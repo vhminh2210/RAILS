@@ -74,13 +74,11 @@ if __name__ == "__main__":
                         help='Imbalance loss.')
     
     #SAM-REG
-
     parser.add_argument('--rweight', type=float, default=0.05)
     parser.add_argument('--sam',type=bool,default=True)
     parser.add_argument('--pop_test',type=bool,default=False)
 
     #SimpleX
-
     parser.add_argument('--w_neg', type=float, default=1)
     parser.add_argument('--neg_margin',type=float, default=0.4)
     
@@ -94,18 +92,30 @@ if __name__ == "__main__":
     parser.add_argument('--freeze_epoch',type=int,default=5)
 
     # RL Agent params
-    parser.add_argument('--topk', type=int, default=10)
-    parser.add_argument('--obswindow', type=int, default=10)
-    parser.add_argument('--agent_batch', type=int, default=64)
-    parser.add_argument('--memory', type=int, default=20000)
-    parser.add_argument('--replace_freq', type=int, default=99)
-    parser.add_argument('--agent_lr', type=float, default=0.01)
-    parser.add_argument('--epsilon', type=float, default=0.95)
-    parser.add_argument('--gamma', type=float, default=0.90)
-    parser.add_argument('--tau', type=float, default=0.01)
-    parser.add_argument('--episode_max', type=int, default=100)
-    parser.add_argument('--step_max', type=int, default=10000)
-    parser.add_argument('--j', type=int, default=16)
+    parser.add_argument('--topk', type=int, default=10,
+                        help= 'top-K recommendation')
+    parser.add_argument('--obswindow', type=int, default=10,
+                        help= 'Observe window. Older observations wont be considered for reward calculation')
+    parser.add_argument('--agent_batch', type=int, default=64,
+                        help= 'Batch size for agent training')
+    parser.add_argument('--memory', type=int, default=20000,
+                        help= 'Size of replay memory. Older transitions will be discarded')
+    parser.add_argument('--replace_freq', type=int, default=99,
+                        help= 'Frequency for updating DQN target network')
+    parser.add_argument('--agent_lr', type=float, default=0.01,
+                        help= 'Learning rate for agent training')
+    parser.add_argument('--epsilon', type=float, default=0.95,
+                        help= 'Epsilon greedy factor')
+    parser.add_argument('--gamma', type=float, default=0.90,
+                        help= 'Discount factor')
+    parser.add_argument('--tau', type=float, default=0.01,
+                        help= 'Fuse eval_net into target_net with temperature tau')
+    parser.add_argument('--episode_max', type=int, default=100,
+                        help= 'Maximum number of episode')
+    parser.add_argument('--step_max', type=int, default=10000,
+                        help= 'Number of DQN update iteration for each episode')
+    # parser.add_argument('--j', type=int, default=16,
+    #                     help= 'ThreadPoolExecutor max_workers')
 
     args = parser.parse_args()
 
