@@ -45,15 +45,11 @@ def recommend_offpolicy(env, agent, last_obs):
 
 
 def trainAgent(agent, step_max):
-    # step = 0
-    # while step < step_max:
-    #     agent.learn()
-    #     step += 1
     for step in tqdm(range(step_max)):
         agent.learn()
 
 
-def recommender(ep_user, train_df, test_df, train_dict,
+def recommender(agent, ep_user, train_df, test_df, train_dict,
                 item_sim_dict, item_quality_dict, item_pop_dict,
                 max_item_id, mask_list, args):
     # Newest interaction made by [ep_user]
@@ -62,10 +58,6 @@ def recommender(ep_user, train_df, test_df, train_dict,
     # Simulate the enviroment, regarding [ep_user] preferences
     env = environment.Env(ep_user, train_dict[ep_user][-args.obswindow:], list(range(max_item_id)),
                           item_sim_dict, item_pop_dict, item_quality_dict, mask_list, args.topk)
-    # Initialize DQN agent with provided environment
-    agent = dqn.DQN(args.obswindow, env.n_actions,
-                    args.memory, args.lr, args.epsilon,
-                    args.replace_freq, args.batch, args.gamma, args.tau, args.topk)
 
     # Generate transitions (s, a, r, s_) and store in agent replay memory
     interaction_num = setInteraction(env, agent, ep_user, train_df, args.obswindow)
@@ -75,7 +67,8 @@ def recommender(ep_user, train_df, test_df, train_dict,
         global user_num
         user_num += 1
 
-    (agent, args.step_max)
+    trainAgent(agent, args.step_max)
+
     # Generated unseen interaction using learned policy
     rec_list = recommend_offpolicy(env, agent, last_obs)
     # Ground truth unseen interaction
@@ -103,6 +96,11 @@ def train_dqn(train_df, test_df,
         train_dict.setdefault(int(row['user_id']), list())
         train_dict[int(row['user_id'])].append(int(row['item_id']))
 
+    # Initialize DQN agent with provided environment
+    agent = dqn.DQN(args.obswindow, max_item_id,
+                    args.memory, args.lr, args.epsilon,
+                    args.replace_freq, args.batch, args.gamma, args.tau, args.topk)
+
     # futures = []
     # executor = ThreadPoolExecutor(max_workers=args.j)
     train_episodes = random.sample(list(train_dict.keys()), args.episode_max)
@@ -114,17 +112,21 @@ def train_dqn(train_df, test_df,
         #                          max_item_id, mask_list, args)
         iter += 1
         print(f'Episode {iter}: User : {ep_user}')
-        recommender(ep_user, train_df, test_df, train_dict,
+        recommender(agent, ep_user, train_df, test_df, train_dict,
                     item_sim_dict, item_quality_dict, item_pop_dict,
                     max_item_id, mask_list, args)
         # futures.append(future)
     # wait(futures)
+
+    print('RL agent training complete!')
+    print('Running evaluations on trained agent ...')
 
     print("Precision: ", np.mean(precision))
     print("NDCG: ", np.mean(ndcg))
     print("Novelty: ", 1 - np.mean(novelty))
     print("ILS: ", np.mean(ils))
 
+    return agent
 
 if __name__ == "__main__":
     pass

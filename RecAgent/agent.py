@@ -9,23 +9,7 @@ from .util.popularity_util import item_popularity_generate
 from .util.quality_util import item_quality_generate
 from .util.simmatrix_util import sim_matrix_generate
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--topk', type=int, default=10)
-    parser.add_argument('--dataset', type=str, default='')
-    parser.add_argument('--obswindow', type=int, default=10)
-    parser.add_argument('--batch', type=int, default=64)
-    parser.add_argument('--memory', type=int, default=20000)
-    parser.add_argument('--replace_freq', type=int, default=99)
-    parser.add_argument('--lr', type=float, default=0.01)
-    parser.add_argument('--epsilon', type=float, default=0.95)
-    parser.add_argument('--gamma', type=float, default=0.90)
-    parser.add_argument('--tau', type=float, default=0.01)
-    parser.add_argument('--episode_max', type=int, default=100)
-    parser.add_argument('--step_max', type=int, default=10000)
-    parser.add_argument('--j', type=int, default=16)
-    args = parser.parse_args()
-
+def getAgent(args):
     train_df = None
     test_df = None
     item_sim_dict = None
@@ -90,6 +74,6 @@ if __name__ == "__main__":
         print("Please check if the dataset file exists!")
 
     # Train DQN
-    train_dqn(train_df, test_df,
+    return train_dqn(train_df, test_df,
               item_sim_dict, item_quality_dict, item_pop_dict,
               max_item_id, item_list, mask_list, args)
