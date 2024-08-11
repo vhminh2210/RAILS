@@ -98,8 +98,8 @@ def train_dqn(train_df, test_df,
 
     # Initialize DQN agent with provided environment
     agent = dqn.DQN(args.obswindow, max_item_id,
-                    args.memory, args.lr, args.epsilon,
-                    args.replace_freq, args.batch, args.gamma, args.tau, args.topk)
+                    args.memory, args.agent_lr, args.epsilon,
+                    args.replace_freq, args.agent_batch, args.gamma, args.tau, args.topk)
 
     # futures = []
     # executor = ThreadPoolExecutor(max_workers=args.j)

@@ -75,7 +75,7 @@ class Data:
         self.valid_file = self.path + 'valid.txt'
         self.test_ood_file = self.path + 'test_ood.txt'
         self.test_id_file = self.path + 'test_id.txt'
-        self.batch_size = args.batch_size
+        self.batch_size = args.enc_batch_size
         self.neg_sample = args.neg_sample
         self.sam=args.sam
         self.IPStype = args.IPStype

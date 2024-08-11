@@ -559,7 +559,7 @@ def getEncoder(args):
                 
     flag = False
     
-    optimizer = torch.optim.Adam([param for param in model.parameters() if param.requires_grad == True], lr=model.lr)
+    optimizer = torch.optim.Adam([param for param in model.parameters() if param.requires_grad == True], lr=model.enc_lr)
 
     #item_pop_idx = torch.tensor(data.item_pop_idx).cuda(device)
     for epoch in range(start_epoch, args.epoch):
