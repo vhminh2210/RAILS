@@ -83,10 +83,6 @@ def parse_args():
                         help='weight for combining l1 and l2.')
     parser.add_argument('--freeze_epoch',type=int,default=5)
 
-
-    
-
-    
     return parser.parse_args()
 
 

@@ -247,6 +247,7 @@ class BC_LOSS(LGN):
         reg_loss_freeze=self.decay * (regularizer2)
         reg_loss_norm=self.decay * (regularizer1)
 
+        # main_loss, pop.bias(pb).extractor loss, (main+pb)_reg, pb_reg, main_reg
         return loss1, loss2, reg_loss, reg_loss_freeze, reg_loss_norm
 
     def freeze_pop(self):
@@ -320,7 +321,7 @@ class BC_LOSS_batch(LGN):
         reg_loss_freeze=self.decay * (regularizer2)
         reg_loss_norm=self.decay * (regularizer1)
 
-        # main_loss, pop.bias(pb).extractor loss, (main+pb_reg, pb_reg, main_reg
+        # main_loss, pop.bias(pb).extractor loss, (main+pb)_reg, pb_reg, main_reg
         return loss1, loss2, reg_loss, reg_loss_freeze, reg_loss_norm
 
     def freeze_pop(self):

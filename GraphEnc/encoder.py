@@ -201,7 +201,7 @@ def ensureDir(dir_path):
         os.makedirs(dir_path)
 
 
-def split_grp_view(data,grp_idx):
+def split_grp_view(data, grp_idx, grp_view):
     n=len(grp_view)
 
     # For example, data = {user : [list_of_items]}
@@ -263,7 +263,7 @@ def visulization(items,users,data,p_item,p_user,name):
     test_id_user_list=data.test_id_user_list
     train_user_list=data.train_user_list
 
-    def split_grp_view(data,grp_idx):
+    def split_grp_view(data, grp_idx, grp_view):
         n=len(grp_view)
         split_data=[collections.defaultdict(list) for _ in range(n)]
 
@@ -289,9 +289,9 @@ def visulization(items,users,data,p_item,p_user,name):
     for i in range(n_items):
         pop_group[idx[i]].append(i)
 
-    eval_test_ood_split=split_grp_view(test_ood_user_list,idx)
-    eval_test_id_split=split_grp_view(test_id_user_list,idx)
-    eval_train_split=split_grp_view(train_user_list,idx)
+    eval_test_ood_split=split_grp_view(test_ood_user_list, idx, grp_view)
+    eval_test_id_split=split_grp_view(test_id_user_list, idx, grp_view)
+    eval_train_split=split_grp_view(train_user_list, idx, grp_view)
 
     pop_users=p_user.tolist()
 
@@ -453,24 +453,19 @@ def visulization(items,users,data,p_item,p_user,name):
     plt.savefig(name+"low_pop_"+str(pops[2])+".png",bbox_inches='tight')
     plt.close()
 
+def getEncoder(args):
 
-
-
-if __name__ == '__main__':
-
-    start = time.time()
-
-    args = parse_args()
     data = Data(args)
     data.load_data()
     device="cuda:"+str(args.cuda)
     device = torch.device(args.cuda)
     saveID = args.saveID
+
+    # Path preparations
     if args.modeltype == "INFONCE" or args.modeltype == 'INFONCE_batch':
         saveID += "n_layers=" + str(args.n_layers) + "tau=" + str(args.tau)
     if args.modeltype == "BC_LOSS" or args.modeltype == 'BC_LOSS_batch':
         saveID += "n_layers=" + str(args.n_layers) + "tau1=" + str(args.tau1) + "tau2=" + str(args.tau2) + "w=" + str(args.w_lambda)
-
 
     if args.n_layers == 2 and args.modeltype != "LGN":
         base_path = './weights/{}/{}-LGN/{}'.format(args.dataset, args.modeltype, saveID)
@@ -489,8 +484,6 @@ if __name__ == '__main__':
     p_item = np.array([len(data.train_item_list[i]) if i in data.train_item_list else 0 for i in range(data.n_items)])
     # User popularity statistics
     p_user = np.array([len(data.train_user_list[u]) if u in data.train_user_list else 0 for u in range(data.n_users)])
-    # Max p_u
-    m_user = np.argmax(p_user)
     
     np.save("pop_user", p_user)
     np.save("pop_item", p_item)
@@ -509,8 +502,8 @@ if __name__ == '__main__':
     # Return an item-group mapping with shape of p_item, values in range(n_groups)
     idx = np.searchsorted(grp_view, p_item)
 
-    eval_test_ood_split=split_grp_view(data.test_ood_user_list,idx)
-    eval_test_id_split=split_grp_view(data.test_id_user_list,idx)
+    eval_test_ood_split=split_grp_view(data.test_ood_user_list, idx, grp_view)
+    eval_test_id_split=split_grp_view(data.test_id_user_list, idx, grp_view)
 
     grp_view = [0] + grp_view
 
@@ -538,9 +531,9 @@ if __name__ == '__main__':
         eval_valid = ProxyEvaluator(data,data.train_user_list,data.valid_user_list,top_k=[20],pop_mask=pop_mask)
 
     # evaluators=[eval_valid,eval_test_id, eval_test_ood]
-    evaluators = [eval_valid,eval_test_id]
+    evaluators = [eval_valid, eval_test_id]
     # eval_names=["valid","test_id", "test_ood" ]
-    eval_names = ["valid","test_id"]
+    eval_names = ["valid", "test_id"]
 
     if args.modeltype == 'LGN':
         model = LGN(args, data)
@@ -555,8 +548,6 @@ if __name__ == '__main__':
     if args.modeltype == 'BC_LOSS_batch':
         model = BC_LOSS_batch(args, data)
     
-#    b=args.sample_beta
-
     model.cuda(device)
 
     model, start_epoch = restore_checkpoint(model, base_path, device)
@@ -584,7 +575,6 @@ if __name__ == '__main__':
         running_loss1, running_loss2 = 0, 0
 
         t1=time.time()
-
         pbar = tqdm(enumerate(data.train_loader), total = len(data.train_loader))
 
         for batch_i, batch in pbar:            
@@ -605,18 +595,15 @@ if __name__ == '__main__':
             model.train()
          
             if args.modeltype == 'INFONCE_batch':
-
                 mf_loss, reg_loss = model(users, pos_items)
                 loss = mf_loss + reg_loss
 
             elif args.modeltype == 'INFONCE':
-
                 mf_loss, reg_loss = model(users, pos_items, neg_items)
                 loss = mf_loss + reg_loss
             
             elif args.modeltype == 'BC_LOSS_batch':
                 loss1, loss2, reg_loss, reg_loss_freeze, reg_loss_norm = model(users, pos_items, users_pop, pos_items_pop)
-                
                 if epoch < args.freeze_epoch:
                     loss =  loss2 + reg_loss_freeze
                 else:
@@ -691,6 +678,9 @@ if __name__ == '__main__':
             model.train()
         
     # Get result
+    print('GCF model training complete!')
+    print('Running evaluations on trained encoder ...')
+
     model = restore_best_checkpoint(data.best_valid_epoch, model, base_path, device)
     print_str = "The best epoch is % d" % data.best_valid_epoch
     with open(base_path +'stats_{}.txt'.format(args.saveID), 'a') as f:
@@ -701,5 +691,4 @@ if __name__ == '__main__':
     with open(base_path +'stats_{}.txt'.format(args.saveID), 'a') as f:
         f.write(print_str + "\n")
 
-
-
+    return model
