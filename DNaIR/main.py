@@ -2,12 +2,12 @@ import argparse
 import os
 import pandas as pd
 
-from train import train_dqn
-from util.datasplit_util import data_split
-from util.jsondict_util import load_dict
-from util.popularity_util import item_popularity_generate
-from util.quality_util import item_quality_generate
-from util.simmatrix_util import sim_matrix_generate
+from .train import train_dqn
+from .util.datasplit_util import data_split
+from .util.jsondict_util import load_dict
+from .util.popularity_util import item_popularity_generate
+from .util.quality_util import item_quality_generate
+from .util.simmatrix_util import sim_matrix_generate
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

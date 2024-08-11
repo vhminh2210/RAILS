@@ -12,12 +12,12 @@ import torch
 import time
 import numpy as np
 from tqdm import tqdm
-from evaluator import ProxyEvaluator
+from .evaluator import ProxyEvaluator
 import collections
 import os
-from data import Data
-from parse import parse_args
-from model import LGN, INFONCE_batch, INFONCE, BC_LOSS, BC_LOSS_batch
+from .data import Data
+from .parse import parse_args
+from .model import LGN, INFONCE_batch, INFONCE, BC_LOSS, BC_LOSS_batch
 from torch.utils.data import Dataset, DataLoader
 
 

@@ -5,7 +5,7 @@ from types import new_class
 import numpy as np
 import scipy.sparse as sp
 from scipy.sparse import csr_matrix
-from parse import parse_args
+from .parse import parse_args
 import time
 import torch
 from copy import deepcopy
@@ -13,7 +13,7 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 import pandas as pd
 from torch.utils.data import Dataset, DataLoader
-from util import randint_choice
+from .util import randint_choice
 
 
 # Helper function used when loading data from files

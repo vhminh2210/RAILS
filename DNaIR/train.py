@@ -1,8 +1,8 @@
 import random
 import numpy as np
 from concurrent.futures import ThreadPoolExecutor, wait
-from model import environment, dqn
-from util.metrics_util import ndcg_metric, novelty_metric, ils_metric, interdiv_metric
+from .model import environment, dqn
+from .util.metrics_util import ndcg_metric, novelty_metric, ils_metric, interdiv_metric
 
 from tqdm import tqdm
 
