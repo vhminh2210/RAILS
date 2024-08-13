@@ -3,16 +3,15 @@ import pandas as pd
 from tqdm import tqdm
 from util.jsondict_util import save_dict
 
-
 def sim_matrix_generate(dat_path, mat_path):
     df = pd.read_csv(dat_path, sep=',', names=['user_id', 'item_id', 'ratings', 'timestamp'])
 
-    train_dict = {}
+    train_dict = {} # {user1:[item1, item3], user2:[item1, item2, item5], ...}
     for index, row in tqdm(df.iterrows(), total=df.shape[0]):
         train_dict.setdefault(int(row['user_id']), list())
         train_dict[int(row['user_id'])].append(int(row['item_id']))
 
-    item_sim_matrix = {}
+    item_sim_matrix = {} # {item1:{item1:s11, item2:s12, item5:s15}, ...}
     item_viewnum_dict = {}
     for user in tqdm(train_dict, total=len(train_dict)):
         items = train_dict[user]

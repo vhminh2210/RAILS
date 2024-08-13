@@ -126,7 +126,11 @@ if __name__ == "__main__":
     encoder = getEncoder(args)
     print('####################')
 
+    # Get user, item embeddings
+    user_emb = encoder.embed_user.detach()
+    item_emb = encoder.embed_item.detach()
+
     # Interactive RL Agent
     print('RL Agent training starts...')
-    agent = getAgent(args)
+    agent = getAgent(user_emb, item_emb, args)
     pass

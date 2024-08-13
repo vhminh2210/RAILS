@@ -51,13 +51,13 @@ def trainAgent(agent, step_max):
 
 def recommender(agent, ep_user, train_df, test_df, train_dict,
                 item_sim_dict, item_quality_dict, item_pop_dict,
-                max_item_id, mask_list, args):
+                max_item_id, mask_list, sim_mode, item_emb, args):
     # Newest interaction made by [ep_user]
     last_obs = train_dict[ep_user][-args.obswindow:]
     mask_list.extend(train_dict[ep_user][:-1])
     # Simulate the enviroment, regarding [ep_user] preferences
     env = environment.Env(ep_user, train_dict[ep_user][-args.obswindow:], list(range(max_item_id)),
-                          item_sim_dict, item_pop_dict, item_quality_dict, mask_list, args.topk)
+                          item_sim_dict, item_pop_dict, item_quality_dict, mask_list, sim_mode, item_emb, args.topk)
 
     # Generate transitions (s, a, r, s_) and store in agent replay memory
     interaction_num = setInteraction(env, agent, ep_user, train_df, args.obswindow)
@@ -86,7 +86,7 @@ def recommender(agent, ep_user, train_df, test_df, train_dict,
 
 def train_dqn(train_df, test_df,
               item_sim_dict, item_quality_dict, item_pop_dict,
-              max_item_id, item_list, mask_list, args):
+              max_item_id, item_list, mask_list, sim_mode, item_emb, args):
     
     global precision, ndcg, novelty, coverage, ils, interdiv
 
@@ -114,7 +114,7 @@ def train_dqn(train_df, test_df,
         print(f'Episode {iter}: User : {ep_user}')
         recommender(agent, ep_user, train_df, test_df, train_dict,
                     item_sim_dict, item_quality_dict, item_pop_dict,
-                    max_item_id, mask_list, args)
+                    max_item_id, mask_list, sim_mode, item_emb, args)
         # futures.append(future)
     # wait(futures)
 

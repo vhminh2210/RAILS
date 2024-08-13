@@ -1,10 +1,11 @@
 import math
 import numpy as np
+from numpy.linalg import norm
 
 
 class Env():
     def __init__(self, user, observation_data, I,
-                 item_sim_matrix, item_pop_dict, quality_dict, mask_list, K):
+                 item_sim_matrix, item_pop_dict, quality_dict, mask_list, sim_mode, item_emb, K):
         self.observation = np.array(observation_data)
         self.n_observation = len(self.observation)
         self.action_space = I
@@ -14,6 +15,8 @@ class Env():
         self.item_pop_dict = item_pop_dict
         self.quality_dict = quality_dict
         self.mask_list = mask_list
+        self.sim_mode = sim_mode
+        self.item_emb = item_emb
         self.K = K
 
     def reset(self, observation):
@@ -28,6 +31,7 @@ class Env():
         done = False
         s = self.observation
 
+        # If action is chosen in the previous step (due to similarity reasons), discard the step
         if s[-1] == action:
             self.item_sim_matrix[str(s[-1])][str(action)] = 0
             r = -1
@@ -38,9 +42,16 @@ class Env():
             # Similarity score
             r_acc = 0
             for i in range(self.n_observation):
-                if str(s[-(i + 1)]) in self.item_sim_matrix.keys():
-                    if str(action) in self.item_sim_matrix[str(s[-(i + 1)])].keys():
-                        r_acc += (0.9 ** i) * self.item_sim_matrix[str(s[-(i + 1)])][str(action)]
+                if self.sim_mode == 'embedding':
+                    vi = self.item_emb[s[-(i + 1)]]
+                    va = self.item_emb[action]
+                    r_acc += (0.9 ** i) * (np.dot(vi, va) / (norm(vi) * norm(va)))
+                
+                else:
+                    if str(s[-(i + 1)]) in self.item_sim_matrix.keys():
+                        # If candidate action has no similarity with past action -> skip this pair
+                        if str(action) in self.item_sim_matrix[str(s[-(i + 1)])].keys():
+                            r_acc += (0.9 ** i) * self.item_sim_matrix[str(s[-(i + 1)])][str(action)]
             r = r_acc + r_div
         if r > 0:
             # If the reward is positive, append [action] to [observations]
