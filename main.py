@@ -3,6 +3,7 @@ import argparse
 from sys import exit
 rd.seed(101)
 import torch
+from torch import nn
 import time
 import numpy as np
 from tqdm import tqdm
@@ -123,12 +124,23 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     args = parser.parse_args()
     print('GCF training starts...')
-    encoder = getEncoder(args)
+    encoder, data = getEncoder(args)
     print('####################')
 
     # Get user, item embeddings
     user_emb = encoder.embed_user.detach()
     item_emb = encoder.embed_item.detach()
+
+    # Build representative user embeddings for each item
+    repr_user = []
+    for item in range(data.n_items):
+        ru_item = 0 # Representative user for item
+        for user in data.train_item_list[item]:
+            ru_item = ru_item + user_emb[user]
+        ru_item = ru_item / len(data.train_item_list[item])
+        repr_user.append(ru_item)
+    
+    repr_user = nn.Embedding.from_pretrained(repr_user)
 
     # Interactive RL Agent
     print('RL Agent training starts...')

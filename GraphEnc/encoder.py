@@ -691,4 +691,4 @@ def getEncoder(args):
     with open(base_path +'stats_{}.txt'.format(args.saveID), 'a') as f:
         f.write(print_str + "\n")
 
-    return model
+    return model, data
