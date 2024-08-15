@@ -10,11 +10,16 @@ from tqdm import tqdm
 
 from GraphEnc.encoder import getEncoder
 from RecAgent.agent import getAgent
+from utils import split_data
 
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dataset', type=str, default='')
+    parser.add_argument('--dataset', type=str, default='',
+                        help= 'Dataset name')
+    parser.add_argument('--root', type=str, default='datasets',
+                        help= 'Datasets root directory')
+    
     # Graph encoder params
     parser.add_argument('--vis', nargs='?', default=-1,
                         help='we only want test value.')
@@ -121,6 +126,8 @@ if __name__ == "__main__":
     #                     help= 'ThreadPoolExecutor max_workers')
 
     args = parser.parse_args()
+
+    split_data(args)
 
     user_emb, item_emb, repr_user = None, None, None
 
