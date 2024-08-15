@@ -9,7 +9,7 @@ from .util.popularity_util import item_popularity_generate
 from .util.quality_util import item_quality_generate
 from .util.simmatrix_util import sim_matrix_generate
 
-def getAgent(user_emb, item_emb, args):
+def getAgent(repr_user, item_emb, args):
     train_df = None
     test_df = None
     item_sim_dict = None
@@ -74,10 +74,11 @@ def getAgent(user_emb, item_emb, args):
         print("Please check if the dataset file exists!")
 
     # Train DQN
-    if item_emb is None:
-        sim_mode = 'stats'
-    else:
-        sim_mode = 'embedding'
+    if args.sim_mode == 'item_embedding' or args.sim_mode == 'user_embedding':
+        assert item_emb is not None
+    if args.sim_mode == 'user_embedding':
+        assert repr_user is not None
+
     return train_dqn(train_df, test_df,
               item_sim_dict, item_quality_dict, item_pop_dict,
-              max_item_id, item_list, mask_list, sim_mode, item_emb, args)
+              max_item_id, item_list, mask_list, repr_user, item_emb, args)

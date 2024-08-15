@@ -115,34 +115,41 @@ if __name__ == "__main__":
                         help= 'Maximum number of episode')
     parser.add_argument('--step_max', type=int, default=10000,
                         help= 'Number of DQN update iteration for each episode')
+    parser.add_argument('--sim_mode', type=str, default='stats',
+                        help= 'Similarity mode for relevance score')
     # parser.add_argument('--j', type=int, default=16,
     #                     help= 'ThreadPoolExecutor max_workers')
 
     args = parser.parse_args()
 
-    # Graph encoder
-    parser = argparse.ArgumentParser()
-    args = parser.parse_args()
-    print('GCF training starts...')
-    encoder, data = getEncoder(args)
-    print('####################')
+    user_emb, item_emb, repr_user = None, None, None
 
-    # Get user, item embeddings
-    user_emb = encoder.embed_user.detach()
-    item_emb = encoder.embed_item.detach()
+    # Enable GCN embeddings
+    if args.sim_mode != 'stats':
 
-    # Build representative user embeddings for each item
-    repr_user = []
-    for item in range(data.n_items):
-        ru_item = 0 # Representative user for item
-        for user in data.train_item_list[item]:
-            ru_item = ru_item + user_emb[user]
-        ru_item = ru_item / len(data.train_item_list[item])
-        repr_user.append(ru_item)
-    
-    repr_user = nn.Embedding.from_pretrained(repr_user)
+        # Graph encoder
+        parser = argparse.ArgumentParser()
+        args = parser.parse_args()
+        print('GCF training starts...')
+        encoder, data = getEncoder(args)
+        print('####################')
+
+        # Get user, item embeddings
+        user_emb = encoder.embed_user.detach()
+        item_emb = encoder.embed_item.detach()
+
+        # Build representative user embeddings for each item
+        repr_user = []
+        for item in range(data.n_items):
+            ru_item = 0 # Representative user for item
+            for user in data.train_item_list[item]:
+                ru_item = ru_item + user_emb[user]
+            ru_item = ru_item / len(data.train_item_list[item])
+            repr_user.append(ru_item)
+        
+        repr_user = nn.Embedding.from_pretrained(repr_user)
 
     # Interactive RL Agent
     print('RL Agent training starts...')
-    agent = getAgent(user_emb, item_emb, args)
+    agent = getAgent(repr_user, item_emb, args)
     pass

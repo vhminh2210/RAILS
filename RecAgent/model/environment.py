@@ -5,7 +5,7 @@ from numpy.linalg import norm
 
 class Env():
     def __init__(self, user, observation_data, I,
-                 item_sim_matrix, item_pop_dict, quality_dict, mask_list, sim_mode, item_emb, K):
+                 item_sim_matrix, item_pop_dict, quality_dict, mask_list, sim_mode, repr_user, item_emb, K):
         self.observation = np.array(observation_data)
         self.n_observation = len(self.observation)
         self.action_space = I
@@ -16,6 +16,7 @@ class Env():
         self.quality_dict = quality_dict
         self.mask_list = mask_list
         self.sim_mode = sim_mode
+        self.repr_user = repr_user
         self.item_emb = item_emb
         self.K = K
 
@@ -42,16 +43,25 @@ class Env():
             # Similarity score
             r_acc = 0
             for i in range(self.n_observation):
-                if self.sim_mode == 'embedding':
-                    vi = self.item_emb[s[-(i + 1)]]
+                # Cosine Similarity using item embedding
+                if self.sim_mode == 'item_embedding':
+                    vi = self.item_emb[s[-(i + 1)]] # Item embedding
                     va = self.item_emb[action]
                     r_acc += (0.9 ** i) * (np.dot(vi, va) / (norm(vi) * norm(va)))
                 
-                else:
+                # Cosine Similarity using user-item statistics
+                elif self.sim_mode == 'stats':
                     if str(s[-(i + 1)]) in self.item_sim_matrix.keys():
                         # If candidate action has no similarity with past action -> skip this pair
                         if str(action) in self.item_sim_matrix[str(s[-(i + 1)])].keys():
                             r_acc += (0.9 ** i) * self.item_sim_matrix[str(s[-(i + 1)])][str(action)]
+
+                # Cosine Similarity using representative user and item embeddings
+                elif self.sim_mode == 'user_embedding':
+                    vi = self.repr_user[s[-(i + 1)]] # Item's representative user
+                    va = self.item_emb[action]
+                    r_acc += (0.9 ** i) * (np.dot(vi, va) / (norm(vi) * norm(va)))
+
             r = r_acc + r_div
         if r > 0:
             # If the reward is positive, append [action] to [observations]
