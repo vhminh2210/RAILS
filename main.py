@@ -25,8 +25,6 @@ if __name__ == "__main__":
                         help='we only want test value.')
     parser.add_argument('--test_only', nargs='?', default=False,
                         help='we only want test value.')
-    parser.add_argument('--data_path', nargs='?', default='./data/',
-                        help='Input data path.')
     parser.add_argument('--embed_size', type=int, default=64,
                         help='Embedding size.')
     parser.add_argument('--enc_batch_size', type=int, default=1024,

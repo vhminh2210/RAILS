@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from torch.utils.data import Dataset, DataLoader
 from .util import randint_choice
+import os
 
 
 # Helper function used when loading data from files
@@ -69,12 +70,12 @@ def helper_load_train(filename):
 class Data:
     
     def __init__(self, args):
-        self.path = args.data_path + args.dataset + '/'
-        self.small_path=args.data_path + args.dataset+".mid"+"/"
-        self.train_file = self.path + 'train.txt'
-        self.valid_file = self.path + 'valid.txt'
-        self.test_ood_file = self.path + 'test_ood.txt'
-        self.test_id_file = self.path + 'test_id.txt'
+        self.path = os.path.join('..', args.root, args.dataset)
+        # self.small_path=args.root + args.dataset+".mid"+"/"
+        self.train_file = os.path.join(self.path, 'train.txt')
+        self.valid_file = os.path.join(self.path, 'val.txt')
+        self.test_ood_file = os.path.join(self.path, 'test_ood.txt')
+        self.test_id_file = os.path.join(self.path, 'test.txt')
         self.batch_size = args.enc_batch_size
         self.neg_sample = args.neg_sample
         self.sam=args.sam
