@@ -125,6 +125,7 @@ if __name__ == "__main__":
     #                     help= 'ThreadPoolExecutor max_workers')
 
     args = parser.parse_args()
+    assert args.epoch >= args.freeze_epoch
 
     print('Preparing data ...')
     split_data(args)
@@ -153,8 +154,11 @@ if __name__ == "__main__":
                 ru_item = ru_item + user_emb[user]
             ru_item = ru_item / len(data.train_item_list[item])
             repr_user.append(ru_item)
+        repr_user = torch.stack(repr_user, axis= 0)
+        print('Representative user embeddings shape:', repr_user.shape)
         
         repr_user = nn.Embedding.from_pretrained(repr_user)
+        item_emb = nn.Embedding.from_pretrained(item_emb)
 
     # Interactive RL Agent
     print('RL Agent training starts...')

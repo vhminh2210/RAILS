@@ -5,8 +5,11 @@ import csv
 
 def agent_data(filename, args):
 
-    TXT = os.path.join(args.root, args.dataset, f'{filename}.txt')
-    CSV = os.path.join(args.root, args.dataset, f'{filename}.csv')
+    if filename == 'dat':
+        TXT = os.path.join(args.root, args.dataset, f'{args.dataset}.txt')
+    else:
+        TXT = os.path.join(args.root, args.dataset, f'{filename}.txt')
+    CSV = os.path.join(args.root, args.dataset, f'{args.dataset}.{filename}')
 
     fields = ['user_id', 'item_id', 'ratings', 'timestamp']
 
@@ -104,6 +107,7 @@ def split_data(args, train_ratio= 0.8, val_ratio= 0.1, test_ratio= 0.1, seed= 10
     file.close()
 
     # Data for RL agents
+    agent_data('dat', args)
     agent_data('train', args)
     agent_data('val', args)
     agent_data('test', args)

@@ -666,7 +666,7 @@ def getEncoder(args):
             f.write(perf_str+"\n")
 
         # Evaluate the trained model
-        if (epoch + 1) % args.verbose == 0 and epoch >= freeze_epoch:
+        if (epoch + 1) % args.verbose == 0 and (epoch + 1) >= freeze_epoch:
             model.eval() 
 
             for i,evaluator in enumerate(evaluators):

@@ -1,6 +1,7 @@
 import math
 import numpy as np
 from numpy.linalg import norm
+import torch
 
 
 class Env():
@@ -43,10 +44,12 @@ class Env():
             # Similarity score
             r_acc = 0
             for i in range(self.n_observation):
+                cur_tensor = torch.IntTensor([s[-(i + 1)]])
+                act_tensor = torch.IntTensor([action])
                 # Cosine Similarity using item embedding
                 if self.sim_mode == 'item_embedding':
-                    vi = self.item_emb[s[-(i + 1)]] # Item embedding
-                    va = self.item_emb[action]
+                    vi = self.item_emb(cur_tensor).reshape((-1)) # Item embedding
+                    va = self.item_emb(act_tensor).reshape((-1))
                     r_acc += (0.9 ** i) * (np.dot(vi, va) / (norm(vi) * norm(va)))
                 
                 # Cosine Similarity using user-item statistics
@@ -58,8 +61,8 @@ class Env():
 
                 # Cosine Similarity using representative user and item embeddings
                 elif self.sim_mode == 'user_embedding':
-                    vi = self.repr_user[s[-(i + 1)]] # Item's representative user
-                    va = self.item_emb[action]
+                    vi = self.repr_user(cur_tensor).reshape((-1)) # Item's representative user
+                    va = self.item_emb(act_tensor).reshape((-1))
                     r_acc += (0.9 ** i) * (np.dot(vi, va) / (norm(vi) * norm(va)))
 
             r = r_acc + r_div

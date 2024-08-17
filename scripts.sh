@@ -7,4 +7,7 @@ python main.py --modeltype BC_LOSS \
                 --neg_sample 1 \
                 --sim_mode user_embedding \
                 --epoch 5 \
-                --cuda -1
+                --freeze_epoch 5 \
+                --cuda -1 \
+                --step_max 100 \
+                --episode_max 10
