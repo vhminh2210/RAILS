@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-from util.jsondict_util import save_dict
+from RecAgent.util.jsondict_util import save_dict
 
 
 def item_quality_generate(dat_path, qua_path):

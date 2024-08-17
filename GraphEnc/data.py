@@ -70,7 +70,7 @@ def helper_load_train(filename):
 class Data:
     
     def __init__(self, args):
-        self.path = os.path.join('..', args.root, args.dataset)
+        self.path = os.path.join(args.root, args.dataset)
         # self.small_path=args.root + args.dataset+".mid"+"/"
         self.train_file = os.path.join(self.path, 'train.txt')
         self.valid_file = os.path.join(self.path, 'val.txt')
@@ -80,7 +80,10 @@ class Data:
         self.neg_sample = args.neg_sample
         self.sam=args.sam
         self.IPStype = args.IPStype
-        self.device = torch.device(args.cuda)
+        if args.cuda >= 0:
+            self.device = torch.device(args.cuda)
+        else:
+            self.device = 'cpu'
         self.modeltype = args.modeltype
         self.small_num=5000
         self.user_pop_max = 0
@@ -302,7 +305,7 @@ class Data:
                 print(f"costing {end - s}s, saved norm_mat...")
                 sp.save_npz(self.path + '/s_pre_adj_mat.npz', norm_adj)
             self.Graph = self._convert_sp_mat_to_sp_tensor(norm_adj)
-            self.Graph = self.Graph.coalesce().cuda(self.device)
+            self.Graph = self.Graph.coalesce().to(self.device)
 
         return self.Graph
   

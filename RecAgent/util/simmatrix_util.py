@@ -1,7 +1,7 @@
 import math
 import pandas as pd
 from tqdm import tqdm
-from util.jsondict_util import save_dict
+from RecAgent.util.jsondict_util import save_dict
 
 def sim_matrix_generate(dat_path, mat_path):
     df = pd.read_csv(dat_path, sep=',', names=['user_id', 'item_id', 'ratings', 'timestamp'])

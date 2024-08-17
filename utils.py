@@ -42,6 +42,7 @@ def split_data(args, train_ratio= 0.8, val_ratio= 0.1, test_ratio= 0.1, seed= 10
     TRAIN = os.path.join(args.root, args.dataset, 'train.txt')
     VAL = os.path.join(args.root, args.dataset, 'val.txt')
     TEST = os.path.join(args.root, args.dataset, 'test.txt')
+    TEST_OOD = os.path.join(args.root, args.dataset, 'test_ood.txt')
 
     with open(TXT, 'r') as file:
         Lines = file.readlines()
@@ -95,6 +96,10 @@ def split_data(args, train_ratio= 0.8, val_ratio= 0.1, test_ratio= 0.1, seed= 10
     file.close()
 
     with open(TEST, 'w') as file:
+        file.writelines(test)
+    file.close()
+
+    with open(TEST_OOD, 'w') as file:
         file.writelines(test)
     file.close()
 

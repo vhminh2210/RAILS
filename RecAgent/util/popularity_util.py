@@ -1,6 +1,6 @@
 import pandas as pd
 from tqdm import tqdm
-from util.jsondict_util import save_dict
+from RecAgent.util.jsondict_util import save_dict
 
 
 def item_popularity_generate(dat_path, pop_path):

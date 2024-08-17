@@ -21,7 +21,7 @@ def getAgent(repr_user, item_emb, args):
 
     # Load data
     dataset = args.dataset
-    dat_dir = os.path.join('..', args.root, args.datase)
+    dat_dir = os.path.join('..', args.root, args.dataset)
     dat_path = os.path.join(dat_dir, f'{args.dataset}.dat')
     if os.path.exists(dat_path):
         df = pd.read_csv(dat_path, sep=',',

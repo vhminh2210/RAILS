@@ -19,6 +19,8 @@ if __name__ == "__main__":
                         help= 'Dataset name')
     parser.add_argument('--root', type=str, default='datasets',
                         help= 'Datasets root directory')
+    parser.add_argument('--sim_mode', type=str, default='stats',
+                        help= 'Similarity mode for relevance score')
     
     # Graph encoder params
     parser.add_argument('--vis', nargs='?', default=-1,
@@ -118,14 +120,14 @@ if __name__ == "__main__":
                         help= 'Maximum number of episode')
     parser.add_argument('--step_max', type=int, default=10000,
                         help= 'Number of DQN update iteration for each episode')
-    parser.add_argument('--sim_mode', type=str, default='stats',
-                        help= 'Similarity mode for relevance score')
     # parser.add_argument('--j', type=int, default=16,
     #                     help= 'ThreadPoolExecutor max_workers')
 
     args = parser.parse_args()
 
     split_data(args)
+    print('Preparing data finished!')
+    print('####################')
 
     user_emb, item_emb, repr_user = None, None, None
 
@@ -133,8 +135,6 @@ if __name__ == "__main__":
     if args.sim_mode != 'stats':
 
         # Graph encoder
-        parser = argparse.ArgumentParser()
-        args = parser.parse_args()
         print('GCF training starts...')
         encoder, data = getEncoder(args)
         print('####################')

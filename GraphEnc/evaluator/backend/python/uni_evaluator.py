@@ -1,13 +1,16 @@
 """
 @author: Zhongchuan Sun
 """
+import sys
+
+# sys.path.append('GraphICS')
+
 import numpy as np
 from concurrent.futures import ThreadPoolExecutor
-from util import DataIterator
-from util import typeassert, argmax_top_k
-from evaluator.abstract_evaluator import AbstractEvaluator
+from GraphEnc.util.data_iterator import DataIterator
+from GraphEnc.util.tool import typeassert, argmax_top_k, pad_sequences
+from GraphEnc.evaluator.abstract_evaluator import AbstractEvaluator
 from .metric import metric_dict
-from util import pad_sequences
 from tqdm import tqdm
 
 

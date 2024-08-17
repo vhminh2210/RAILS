@@ -4,7 +4,7 @@
 import sys
 import os
 import logging
-from util import Configurator
+from .configurator import Configurator
 
 
 class Logger(object):

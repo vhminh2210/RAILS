@@ -457,8 +457,11 @@ def getEncoder(args):
 
     data = Data(args)
     data.load_data()
-    device="cuda:"+str(args.cuda)
-    device = torch.device(args.cuda)
+    if args.cuda >= 0:
+        device="cuda:"+str(args.cuda)
+    else:
+        device= 'cpu'
+    device = torch.device(device)
     saveID = args.saveID
 
     # Path preparations
@@ -548,7 +551,7 @@ def getEncoder(args):
     if args.modeltype == 'BC_LOSS_batch':
         model = BC_LOSS_batch(args, data)
     
-    model.cuda(device)
+    model.to(device)
 
     model, start_epoch = restore_checkpoint(model, base_path, device)
 
@@ -579,7 +582,7 @@ def getEncoder(args):
 
         for batch_i, batch in pbar:            
 
-            batch = [x.cuda(device) for x in batch]
+            batch = [x.to(device) for x in batch]
 
             users = batch[0]
             pos_items = batch[1]
