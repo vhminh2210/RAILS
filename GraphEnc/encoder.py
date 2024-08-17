@@ -525,11 +525,11 @@ def getEncoder(args):
 
     if not args.pop_test:
         # Default. Set only for SAM-REG (?). num_thread might need adjustments for Kaggle experiments
-        eval_test_ood = ProxyEvaluator(data,data.train_user_list,data.test_ood_user_list,top_k=[20],dump_dict=merge_user_list([data.train_user_list,data.valid_user_list,data.test_id_user_list]))
+        # eval_test_ood = ProxyEvaluator(data,data.train_user_list,data.test_ood_user_list,top_k=[20],dump_dict=merge_user_list([data.train_user_list,data.valid_user_list,data.test_id_user_list]))
         eval_test_id = ProxyEvaluator(data,data.train_user_list,data.test_id_user_list,top_k=[20],dump_dict=merge_user_list([data.train_user_list,data.valid_user_list,data.test_ood_user_list]))
         eval_valid = ProxyEvaluator(data,data.train_user_list,data.valid_user_list,top_k=[20])
     else:
-        eval_test_ood = ProxyEvaluator(data,data.train_user_list,data.test_ood_user_list,top_k=[20],dump_dict=merge_user_list([data.train_user_list,data.valid_user_list,data.test_id_user_list]),pop_mask=pop_mask)
+        # eval_test_ood = ProxyEvaluator(data,data.train_user_list,data.test_ood_user_list,top_k=[20],dump_dict=merge_user_list([data.train_user_list,data.valid_user_list,data.test_id_user_list]),pop_mask=pop_mask)
         eval_test_id = ProxyEvaluator(data,data.train_user_list,data.test_id_user_list,top_k=[20],dump_dict=merge_user_list([data.train_user_list,data.valid_user_list,data.test_ood_user_list]),pop_mask=pop_mask)
         eval_valid = ProxyEvaluator(data,data.train_user_list,data.valid_user_list,top_k=[20],pop_mask=pop_mask)
 
@@ -562,11 +562,11 @@ def getEncoder(args):
                 
     flag = False
     
-    optimizer = torch.optim.Adam([param for param in model.parameters() if param.requires_grad == True], lr=model.enc_lr)
+    optimizer = torch.optim.Adam([param for param in model.parameters() if param.requires_grad == True], lr=model.lr)
 
     #item_pop_idx = torch.tensor(data.item_pop_idx).cuda(device)
     for epoch in range(start_epoch, args.epoch):
-
+        print('Epoch:', epoch)
         # If the early stopping has been reached, restore to the best performance model
         if flag:
             break

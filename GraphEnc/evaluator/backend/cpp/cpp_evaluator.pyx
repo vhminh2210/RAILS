@@ -4,8 +4,8 @@
 """
 import numpy as np
 cimport numpy as np
-from evaluator.abstract_evaluator import AbstractEvaluator
-from util.cython.tools import float_type
+from GraphEnc.evaluator.abstract_evaluator import AbstractEvaluator
+from GraphEnc.util.cython.tools import float_type
 from libcpp.unordered_set cimport unordered_set as cset
 from libcpp.vector cimport vector as cvector
 

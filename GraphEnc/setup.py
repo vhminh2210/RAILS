@@ -4,8 +4,8 @@ import numpy as np
 import os
 
 # Original settings
-pyx_directories = ["GraphEnc/evaluator/backend/cpp/", "util/cython"]
-cpp_dirs = ["GraphEnc/evaluator/backend/cpp/include", "util/cython/include"]
+pyx_directories = ["GraphEnc/evaluator/backend/cpp/", "GraphEnc/util/cython"]
+cpp_dirs = ["GraphEnc/evaluator/backend/cpp/include", "GraphEnc/util/cython/include"]
 
 # # Adjustments for Kaggle
 # pyx_directories = ["BC-Loss/evaluator/backend/cpp/", "BC-Loss/util/cython"]

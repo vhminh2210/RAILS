@@ -128,10 +128,6 @@ if __name__ == "__main__":
 
     print('Preparing data ...')
     split_data(args)
-    
-    print('Setup GraphEnc evaluators ...')
-    subprocess.run(['python', 'GraphEnc/setup.py', 'build_ext', '--inplace'])
-
     print('Setup finished!')
     print('####################')
 
@@ -146,8 +142,8 @@ if __name__ == "__main__":
         print('####################')
 
         # Get user, item embeddings
-        user_emb = encoder.embed_user.detach()
-        item_emb = encoder.embed_item.detach()
+        user_emb = encoder.embed_user.weight.detach()
+        item_emb = encoder.embed_item.weight.detach()
 
         # Build representative user embeddings for each item
         repr_user = []

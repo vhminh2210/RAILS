@@ -1,10 +1,10 @@
 """
 @author: Zhongchuan Sun
 """
-from ..util.tool import typeassert
-from .abstract_evaluator import AbstractEvaluator
-from .backend import UniEvaluator
-from .grouped_evaluator import GroupedEvaluator
+from GraphEnc.util import typeassert
+from GraphEnc.evaluator.abstract_evaluator import AbstractEvaluator
+from GraphEnc.evaluator.backend import UniEvaluator
+from GraphEnc.evaluator.grouped_evaluator import GroupedEvaluator
 
 
 class ProxyEvaluator(AbstractEvaluator):

@@ -4,13 +4,13 @@
 import numpy as np
 import pandas as pd
 from tensorflow.python.framework.ops import NullContextmanager
-from util import DataIterator
-from util import typeassert
+from GraphEnc.util import DataIterator
+from GraphEnc.util import typeassert
 from .cpp_evaluator import CPPEvaluator
-from util.cython.tools import float_type, is_ndarray
-from util import pad_sequences
+from GraphEnc.util.cython.tools import float_type, is_ndarray
+from GraphEnc.util import pad_sequences
 #from util.cython.arg_topk import arg_topk
-from util.tool import argmax_top_k, max_top_k
+from GraphEnc.util.tool import argmax_top_k, max_top_k
 
 
 metric_dict = {"Precision": 1, "Recall": 2, "MAP": 3, "NDCG": 4, "MRR": 5, "HR":6}

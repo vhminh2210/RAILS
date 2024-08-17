@@ -11,18 +11,18 @@ class MF(nn.Module):
         super(MF, self).__init__()
         self.n_users = data.n_users
         self.n_items = data.n_items
-        self.lr = args.lr
+        self.lr = args.enc_lr
         self.emb_dim = args.embed_size
-        self.batch_size = args.batch_size
+        self.batch_size = args.enc_batch_size
         self.decay = args.regs
-        self.device = torch.device(args.cuda)
+        self.device = torch.device(args.cuda) if args.cuda >= 0 else torch.device('cpu')
         self.saveID = args.saveID
 
         self.train_user_list = data.train_user_list
         self.valid_user_list = data.valid_user_list
         # = torch.tensor(data.population_list).cuda(self.device)
-        self.user_pop = torch.tensor(data.user_pop_idx).type(torch.LongTensor).cuda(self.device)
-        self.item_pop = torch.tensor(data.item_pop_idx).type(torch.LongTensor).cuda(self.device)
+        self.user_pop = torch.tensor(data.user_pop_idx).type(torch.LongTensor).to(self.device)
+        self.item_pop = torch.tensor(data.item_pop_idx).type(torch.LongTensor).to(self.device)
         self.user_pop_max = data.user_pop_max
         self.item_pop_max = data.item_pop_max        
 
@@ -37,8 +37,8 @@ class MF(nn.Module):
         if items is None:
             items = list(range(self.n_items))
 
-        users = self.embed_user(torch.tensor(users).cuda(self.device))
-        items = torch.transpose(self.embed_item(torch.tensor(items).cuda(self.device)), 0, 1)
+        users = self.embed_user(torch.tensor(users).to(self.device))
+        items = torch.transpose(self.embed_item(torch.tensor(items).to(self.device)), 0, 1)
         rate_batch = torch.matmul(users, items)
 
         return rate_batch.cpu().detach().numpy()
@@ -96,8 +96,8 @@ class LGN(MF):
 
         all_users, all_items = self.compute()
 
-        users = all_users[torch.tensor(users).cuda(self.device)]
-        items = torch.transpose(all_items[torch.tensor(items).cuda(self.device)], 0, 1)
+        users = all_users[torch.tensor(users).to(self.device)]
+        items = torch.transpose(all_items[torch.tensor(items).to(self.device)], 0, 1)
         rate_batch = torch.matmul(users, items)
 
         return rate_batch.cpu().detach().numpy()
