@@ -1,16 +1,15 @@
-  
 from distutils.core import setup, Extension
 from Cython.Build import cythonize
 import numpy as np
 import os
 
-# # Original settings
-# pyx_directories = ["BC-Loss/evaluator/backend/cpp/", "util/cython"]
-# cpp_dirs = ["BC-Loss/evaluator/backend/cpp/include", "util/cython/include"]
+# Original settings
+pyx_directories = ["GraphEnc/evaluator/backend/cpp/", "util/cython"]
+cpp_dirs = ["GraphEnc/evaluator/backend/cpp/include", "util/cython/include"]
 
-# Adjustments for Kaggle
-pyx_directories = ["BC-Loss/evaluator/backend/cpp/", "BC-Loss/util/cython"]
-cpp_dirs = ["BC-Loss/evaluator/backend/cpp/include", "BC-Loss/util/cython/include"]
+# # Adjustments for Kaggle
+# pyx_directories = ["BC-Loss/evaluator/backend/cpp/", "BC-Loss/util/cython"]
+# cpp_dirs = ["BC-Loss/evaluator/backend/cpp/include", "BC-Loss/util/cython/include"]
 
 extensions = [
     Extension(

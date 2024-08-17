@@ -7,6 +7,7 @@ from torch import nn
 import time
 import numpy as np
 from tqdm import tqdm
+import subprocess
 
 from GraphEnc.encoder import getEncoder
 from RecAgent.agent import getAgent
@@ -125,8 +126,13 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    print('Preparing data ...')
     split_data(args)
-    print('Preparing data finished!')
+    
+    print('Setup GraphEnc evaluators ...')
+    subprocess.run(['python', 'GraphEnc/setup.py', 'build_ext', '--inplace'])
+
+    print('Setup finished!')
     print('####################')
 
     user_emb, item_emb, repr_user = None, None, None
