@@ -21,14 +21,15 @@ def getAgent(repr_user, item_emb, args):
 
     # Load data
     dataset = args.dataset
-    dat_path = './dataset/' + dataset + '/' + dataset + '.dat'
+    dat_dir = os.path.join('..', args.root, args.datase)
+    dat_path = os.path.join(dat_dir, f'{args.dataset}.dat')
     if os.path.exists(dat_path):
         df = pd.read_csv(dat_path, sep=',',
                          names=['user_id', 'item_id', 'ratings', 'timestamp'])
         max_item_id = df['item_id'].max()
         item_list = df['item_id'].tolist()
         mask_list = list(set(list(range(max_item_id))) - set(item_list))
-        mat_path = './dataset/' + dataset + '/' + dataset + '.mat'
+        mat_path = os.path.join(dat_dir, f'{args.dataset}.mat')
 
         # Generate pre-calculated similarity, popularity and quality matrix
         if os.path.exists(mat_path):
@@ -36,13 +37,13 @@ def getAgent(repr_user, item_emb, args):
         else:
             sim_matrix_generate(dat_path, mat_path)
             item_sim_dict = load_dict(mat_path)
-        qua_path = './dataset/' + dataset + '/' + dataset + '.qua'
+        qua_path = os.path.join(dat_dir, f'{args.dataset}.qua')
         if os.path.exists(qua_path):
             item_quality_dict = load_dict(qua_path)
         else:
             item_quality_generate(dat_path, qua_path)
             item_quality_dict = load_dict(qua_path)
-        pop_path = './dataset/' + dataset + '/' + dataset + '.pop'
+        pop_path = os.path.join(dat_dir, f'{args.dataset}.pop')
         if os.path.exists(pop_path):
             item_pop_dict = load_dict(pop_path)
         else:
@@ -50,9 +51,9 @@ def getAgent(repr_user, item_emb, args):
             item_pop_dict = load_dict(pop_path)
 
         # Train - val - test split
-        train_path = './dataset/' + dataset + '/' + dataset + '.train'
-        valid_path = './dataset/' + dataset + '/' + dataset + '.valid'
-        test_path = './dataset/' + dataset + '/' + dataset + '.test'
+        train_path = os.path.join(dat_dir, f'{args.dataset}.train')
+        valid_path = os.path.join(dat_dir, f'{args.dataset}.valid')
+        test_path = os.path.join(dat_dir, f'{args.dataset}.test')
         if (os.path.exists(train_path)) \
                 & (os.path.exists(valid_path)) \
                 & (os.path.exists(test_path)):
