@@ -488,8 +488,8 @@ def getEncoder(args):
     # User popularity statistics
     p_user = np.array([len(data.train_user_list[u]) if u in data.train_user_list else 0 for u in range(data.n_users)])
     
-    np.save("pop_user", p_user)
-    np.save("pop_item", p_item)
+    # np.save("pop_user", p_user)
+    # np.save("pop_item", p_item)
     
     pop_sorted = np.sort(p_item)
     n_groups = 3
