@@ -29,17 +29,19 @@ class Env():
         elif self.args.sim_mode == 'item_embedding':
             assert self.item_emb is not None
             state = 0
-            for i in range(len(last_obs)):
+            n_obs = len(last_obs)
+            for i in range(n_obs):
                 obs = last_obs[i]
-                state += (self.args.eta ** i) * self.item_emb(torch.IntTensor([obs]))
+                state += (self.args.eta ** (n_obs - i - 1)) * self.item_emb(torch.IntTensor([obs]))
             return state
 
         elif self.args.sim_mode == 'user_embedding':
             assert self.repr_user is not None
             state = 0
-            for i in range(len(last_obs)):
+            n_obs = len(last_obs)
+            for i in range(n_obs):
                 obs = last_obs[i]
-                state += (self.args.eta ** i) * self.repr_user(torch.IntTensor([obs]))
+                state += (self.args.eta ** (n_obs - i - 1)) * self.repr_user(torch.IntTensor([obs]))
             return state
 
         else:

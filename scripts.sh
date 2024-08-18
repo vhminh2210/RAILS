@@ -6,9 +6,9 @@ python main.py --modeltype BC_LOSS \
                 --dataset d1 \
                 --n_layers 2 \
                 --neg_sample 64 \
-                --sim_mode user_embedding \
+                --sim_mode stats \
                 --freeze_epoch 5 \
                 --cuda -1 \
-                --episode_max 500 \
-                --step_max 100 \
-                --memory 200
+                --episode_max 1 \
+                --step_max 1024\
+                --memory 1024

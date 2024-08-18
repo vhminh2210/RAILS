@@ -147,8 +147,9 @@ if __name__ == "__main__":
         print('####################')
 
         # Get user, item embeddings
-        user_emb = encoder.embed_user.weight.detach()
-        item_emb = encoder.embed_item.weight.detach()
+        user_emb, item_emb = encoder.compute()
+
+        user_emb, item_emb = user_emb.detach(), item_emb.detach()
 
         # Build representative user embeddings for each item
         repr_user = []

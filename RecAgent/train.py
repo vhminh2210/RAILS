@@ -69,13 +69,13 @@ def recommender(agent, ep_user, train_df, test_df, train_dict,
 
     trainAgent(agent, args.step_max)
 
-def evaluate(agent, train_df, test_df, train_dict,
+def evaluate(agent, ep_users, train_df, test_df, train_dict,
             item_sim_dict, item_quality_dict, item_pop_dict,
             max_item_id, mask_list, repr_user, item_emb, args):
 
     global precision, ndcg, novelty, coverage, ils, interdiv
 
-    for ep_user in train_dict.keys():
+    for ep_user in ep_users:
         print('Evaluating user', ep_user)
         last_obs = train_dict[ep_user][-args.obswindow:]
         mask_list.extend(train_dict[ep_user][:-1])
@@ -92,6 +92,8 @@ def evaluate(agent, train_df, test_df, train_dict,
         rec_list = recommend_offpolicy(env, agent, last_obs)
         # Ground truth unseen interaction
         test_set = test_df.loc[test_df['user_id'] == ep_user, 'item_id'].tolist()
+
+        print(rec_list, test_set)
 
         # Evaluation stats
         precision.append(len(set(rec_list) & set(test_set)) / (len(rec_list)))
@@ -125,7 +127,8 @@ def train_dqn(train_df, test_df,
 
     # futures = []
     # executor = ThreadPoolExecutor(max_workers=args.j)
-    train_episodes = random.sample(list(train_dict.keys()), args.episode_max)
+    # train_episodes = random.sample(list(train_dict.keys()), args.episode_max)
+    train_episodes = [125]
     iter = 0 # Each episode corresponds to 1 user interactive session
     for ep_user in train_episodes:
         iter += 1
@@ -143,7 +146,7 @@ def train_dqn(train_df, test_df,
     print('RL agent training complete!')
     print('####################')
     print('Running evaluations on trained agent ...')
-    evaluate(agent, train_df, test_df, train_dict,
+    evaluate(agent, train_episodes, train_df, test_df, train_dict,
             item_sim_dict, item_quality_dict, item_pop_dict,
             max_item_id, mask_list, repr_user, item_emb, args)
 
