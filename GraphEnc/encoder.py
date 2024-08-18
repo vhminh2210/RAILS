@@ -682,6 +682,7 @@ def getEncoder(args):
         
     # Get result
     print('GCF model training complete!')
+    print('####################')
     print('Running evaluations on trained encoder ...')
 
     model = restore_best_checkpoint(data.best_valid_epoch, model, base_path, device)

@@ -115,18 +115,22 @@ if __name__ == "__main__":
                         help= 'Epsilon greedy factor')
     parser.add_argument('--gamma', type=float, default=0.90,
                         help= 'Discount factor')
+    parser.add_argument('--eta', type=float, default=0.90,
+                        help= 'Forgetting factor')
     parser.add_argument('--tau', type=float, default=0.01,
                         help= 'Fuse eval_net into target_net with temperature tau')
     parser.add_argument('--episode_max', type=int, default=100,
                         help= 'Maximum number of episode')
     parser.add_argument('--step_max', type=int, default=10000,
                         help= 'Number of DQN update iteration for each episode')
-    # parser.add_argument('--j', type=int, default=16,
-    #                     help= 'ThreadPoolExecutor max_workers')
+    parser.add_argument('--j', type=int, default=8,
+                        help= 'ThreadPoolExecutor max_workers')
 
     args = parser.parse_args()
     assert args.epoch >= args.freeze_epoch
 
+    start_time = time.time()
+    print('####################')
     print('Preparing data ...')
     split_data(args)
     print('Setup finished!')
@@ -163,4 +167,5 @@ if __name__ == "__main__":
     # Interactive RL Agent
     print('RL Agent training starts...')
     agent = getAgent(repr_user, item_emb, args)
-    pass
+    print('####################')
+    print('Runtime:', time.time() - start_time, 'seconds')

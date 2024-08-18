@@ -89,37 +89,42 @@ class DQN(object):
         self.K = K # topK
         self.memory = np.zeros((0, self.n_states * 2 + 2))
 
-    def choose_action(self, state, env, I_sim_list):
-        state = torch.unsqueeze(torch.tensor(state, dtype=torch.float32), 0)
+    def choose_action(self, obs, env, I_sim_list):
+        if env.args.sim_mode == 'stats':
+            obs = torch.unsqueeze(torch.tensor(obs, dtype=torch.float32), 0)
+        state = env.build_state(obs)
         if (torch.cuda.is_available()):
             state = state.cuda()
-        actions_Q = self.eval_net.forward(state)
-        temp_actions_Qvalue = actions_Q.cpu().detach().numpy()
+        actions_Q = self.eval_net.forward(torch.tensor(state))
 
-        temp_actions_sim_Qvalue = []
-        for item_id in I_sim_list:
-            index = env.action_space.index(item_id)
-            temp_actions_sim_Qvalue.append(temp_actions_Qvalue[0][index])
-        actions_sim_Qvalue = torch.from_numpy(np.array(temp_actions_sim_Qvalue))
-        actions_sim_Qvalue = torch.unsqueeze(actions_sim_Qvalue, 0)
-        actions_sim_Qvalue_list = actions_sim_Qvalue.tolist()[0]
+        actions_Q = actions_Q.cpu().detach().numpy()
+
+        temp_actions_Qvalue = []
+        for index in range(env.n_actions):
+            temp_actions_Qvalue.append(actions_Q[0][index])
+
+        actions_Qvalue = torch.from_numpy(np.array(temp_actions_Qvalue))
+        actions_Qvalue = torch.unsqueeze(actions_Qvalue, 0)
+
+        actions_Qvalue_list = actions_Qvalue.tolist()[0]
+        sorted_Qvalue = sorted(actions_Qvalue_list, reverse= True)
 
         rec_list = []
+        cnt = 0
+
         while len(rec_list) < self.K:
             # Exploitation
             if np.random.uniform() < self.epsilon:
-                if len(actions_sim_Qvalue_list) > 0:
-                    action_index = actions_sim_Qvalue_list.index(max(actions_sim_Qvalue_list, default=0))
-                    action = I_sim_list[action_index]
-                    I_sim_list.remove(action)
-                    actions_sim_Qvalue_list.remove(max(actions_sim_Qvalue_list))
+                if cnt < len(actions_Qvalue_list):
+                    action = actions_Qvalue_list.index(sorted_Qvalue[cnt])
+                    cnt += 1
                 else:
                     action = np.random.randint(0, self.n_actions)
             # Exploration - epsilon greedy
             else:
                 action = np.random.randint(0, self.n_actions)
             # If action is not masked (by being chosen before, etc...)
-            if action not in env.mask_list:
+            if action not in env.mask_list and action not in rec_list:
                 rec_list.append(action)
                 env.mask_list.append(action)
         return rec_list
