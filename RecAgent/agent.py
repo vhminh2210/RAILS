@@ -27,8 +27,10 @@ def getAgent(repr_user, item_emb, args):
         df = pd.read_csv(dat_path, sep=',',
                          names=['user_id', 'item_id', 'ratings', 'timestamp'])
         max_item_id = df['item_id'].max()
+        if args.sim_mode != 'stats':
+            max_item_id = item_emb.weight.shape[0] - 1 # When the training sets doesnt contain all possible item
         item_list = df['item_id'].tolist()
-        mask_list = list(set(list(range(max_item_id))) - set(item_list))
+        mask_list = list(set(list(range(max_item_id + 1))) - set(item_list))
         mat_path = os.path.join(dat_dir, f'{args.dataset}.mat')
 
         # Generate pre-calculated similarity, popularity and quality matrix

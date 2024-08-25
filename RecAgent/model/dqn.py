@@ -37,7 +37,7 @@ class LayerNorm(nn.Module):
 nn.LayerNorm = LayerNorm
 
 class Net(nn.Module):
-    def __init__(self, num_inputs, num_outputs, hidden_size):
+    def __init__(self, num_inputs, num_outputs, hidden_size, embd= None):
         super(Net, self).__init__()
         self.linear1 = nn.Linear(num_inputs, hidden_size)
         self.ln1 = nn.LayerNorm(hidden_size)
@@ -49,6 +49,17 @@ class Net(nn.Module):
         self.mu.weight.data.mul_(0.1)
         self.mu.bias.data.mul_(0.1)
 
+        self.softmax = nn.Softmax(dim= 1)
+
+        if embd is not None:
+            self.embd = embd.weight.detach()
+            try:
+                assert self.embd.shape[-1] == num_outputs
+            except:
+                print('Output size must equal embedding size for dot product')
+        else:
+            self.embd = None
+
     def forward(self, inputs):
         x = inputs
         x = self.linear1(x)
@@ -58,12 +69,14 @@ class Net(nn.Module):
         x = self.ln2(x)
         x = F.relu(x)
         q_values = torch.tanh(self.mu(x))
+        if self.embd is not None:
+            q_values = (q_values @ self.embd.T)
         return q_values
 
 
 class DQN(object):
     def __init__(self, n_states, n_actions,
-                 memory_capacity, lr, epsilon, target_network_replace_freq, batch_size, gamma, tau, K):
+                 memory_capacity, lr, epsilon, target_network_replace_freq, batch_size, gamma, tau, K, embd= None):
         self.n_states = n_states # States size, i.e., observation windows
         self.n_actions = n_actions # Size of action space
         self.memory_capacity = memory_capacity
@@ -74,8 +87,12 @@ class DQN(object):
         self.gamma = gamma
         self.tau = tau
 
-        self.eval_net = Net(self.n_states, self.n_actions, 256)
-        self.target_net = Net(self.n_states, self.n_actions, 256)
+        if embd is None:
+            self.eval_net = Net(self.n_states, self.n_actions, 256)
+            self.target_net = Net(self.n_states, self.n_actions, 256)
+        else:
+            self.eval_net = Net(self.n_states, embd.weight.shape[-1], 256, embd= embd)
+            self.target_net = Net(self.n_states, embd.weight.shape[-1], 256, embd= embd)
         self.optimizer = torch.optim.Adam(self.eval_net.parameters(), lr=self.lr)
         self.loss_func = nn.MSELoss()
         hard_update(self.target_net, self.eval_net) # Transfer weights from eval_q_net to target_q_net

@@ -56,7 +56,7 @@ def recommender(agent, ep_user, train_df, test_df, train_dict,
     last_obs = train_dict[ep_user][-args.obswindow:]
     mask_list.extend(train_dict[ep_user][:-1])
     # Simulate the enviroment, regarding [ep_user] preferences
-    env = environment.Env(ep_user, train_dict[ep_user][-args.obswindow:], list(range(max_item_id)),
+    env = environment.Env(ep_user, train_dict[ep_user][-args.obswindow:], list(range(max_item_id + 1)),
                           item_sim_dict, item_pop_dict, item_quality_dict, mask_list, args.sim_mode, repr_user, item_emb, args)
 
     # Generate transitions (s, a, r, s_) and store in agent replay memory
@@ -74,6 +74,7 @@ def evaluate(agent, ep_users, train_df, test_df, train_dict,
             max_item_id, mask_list, repr_user, item_emb, args):
 
     global precision, ndcg, novelty, coverage, ils, interdiv
+    print(max_item_id)
 
     for ep_user in ep_users:
         print('Evaluating user', ep_user)
@@ -81,9 +82,8 @@ def evaluate(agent, ep_users, train_df, test_df, train_dict,
         mask_list.extend(train_dict[ep_user][:-1])
         
         # Simulate the enviroment, regarding [ep_user] preferences
-        env = environment.Env(ep_user, train_dict[ep_user][-args.obswindow:], list(range(max_item_id)),
+        env = environment.Env(ep_user, train_dict[ep_user][-args.obswindow:], list(range(max_item_id + 1)),
                           item_sim_dict, item_pop_dict, item_quality_dict, mask_list, args.sim_mode, repr_user, item_emb, args)
-        
         interaction_num = setInteraction(env, agent, ep_user, train_df, args.obswindow)
         if interaction_num <= 10:
             continue
@@ -120,15 +120,29 @@ def train_dqn(train_df, test_df,
         agent = dqn.DQN(args.obswindow, max_item_id + 1,
                         args.memory, args.agent_lr, args.epsilon,
                         args.replace_freq, args.agent_batch, args.gamma, args.tau, args.topk)
-    else:
+    elif args.sim_mode == 'item_embedding':
+        try:
+            assert item_emb is not None
+        except:
+            print('Item embedding must not be None!')
         agent = dqn.DQN(args.embed_size, max_item_id + 1,
                 args.memory, args.agent_lr, args.epsilon,
-                args.replace_freq, args.agent_batch, args.gamma, args.tau, args.topk)
+                args.replace_freq, args.agent_batch, args.gamma, args.tau, args.topk, embd= item_emb)
+    elif args.sim_mode == 'user_embedding':
+        try:
+            assert repr_user is not None
+        except:
+            print('Representative user must not be None!')
+        agent = dqn.DQN(args.embed_size, max_item_id + 1,
+                args.memory, args.agent_lr, args.epsilon,
+                args.replace_freq, args.agent_batch, args.gamma, args.tau, args.topk, embd= repr_user) 
+    else:
+        raise NotImplementedError(f"Similarity mode {self.args.sim_mode} not found!")
 
     # futures = []
     # executor = ThreadPoolExecutor(max_workers=args.j)
-    # train_episodes = random.sample(list(train_dict.keys()), args.episode_max)
-    train_episodes = [125]
+    train_episodes = random.sample(list(train_dict.keys()), args.episode_max)
+    # train_episodes = [125]
     iter = 0 # Each episode corresponds to 1 user interactive session
     for ep_user in train_episodes:
         iter += 1
