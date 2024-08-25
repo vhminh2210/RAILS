@@ -10,5 +10,7 @@ python main.py --modeltype BC_LOSS \
                 --freeze_epoch 5 \
                 --cuda -1 \
                 --episode_max 1 \
-                --step_max 1024\
-                --memory 1024
+                --step_max 8096 \
+                --memory 8096 \
+                --nov_beta 0.4 \
+                --agent_batch 16

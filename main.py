@@ -101,6 +101,8 @@ if __name__ == "__main__":
     # RL Agent params
     parser.add_argument('--topk', type=int, default=10,
                         help= 'top-K recommendation')
+    parser.add_argument('--nov_beta', type=float, default=0.4,
+                        help= 'novelty temperature')
     parser.add_argument('--obswindow', type=int, default=10,
                         help= 'Observe window. Older observations wont be considered for reward calculation')
     parser.add_argument('--agent_batch', type=int, default=64,

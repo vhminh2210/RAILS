@@ -67,7 +67,7 @@ class Env():
         else:
             quality = self.quality_dict[str(action)]
             # Novelty score
-            r_div = 0.4 * quality * 1 / math.log((self.item_pop_dict[str(action)] + 1.1), 10)
+            r_div = self.args.nov_beta * quality * 1 / math.log((self.item_pop_dict[str(action)] + 1.1), 10)
             # Similarity score
             r_acc = 0
             for i in range(self.n_observation):
