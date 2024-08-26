@@ -9,9 +9,11 @@ python main.py --modeltype BC_LOSS \
                 --sim_mode user_embedding \
                 --freeze_epoch 5 \
                 --cuda -1 \
-                --episode_max 32 \
-                --step_max 8096 \
-                --memory 16192 \
+                --episode_max 128\
+                --step_max 256 \
+                --memory 8196 \
                 --nov_beta 0.0 \
-                --agent_batch 32 \
-                --dqn_mode ddqn
+                --agent_batch 16 \
+                --dqn_mode ddqn \
+                --eta 1.0 \
+                --agent_lr 0.01

@@ -40,7 +40,7 @@ def recommend_offpolicy(env, agent, last_obs):
     I_sim, I_div = sorted_I[:index], sorted_I[index:]
     I_sim_list = [list(i)[0] for i in I_sim]
 
-    return agent.choose_action(so, env, I_sim_list)
+    return agent.choose_action(so, env, I_sim_list, mode= 'infer')
 
 
 def trainAgent(agent, step_max):
@@ -61,7 +61,7 @@ def recommender(agent, ep_user, train_df, test_df, train_dict,
 
     # Generate transitions (s, a, r, s_) and store in agent replay memory
     interaction_num = setInteraction(env, agent, ep_user, train_df, args.obswindow)
-    if interaction_num <= 10:
+    if interaction_num <= 20:
         return
     else:
         global user_num
@@ -85,7 +85,7 @@ def evaluate(agent, ep_users, train_df, test_df, train_dict,
         env = environment.Env(ep_user, train_dict[ep_user][-args.obswindow:], list(range(max_item_id + 1)),
                           item_sim_dict, item_pop_dict, item_quality_dict, mask_list, args.sim_mode, repr_user, item_emb, args)
         interaction_num = setInteraction(env, agent, ep_user, train_df, args.obswindow)
-        if interaction_num <= 10:
+        if interaction_num <= 20:
             continue
         
         # Generated unseen interaction using learned policy

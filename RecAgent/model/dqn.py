@@ -107,7 +107,7 @@ class DQN(object):
         self.memory = np.zeros((0, self.n_states * 2 + 2))
         self.mode = mode
 
-    def choose_action(self, obs, env, I_sim_list):
+    def choose_action(self, obs, env, I_sim_list, mode= 'training'):
         if env.args.sim_mode == 'stats':
             obs = torch.unsqueeze(torch.tensor(obs, dtype=torch.float32), 0)
         state = env.build_state(obs)
@@ -129,10 +129,12 @@ class DQN(object):
 
         rec_list = []
         cnt = 0
+        patient = 0
 
         while len(rec_list) < self.K:
+            patient += 1
             # Exploitation
-            if np.random.uniform() < self.epsilon:
+            if np.random.uniform() < self.epsilon or mode == 'infer':
                 if cnt < len(actions_Qvalue_list):
                     action = actions_Qvalue_list.index(sorted_Qvalue[cnt])
                     cnt += 1
@@ -145,16 +147,20 @@ class DQN(object):
             if action not in env.mask_list and action not in rec_list:
                 rec_list.append(action)
                 env.mask_list.append(action)
+            if patient == 10000:
+                break
         return rec_list
 
     def store_transition(self, s, a, r, s_):
         transition = np.hstack((s, [a, r], s_))
+        
+        # Shuffle memory. Preventing forgetting of interactions from early episodes
+        random_index = np.arange(len(self.memory))
+        np.random.shuffle(random_index)
+        self.memory = self.memory[random_index, :]
+
         if len(self.memory) < self.memory_capacity:
             self.memory = np.append(self.memory, [transition], axis=0)
-            # Shuffle memory. Preventing forgetting of interactions from early episodes
-            random_index = np.arange(len(self.memory))
-            np.random.shuffle(random_index)
-            self.memory = self.memory[random_index, :]
         else:
             index = self.memory_counter % self.memory_capacity
             self.memory[index, :] = transition
