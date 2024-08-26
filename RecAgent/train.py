@@ -119,7 +119,8 @@ def train_dqn(train_df, test_df,
     if args.sim_mode == 'stats':
         agent = dqn.DQN(args.obswindow, max_item_id + 1,
                         args.memory, args.agent_lr, args.epsilon,
-                        args.replace_freq, args.agent_batch, args.gamma, args.tau, args.topk)
+                        args.replace_freq, args.agent_batch, args.gamma, args.tau, args.topk, 
+                        mode= args.dqn_mode)
     elif args.sim_mode == 'item_embedding':
         try:
             assert item_emb is not None
@@ -127,7 +128,8 @@ def train_dqn(train_df, test_df,
             print('Item embedding must not be None!')
         agent = dqn.DQN(args.embed_size, max_item_id + 1,
                 args.memory, args.agent_lr, args.epsilon,
-                args.replace_freq, args.agent_batch, args.gamma, args.tau, args.topk, embd= item_emb)
+                args.replace_freq, args.agent_batch, args.gamma, args.tau, args.topk, 
+                embd= item_emb, mode= args.dqn_mode)
     elif args.sim_mode == 'user_embedding':
         try:
             assert repr_user is not None
@@ -135,7 +137,8 @@ def train_dqn(train_df, test_df,
             print('Representative user must not be None!')
         agent = dqn.DQN(args.embed_size, max_item_id + 1,
                 args.memory, args.agent_lr, args.epsilon,
-                args.replace_freq, args.agent_batch, args.gamma, args.tau, args.topk, embd= repr_user) 
+                args.replace_freq, args.agent_batch, args.gamma, args.tau, args.topk, 
+                embd= repr_user, mode= args.dqn_mode) 
     else:
         raise NotImplementedError(f"Similarity mode {self.args.sim_mode} not found!")
 

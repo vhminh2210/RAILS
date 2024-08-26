@@ -125,6 +125,8 @@ if __name__ == "__main__":
                         help= 'Maximum number of episode')
     parser.add_argument('--step_max', type=int, default=10000,
                         help= 'Number of DQN update iteration for each episode')
+    parser.add_argument('--dqn_mode', type=str, default='vanilla',
+                        help= 'DQN update mode: vanilla/ddqn')
     parser.add_argument('--j', type=int, default=8,
                         help= 'ThreadPoolExecutor max_workers')
 

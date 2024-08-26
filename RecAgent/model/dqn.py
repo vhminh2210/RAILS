@@ -76,7 +76,7 @@ class Net(nn.Module):
 
 class DQN(object):
     def __init__(self, n_states, n_actions,
-                 memory_capacity, lr, epsilon, target_network_replace_freq, batch_size, gamma, tau, K, embd= None):
+                 memory_capacity, lr, epsilon, target_network_replace_freq, batch_size, gamma, tau, K, embd= None, mode= 'vanilla'):
         self.n_states = n_states # States size, i.e., observation windows
         self.n_actions = n_actions # Size of action space
         self.memory_capacity = memory_capacity
@@ -105,6 +105,7 @@ class DQN(object):
         self.memory_counter = 0
         self.K = K # topK
         self.memory = np.zeros((0, self.n_states * 2 + 2))
+        self.mode = mode
 
     def choose_action(self, obs, env, I_sim_list):
         if env.args.sim_mode == 'stats':
@@ -150,6 +151,10 @@ class DQN(object):
         transition = np.hstack((s, [a, r], s_))
         if len(self.memory) < self.memory_capacity:
             self.memory = np.append(self.memory, [transition], axis=0)
+            # Shuffle memory. Preventing forgetting of interactions from early episodes
+            random_index = np.arange(len(self.memory))
+            np.random.shuffle(random_index)
+            self.memory = self.memory[random_index, :]
         else:
             index = self.memory_counter % self.memory_capacity
             self.memory[index, :] = transition
@@ -175,9 +180,18 @@ class DQN(object):
             batch_reward = batch_reward.cuda()
             batch_state_ = batch_state_.cuda()
 
-        q_eval = self.eval_net(batch_state).gather(1, batch_action)
+        raw_q_eval = self.eval_net(batch_state)
+        q_eval = raw_q_eval.gather(1, batch_action)
         q_next = self.target_net(batch_state_).detach() # detach target_net from gradient updates (?)
-        q_target = batch_reward + self.gamma * q_next.max(1)[0].view(self.batch_size, 1)
+
+        if self.mode == 'vanilla':
+            q_target = batch_reward + self.gamma * q_next.max(1)[0].view(self.batch_size, 1)
+        elif self.mode == 'ddqn':
+            q_eval_action = raw_q_eval.argmax(dim= 1).unsqueeze(0)
+            q_target = batch_reward + self.gamma * q_next.gather(1, q_eval_action)[0].view(self.batch_size, 1)
+        else:
+            raise NotImplementedError(f'DQN update mode {self.mode} not found!')
+
         loss = self.loss_func(q_eval, q_target)
 
         # Minor update over eval_net
