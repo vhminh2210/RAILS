@@ -162,12 +162,22 @@ if __name__ == "__main__":
             for user in data.train_item_list[item]:
                 ru_item = ru_item + user_emb[user]
             ru_item = ru_item / len(data.train_item_list[item])
+            # Normalize embedding
+            ru_item = ru_item / torch.linalg.norm(ru_item)
             repr_user.append(ru_item)
         repr_user = torch.stack(repr_user, axis= 0)
         print('Representative user embeddings shape:', repr_user.shape)
+
+        # Normalize item embeddings
+        for i in range(item_emb.shape[0]):
+            item_emb[i] = item_emb[i] / torch.linalg.norm(item_emb[i])
+        print('Item embeddings shape:', item_emb.shape)
         
         repr_user = nn.Embedding.from_pretrained(repr_user)
         item_emb = nn.Embedding.from_pretrained(item_emb)
+
+        print(np.linalg.norm(repr_user.weight.detach()[1]))
+        print(np.linalg.norm(item_emb.weight.detach()[1]))
 
     # Interactive RL Agent
     print('RL Agent training starts...')

@@ -68,9 +68,10 @@ class Net(nn.Module):
         x = self.linear2(x)
         x = self.ln2(x)
         x = F.relu(x)
-        q_values = torch.tanh(self.mu(x))
         if self.embd is not None:
-            q_values = (q_values @ self.embd.T)
+            q_values = (self.mu(x) @ self.embd.T)
+        else:
+            q_values = torch.tanh(self.mu(x))
         return q_values
 
 

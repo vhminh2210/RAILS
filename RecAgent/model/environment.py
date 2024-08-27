@@ -33,7 +33,7 @@ class Env():
             for i in range(n_obs):
                 obs = last_obs[i]
                 state += (self.args.eta ** (n_obs - i - 1)) * self.item_emb(torch.IntTensor([obs]))
-            return state
+            return state / torch.linalg.norm(state)
 
         elif self.args.sim_mode == 'user_embedding':
             assert self.repr_user is not None
@@ -42,7 +42,7 @@ class Env():
             for i in range(n_obs):
                 obs = last_obs[i]
                 state += (self.args.eta ** (n_obs - i - 1)) * self.repr_user(torch.IntTensor([obs]))
-            return state
+            return state / torch.linalg.norm(state)
 
         else:
             raise NotImplementedError(f'sim_mode {args.sim_mode} not found!')
