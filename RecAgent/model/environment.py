@@ -92,7 +92,8 @@ class Env():
                     va = self.item_emb(act_tensor).reshape((-1))
                     r_acc += (self.eta ** i) * (np.dot(vi, va) / (norm(vi) * norm(va)))
 
-            r = r_acc + r_div
+            # Normalized similarity score to [-1, 1]
+            r = r_acc / self.n_observation + r_div
         if r > 0:
             # If the reward is positive, append [action] to [observations]
             s_temp_ = np.append(so, action)

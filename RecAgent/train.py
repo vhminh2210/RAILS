@@ -96,7 +96,10 @@ def evaluate(agent, ep_users, train_df, test_df, train_dict,
         print(rec_list, test_set)
 
         # Evaluation stats
-        precision.append(len(set(rec_list) & set(test_set)) / (len(rec_list)))
+        if len(rec_list) == 0:
+            precision.append(0)
+        else:
+            precision.append(len(set(rec_list) & set(test_set)) / (len(rec_list)))
         ndcg.append(ndcg_metric({ep_user: rec_list}, {ep_user: test_set}))
         novelty.append(novelty_metric(rec_list, env.item_pop_dict))
         coverage.extend(rec_list)
@@ -120,7 +123,8 @@ def train_dqn(train_df, test_df,
         agent = dqn.DQN(args.obswindow, max_item_id + 1,
                         args.memory, args.agent_lr, args.epsilon,
                         args.replace_freq, args.agent_batch, args.gamma, args.tau, args.topk, 
-                        mode= args.dqn_mode)
+                        mode= args.dqn_mode, 
+                        args= args)
     elif args.sim_mode == 'item_embedding':
         try:
             assert item_emb is not None
@@ -129,7 +133,8 @@ def train_dqn(train_df, test_df,
         agent = dqn.DQN(args.embed_size, max_item_id + 1,
                 args.memory, args.agent_lr, args.epsilon,
                 args.replace_freq, args.agent_batch, args.gamma, args.tau, args.topk, 
-                embd= item_emb, mode= args.dqn_mode)
+                embd= item_emb, mode= args.dqn_mode,
+                args= args)
     elif args.sim_mode == 'user_embedding':
         try:
             assert repr_user is not None
@@ -138,7 +143,8 @@ def train_dqn(train_df, test_df,
         agent = dqn.DQN(args.embed_size, max_item_id + 1,
                 args.memory, args.agent_lr, args.epsilon,
                 args.replace_freq, args.agent_batch, args.gamma, args.tau, args.topk, 
-                embd= repr_user, mode= args.dqn_mode) 
+                embd= repr_user, mode= args.dqn_mode,
+                args= args) 
     else:
         raise NotImplementedError(f"Similarity mode {self.args.sim_mode} not found!")
 
@@ -147,6 +153,18 @@ def train_dqn(train_df, test_df,
     train_episodes = random.sample(list(train_dict.keys()), args.episode_max)
     # train_episodes = [125]
     iter = 0 # Each episode corresponds to 1 user interactive session
+
+    # Generating initial memory
+    print('Initializing memory ...')
+    for ep_user in train_episodes:
+        env = environment.Env(ep_user, train_dict[ep_user][-args.obswindow:], list(range(max_item_id + 1)),
+                          item_sim_dict, item_pop_dict, item_quality_dict, mask_list, args.sim_mode, repr_user, item_emb, args)
+
+        # Generate transitions (s, a, r, s_) and store in agent replay memory
+        interaction_num = setInteraction(env, agent, ep_user, train_df, args.obswindow)
+    
+    agent.align_memory()
+
     for ep_user in train_episodes:
         iter += 1
         print(f'Episode {iter}: User : {ep_user}')
@@ -161,6 +179,10 @@ def train_dqn(train_df, test_df,
     # wait(futures)
 
     print('RL agent training complete!')
+    print('####################')
+    print('Plotting train curve ...')
+    agent.stats_plot()
+    print('Train curve finished!')
     print('####################')
     print('Running evaluations on trained agent ...')
     evaluate(agent, train_episodes, train_df, test_df, train_dict,

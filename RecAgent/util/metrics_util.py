@@ -9,7 +9,10 @@ def ils_metric(rec_list, item_sim_matrix):
         for j in range(i + 1, len(rec_list)):
             if str(rec_list[j]) in item_sim_matrix[str(rec_list[i])]:
                 sim_temp += item_sim_matrix[str(rec_list[i])][str(rec_list[j])]
-    return 1 - (sim_temp / (len(rec_list) * (len(rec_list) - 1)))
+    if len(rec_list) != 1:
+        return 1 - (sim_temp / (len(rec_list) * (len(rec_list) - 1)))
+    else:
+        return 0
 
 
 def ndcg_metric(rec_list, test_dict):

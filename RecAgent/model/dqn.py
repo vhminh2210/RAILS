@@ -3,6 +3,9 @@ import torch.nn as nn
 from torch.autograd import Variable
 import torch.nn.functional as F
 import numpy as np
+import matplotlib.pyplot as plt
+import os
+# import seaborn as sns
 
 def soft_update(target, source, tau):
     for target_param, param in zip(target.parameters(), source.parameters()):
@@ -77,7 +80,7 @@ class Net(nn.Module):
 
 class DQN(object):
     def __init__(self, n_states, n_actions,
-                 memory_capacity, lr, epsilon, target_network_replace_freq, batch_size, gamma, tau, K, embd= None, mode= 'vanilla'):
+                 memory_capacity, lr, epsilon, target_network_replace_freq, batch_size, gamma, tau, K, embd= None, mode= 'vanilla', args= None):
         self.n_states = n_states # States size, i.e., observation windows
         self.n_actions = n_actions # Size of action space
         self.memory_capacity = memory_capacity
@@ -87,6 +90,10 @@ class DQN(object):
         self.batch_size = batch_size
         self.gamma = gamma
         self.tau = tau
+        self.train_loss = []
+        self.args = args
+        self.reward_mean = 0.0
+        self.reward_std = 1.0
 
         if embd is None:
             self.eval_net = Net(self.n_states, self.n_actions, 256)
@@ -95,6 +102,7 @@ class DQN(object):
             self.eval_net = Net(self.n_states, embd.weight.shape[-1], 256, embd= embd)
             self.target_net = Net(self.n_states, embd.weight.shape[-1], 256, embd= embd)
         self.optimizer = torch.optim.Adam(self.eval_net.parameters(), lr=self.lr)
+        self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optimizer, T_max = self.args.episode_max * self.args.step_max)
         self.loss_func = nn.MSELoss()
         hard_update(self.target_net, self.eval_net) # Transfer weights from eval_q_net to target_q_net
         if (torch.cuda.is_available()):
@@ -152,7 +160,19 @@ class DQN(object):
                 break
         return rec_list
 
+    def align_memory(self):
+        current_rewards = torch.tensor(self.memory[:, self.n_states + 1:self.n_states + 2], dtype=torch.float32)
+        self.reward_mean = torch.mean(current_rewards)
+        self.reward_std = torch.std(current_rewards)
+        print('Normalize initial rewards ...')
+        print('mean:', self.reward_mean, 'std:', self.reward_std)
+        self.memory[:, self.n_states + 1:self.n_states + 2] = (current_rewards - self.reward_mean) / self.reward_std
+        print('Verify normalization ...')
+        current_rewards = torch.tensor(self.memory[:, self.n_states + 1:self.n_states + 2], dtype=torch.float32)
+        print('mean:', torch.mean(current_rewards), 'std:', torch.std(current_rewards))
+
     def store_transition(self, s, a, r, s_):
+        normalized_r = (r - self.reward_mean) / self.reward_std
         transition = np.hstack((s, [a, r], s_))
         
         # Shuffle memory. Preventing forgetting of interactions from early episodes
@@ -194,17 +214,28 @@ class DQN(object):
         if self.mode == 'vanilla':
             q_target = batch_reward + self.gamma * q_next.max(1)[0].view(self.batch_size, 1)
         elif self.mode == 'ddqn':
-            q_eval_action = raw_q_eval.argmax(dim= 1).unsqueeze(0)
-            q_target = batch_reward + self.gamma * q_next.gather(1, q_eval_action)[0].view(self.batch_size, 1)
+            # q_eval_action = raw_q_eval.argmax(dim= 1).unsqueeze(0)
+            # q_target = batch_reward + self.gamma * q_next.gather(1, q_eval_action)[0].view(self.batch_size, 1)
+            q_eval_action = raw_q_eval.argmax(dim=1).unsqueeze(1)
+            q_target = batch_reward + self.gamma * q_next.gather(1, q_eval_action)
         else:
             raise NotImplementedError(f'DQN update mode {self.mode} not found!')
 
         loss = self.loss_func(q_eval, q_target)
+        self.train_loss.append(loss.item())
 
         # Minor update over eval_net
         self.optimizer.zero_grad()
         loss.backward()
+        torch.nn.utils.clip_grad_value_(self.eval_net.parameters(), 100)
         self.optimizer.step()
+        self.scheduler.step()
         
         # Fuse eval_net into target_net with temperature tau
         soft_update(self.target_net, self.eval_net, self.tau)
+
+    def stats_plot(self):
+        save_pth = os.path.join('figs', f'{self.args.dqn_mode}-{self.args.episode_max}.episodes-{self.args.step_max}.step-{self.args.gamma}.gamma.png')
+        reduced_loss = [np.mean(self.train_loss[x * 256 : (x+1) * 256]) for x in range(int(len(self.train_loss) / 256))]
+        plt.plot(reduced_loss)
+        plt.savefig(save_pth)
