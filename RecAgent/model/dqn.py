@@ -142,10 +142,12 @@ class DQN(object):
 
         while len(rec_list) < self.K:
             patient += 1
+            flag = False
             # Exploitation
             if np.random.uniform() < self.epsilon or mode == 'infer':
                 if cnt < len(actions_Qvalue_list):
                     action = actions_Qvalue_list.index(sorted_Qvalue[cnt])
+                    flag = True
                     cnt += 1
                 else:
                     action = np.random.randint(0, self.n_actions)
@@ -187,6 +189,32 @@ class DQN(object):
             self.memory[index, :] = transition
         self.memory_counter += 1
 
+    def CQLLoss(self, q_values, current_action):
+        '''
+        Consult: https://github.com/BY571/CQL/blob/main/CQL-DQN/agent.py#L45
+        Notations follow https://arxiv.org/pdf/2006.04779 
+
+        q_values.shape = batch_size, n_actions
+        current_actinos.shape = batch_size, 1
+        '''
+        if self.args.cql_mode == 'none':
+            return 0
+        elif self.args.cql_mode == 'cql_H':
+            # Minimize Q-values
+            logsumexp = torch.logsumexp(q_values, dim=1, keepdim=True) # batch_size, 1
+            # Maximize Q-values under data
+            q_a = q_values.gather(1, current_action)
+            return (logsumexp - q_a).mean()
+        elif self.args.cql_mode == 'cql_Rho':
+            policy_max_Q, _ = torch.max(q_values, dim= 1)
+            # Minimize Q-values
+            minimizer = self.args.cql_invZ * policy_max_Q * torch.exp(policy_max_Q)
+            # Maximize Q-values under data
+            maximizer = q_values.gather(1, current_action)
+            return (minimizer - maximizer).mean()
+        else:
+            raise NotImplementedError(f'CQL mode {self.args.cql_mode} not defined!')
+
     def learn(self):
         # Major update: Replace target net by evaluation net
         if self.learn_step_counter % self.replace_freq == 0:
@@ -207,10 +235,11 @@ class DQN(object):
             batch_reward = batch_reward.cuda()
             batch_state_ = batch_state_.cuda()
 
-        raw_q_eval = self.eval_net(batch_state)
-        q_eval = raw_q_eval.gather(1, batch_action)
+        raw_q_eval = self.eval_net(batch_state) # batch_size, n_actinos
+        q_eval = raw_q_eval.gather(1, batch_action) # batch_size, 1
         q_next = self.target_net(batch_state_).detach() # detach target_net from gradient updates (?)
 
+        # Double DQN
         if self.mode == 'vanilla':
             q_target = batch_reward + self.gamma * q_next.max(1)[0].view(self.batch_size, 1)
         elif self.mode == 'ddqn':
@@ -221,7 +250,11 @@ class DQN(object):
         else:
             raise NotImplementedError(f'DQN update mode {self.mode} not found!')
 
-        loss = self.loss_func(q_eval, q_target)
+        # Conservative Q learning
+        cql_loss = self.CQLLoss(raw_q_eval, batch_action)
+        bellman_loss = self.loss_func(q_eval, q_target.detach()) # Detach q_target
+
+        loss = self.args.cql_alpha * cql_loss + 0.5 * bellman_loss
         self.train_loss.append(loss.item())
 
         # Minor update over eval_net

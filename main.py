@@ -129,6 +129,12 @@ if __name__ == "__main__":
                         help= 'DQN update mode: vanilla/ddqn')
     parser.add_argument('--j', type=int, default=8,
                         help= 'ThreadPoolExecutor max_workers')
+    parser.add_argument('--cql_mode', type=str, default='none',
+                        help= 'Conservative Q learning mode: none, cql_H, cql_Rho')
+    parser.add_argument('--cql_alpha', type=float, default=2.0,
+                        help= 'Conservative Q learning weight')
+    parser.add_argument('--cql_invZ', type=float, default=1.0,
+                        help= 'Inverse normalization factor Z for CQL(rho)')
 
     args = parser.parse_args()
     assert args.epoch >= args.freeze_epoch

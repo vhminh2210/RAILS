@@ -5,6 +5,7 @@ from .model import environment, dqn
 from .util.metrics_util import ndcg_metric, novelty_metric, ils_metric, interdiv_metric
 
 from tqdm import tqdm
+import copy
 
 user_num = 0
 precision, ndcg, novelty, coverage, ils, interdiv = [], [], [], [], [], []
@@ -79,11 +80,12 @@ def evaluate(agent, ep_users, train_df, test_df, train_dict,
     for ep_user in ep_users:
         print('Evaluating user', ep_user)
         last_obs = train_dict[ep_user][-args.obswindow:]
-        mask_list.extend(train_dict[ep_user][:-1])
+        ep_mask_list = copy.copy(mask_list)
+        ep_mask_list.extend(train_dict[ep_user][:-1])
         
         # Simulate the enviroment, regarding [ep_user] preferences
         env = environment.Env(ep_user, train_dict[ep_user][-args.obswindow:], list(range(max_item_id + 1)),
-                          item_sim_dict, item_pop_dict, item_quality_dict, mask_list, args.sim_mode, repr_user, item_emb, args)
+                          item_sim_dict, item_pop_dict, item_quality_dict, ep_mask_list, args.sim_mode, repr_user, item_emb, args)
         interaction_num = setInteraction(env, agent, ep_user, train_df, args.obswindow)
         if interaction_num <= 20:
             continue

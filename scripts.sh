@@ -10,13 +10,14 @@ python main.py --modeltype BC_LOSS \
                 --freeze_epoch 5 \
                 --cuda -1 \
                 --episode_max 512\
-                --step_max 4096 \
-                --memory 16384 \
+                --step_max 4086 \
+                --memory 16380 \
                 --nov_beta 0.0 \
                 --agent_batch 64 \
                 --dqn_mode ddqn \
                 --eta 1.0 \
                 --agent_lr 1e-4 \
-                --replace_freq 5000 \
-                --tau 2e-4 \
-                --gamma 0.9
+                --replace_freq 1000 \
+                --tau 0.001 \
+                --gamma 0.9 \
+                --cql_mode cql_Rho
