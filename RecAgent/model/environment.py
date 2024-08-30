@@ -42,7 +42,7 @@ class Env():
             for i in range(n_obs):
                 obs = last_obs[i]
                 state += (self.args.eta ** (n_obs - i - 1)) * self.repr_user(torch.IntTensor([obs]))
-            return state / torch.linalg.norm(state)
+            return state
 
         else:
             raise NotImplementedError(f'sim_mode {args.sim_mode} not found!')
@@ -77,7 +77,15 @@ class Env():
                 if self.sim_mode == 'item_embedding':
                     vi = self.item_emb(cur_tensor).reshape((-1)) # Item embedding
                     va = self.item_emb(act_tensor).reshape((-1))
+                    # Normalize item - item score
                     r_acc += (self.eta ** i) * (np.dot(vi, va) / (norm(vi) * norm(va)))
+
+                # Cosine Similarity using representative user and item embeddings
+                elif self.sim_mode == 'user_embedding':
+                    vi = self.repr_user(cur_tensor).reshape((-1)) # Item's representative user
+                    va = self.item_emb(act_tensor).reshape((-1))
+                    # The representatives - item score will NOT be normalized
+                    r_acc += (self.eta ** i) * np.dot(vi, va)
                 
                 # Cosine Similarity using user-item statistics
                 elif self.sim_mode == 'stats':
@@ -86,14 +94,9 @@ class Env():
                         if str(action) in self.item_sim_matrix[str(s[-(i + 1)])].keys():
                             r_acc += (self.eta ** i) * self.item_sim_matrix[str(s[-(i + 1)])][str(action)]
 
-                # Cosine Similarity using representative user and item embeddings
-                elif self.sim_mode == 'user_embedding':
-                    vi = self.repr_user(cur_tensor).reshape((-1)) # Item's representative user
-                    va = self.item_emb(act_tensor).reshape((-1))
-                    r_acc += (self.eta ** i) * (np.dot(vi, va) / (norm(vi) * norm(va)))
-
-            # Normalized similarity score to [-1, 1]
-            r = r_acc / self.n_observation + r_div
+            # # Normalized similarity score to [-1, 1]
+            # r = r_acc / self.n_observation + r_div
+            r = r_acc + r_div
         if r > 0:
             # If the reward is positive, append [action] to [observations]
             s_temp_ = np.append(so, action)

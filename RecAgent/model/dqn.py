@@ -40,19 +40,45 @@ class LayerNorm(nn.Module):
 nn.LayerNorm = LayerNorm
 
 class Net(nn.Module):
-    def __init__(self, num_inputs, num_outputs, hidden_size, embd= None):
+    def __init__(self, num_inputs, num_outputs, hidden_size, embd= None, dueling= False):
         super(Net, self).__init__()
         self.linear1 = nn.Linear(num_inputs, hidden_size)
         self.ln1 = nn.LayerNorm(hidden_size)
 
-        self.linear2 = nn.Linear(hidden_size, hidden_size)
-        self.ln2 = nn.LayerNorm(hidden_size)
+        self.dueling = dueling
 
-        self.mu = nn.Linear(hidden_size, num_outputs)
+        if not self.dueling:
+            # Non-dueling DQN
+            self.linear2 = nn.Linear(hidden_size, hidden_size)
+            self.ln2 = nn.LayerNorm(hidden_size)
+
+            self.mu = nn.Linear(hidden_size, num_outputs)
+
+        else:
+            # Dueling DQN
+            # Consult https://arxiv.org/pdf/1511.06581 for architecture
+            try:
+                assert hidden_size % 2 == 0
+            except:
+                raise ValueError('Number of hidden activations must divisible by 2 in Dueling DQN mode!')
+            half_size = int(hidden_size / 2)
+            
+            # Value branch
+            self.linear2_V = nn.Linear(hidden_size, half_size)
+            self.ln2_V = nn.LayerNorm(half_size)
+
+            self.linear3_V = nn.Linear(half_size, 1)
+
+            # Advantage branch
+            self.linear2_A = nn.Linear(hidden_size, half_size)
+            self.ln2_A = nn.LayerNorm(half_size)
+
+            self.mu = nn.Linear(half_size, num_outputs)
+
         self.mu.weight.data.mul_(0.1)
         self.mu.bias.data.mul_(0.1)
 
-        self.softmax = nn.Softmax(dim= 1)
+        # self.softmax = nn.Softmax(dim= 1)
 
         if embd is not None:
             self.embd = embd.weight.detach()
@@ -64,17 +90,36 @@ class Net(nn.Module):
             self.embd = None
 
     def forward(self, inputs):
-        x = inputs
-        x = self.linear1(x)
-        x = self.ln1(x)
-        x = F.relu(x)
-        x = self.linear2(x)
-        x = self.ln2(x)
-        x = F.relu(x)
-        if self.embd is not None:
-            q_values = (self.mu(x) @ self.embd.T)
+        if self.dueling:
+            # Dueling DQN
+            x = inputs
+            x = F.relu(self.ln1(self.linear1(x)))
+
+            # Value branch
+            val = F.relu(self.ln2_V(self.linear2_V(x)))
+            val = self.linear3_V(val) # (batch_size, 1)
+
+            # Advantage branch
+            adv = F.relu(self.ln2_A(self.linear2_A(x)))
+            if self.embd is not None:
+                adv = (self.mu(adv) @ self.embd.T) # (batch_size, n_action)
+            else:
+                adv = torch.tanh(self.mu(adv)) # (batch_size, num_outputs = n_action)
+
+            # Q-value fusion
+            adv_mean = torch.mean(adv, dim= 1, keepdim= True) # (batch_size, 1)
+            q_values = adv + (val - adv_mean)
+        
         else:
-            q_values = torch.tanh(self.mu(x))
+            x = inputs
+            x = F.relu(self.ln1(self.linear1(x)))
+            x = F.relu(self.ln2(self.linear2(x)))
+
+            if self.embd is not None:
+                q_values = (self.mu(x) @ self.embd.T)
+            else:
+                q_values = torch.tanh(self.mu(x))
+
         return q_values
 
 
@@ -96,11 +141,13 @@ class DQN(object):
         self.reward_std = 1.0
 
         if embd is None:
-            self.eval_net = Net(self.n_states, self.n_actions, 256)
-            self.target_net = Net(self.n_states, self.n_actions, 256)
+            self.eval_net = Net(self.n_states, self.n_actions, 256, dueling= self.args.dueling_dqn)
+            self.target_net = Net(self.n_states, self.n_actions, 256, dueling= self.args.dueling_dqn)
         else:
-            self.eval_net = Net(self.n_states, embd.weight.shape[-1], 256, embd= embd)
-            self.target_net = Net(self.n_states, embd.weight.shape[-1], 256, embd= embd)
+            self.eval_net = Net(self.n_states, embd.weight.shape[-1], 256, 
+                                embd= embd, dueling= self.args.dueling_dqn)
+            self.target_net = Net(self.n_states, embd.weight.shape[-1], 256, 
+                                embd= embd, dueling= self.args.dueling_dqn)
         self.optimizer = torch.optim.Adam(self.eval_net.parameters(), lr=self.lr)
         self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optimizer, T_max = self.args.episode_max * self.args.step_max)
         self.loss_func = nn.MSELoss()

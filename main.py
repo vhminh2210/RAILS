@@ -127,6 +127,8 @@ if __name__ == "__main__":
                         help= 'Number of DQN update iteration for each episode')
     parser.add_argument('--dqn_mode', type=str, default='vanilla',
                         help= 'DQN update mode: vanilla/ddqn')
+    parser.add_argument('--dueling_dqn', action='store_true', default=False,
+                        help= 'Enable Dueling DQN')
     parser.add_argument('--j', type=int, default=8,
                         help= 'ThreadPoolExecutor max_workers')
     parser.add_argument('--cql_mode', type=str, default='none',
@@ -161,23 +163,28 @@ if __name__ == "__main__":
 
         user_emb, item_emb = user_emb.detach(), item_emb.detach()
 
-        # Build representative user embeddings for each item
-        repr_user = []
-        for item in range(data.n_items):
-            ru_item = 0 # Representative user for item
-            for user in data.train_item_list[item]:
-                ru_item = ru_item + user_emb[user]
-            ru_item = ru_item / len(data.train_item_list[item])
-            # Normalize embedding
-            ru_item = ru_item / torch.linalg.norm(ru_item)
-            repr_user.append(ru_item)
-        repr_user = torch.stack(repr_user, axis= 0)
-        print('Representative user embeddings shape:', repr_user.shape)
+        # Normalize user embeddings
+        for i in range(user_emb.shape[0]):
+            user_emb[i] = user_emb[i] / torch.linalg.norm(user_emb[i])
+        print('User embeddings shape:', user_emb.shape)
 
         # Normalize item embeddings
         for i in range(item_emb.shape[0]):
             item_emb[i] = item_emb[i] / torch.linalg.norm(item_emb[i])
         print('Item embeddings shape:', item_emb.shape)
+
+        # Build representative user embeddings for each item
+        repr_user = []
+        for item in range(data.n_items):
+            ru_item = 0 # Representative user for item
+            for user in data.train_item_list[item]:
+                ru_item = ru_item + user_emb[user] / torch.linalg.norm(user_emb[user])
+            ru_item = ru_item / len(data.train_item_list[item])
+            # Normalize representatives embedding
+            # ru_item = ru_item / torch.linalg.norm(ru_item)
+            repr_user.append(ru_item)
+        repr_user = torch.stack(repr_user, axis= 0)
+        print('Representative user embeddings shape:', repr_user.shape)
         
         repr_user = nn.Embedding.from_pretrained(repr_user)
         item_emb = nn.Embedding.from_pretrained(item_emb)
