@@ -1269,3 +1269,66 @@ The best epoch is  9
 valid:{'recall': 0.87674713, 'hit_ratio': 0.9990999, 'precision': 0.11075659, 'ndcg': 0.613206, 'mrr': 0.5754064, 'map': 0.5234593}
 test_id:{'recall': 0.8483071, 'hit_ratio': 1.0, 'precision': 0.1533336, 'ndcg': 0.8163132, 'mrr': 0.9382008, 'map': 0.8224191}
 The best epoch is  9
+Epoch 9 [6.8s]: train==[1.53207=0.86300 + 0.66857 + 0.00050]
+valid:{'recall': 0.87002593, 'hit_ratio': 1.0, 'precision': 0.11048658, 'ndcg': 0.6061693, 'mrr': 0.5735681, 'map': 0.5196432}
+test_id:{'recall': 0.8423086, 'hit_ratio': 1.0, 'precision': 0.15237531, 'ndcg': 0.8120833, 'mrr': 0.9377456, 'map': 0.82477355}
+The best epoch is  9
+valid:{'recall': 0.87002593, 'hit_ratio': 1.0, 'precision': 0.11048658, 'ndcg': 0.6061693, 'mrr': 0.5735681, 'map': 0.5196432}
+test_id:{'recall': 0.8423086, 'hit_ratio': 1.0, 'precision': 0.15237531, 'ndcg': 0.8120833, 'mrr': 0.9377456, 'map': 0.82477355}
+The best epoch is  9
+Epoch 9 [5.9s]: train==[1.51965=0.85249 + 0.66666 + 0.00050]
+valid:{'recall': 0.87452996, 'hit_ratio': 0.9990999, 'precision': 0.11053155, 'ndcg': 0.60956794, 'mrr': 0.5733121, 'map': 0.51991403}
+test_id:{'recall': 0.84245104, 'hit_ratio': 0.99916667, 'precision': 0.15225033, 'ndcg': 0.8164075, 'mrr': 0.94615966, 'map': 0.83090544}
+The best epoch is  9
+valid:{'recall': 0.87452996, 'hit_ratio': 0.9990999, 'precision': 0.11053155, 'ndcg': 0.60956794, 'mrr': 0.5733121, 'map': 0.51991403}
+test_id:{'recall': 0.84245104, 'hit_ratio': 0.99916667, 'precision': 0.15225033, 'ndcg': 0.8164075, 'mrr': 0.94615966, 'map': 0.83090544}
+The best epoch is  9
+Epoch 9 [6.4s]: train==[1.52979=0.86194 + 0.66735 + 0.00050]
+valid:{'recall': 0.8693235, 'hit_ratio': 0.9990999, 'precision': 0.10963145, 'ndcg': 0.6033532, 'mrr': 0.56846064, 'map': 0.5143718}
+test_id:{'recall': 0.84335864, 'hit_ratio': 0.99916667, 'precision': 0.15216692, 'ndcg': 0.80979675, 'mrr': 0.93263, 'map': 0.8194087}
+The best epoch is  9
+valid:{'recall': 0.8693235, 'hit_ratio': 0.9990999, 'precision': 0.10963145, 'ndcg': 0.6033532, 'mrr': 0.56846064, 'map': 0.5143718}
+test_id:{'recall': 0.84335864, 'hit_ratio': 0.99916667, 'precision': 0.15216692, 'ndcg': 0.80979675, 'mrr': 0.93263, 'map': 0.8194087}
+The best epoch is  9
+Epoch 9 [7.7s]: train==[1.52976=0.85707 + 0.67218 + 0.00050]
+valid:{'recall': 0.8690437, 'hit_ratio': 0.9981998, 'precision': 0.11017156, 'ndcg': 0.61207616, 'mrr': 0.5863197, 'map': 0.527204}
+test_id:{'recall': 0.8417582, 'hit_ratio': 0.99916667, 'precision': 0.15208362, 'ndcg': 0.8130334, 'mrr': 0.9405834, 'map': 0.8230604}
+The best epoch is  9
+valid:{'recall': 0.8690437, 'hit_ratio': 0.9981998, 'precision': 0.11017156, 'ndcg': 0.61207616, 'mrr': 0.5863197, 'map': 0.527204}
+test_id:{'recall': 0.8417582, 'hit_ratio': 0.99916667, 'precision': 0.15208362, 'ndcg': 0.8130334, 'mrr': 0.9405834, 'map': 0.8230604}
+The best epoch is  9
+Epoch 9 [8.9s]: train==[1.53004=0.85874 + 0.67080 + 0.00050]
+valid:{'recall': 0.86638993, 'hit_ratio': 0.9990999, 'precision': 0.10945151, 'ndcg': 0.6125128, 'mrr': 0.5868253, 'map': 0.5309969}
+test_id:{'recall': 0.84492415, 'hit_ratio': 0.99916667, 'precision': 0.15262532, 'ndcg': 0.81574893, 'mrr': 0.9445575, 'map': 0.82444715}
+The best epoch is  9
+valid:{'recall': 0.86638993, 'hit_ratio': 0.9990999, 'precision': 0.10945151, 'ndcg': 0.6125128, 'mrr': 0.5868253, 'map': 0.5309969}
+test_id:{'recall': 0.84492415, 'hit_ratio': 0.99916667, 'precision': 0.15262532, 'ndcg': 0.81574893, 'mrr': 0.9445575, 'map': 0.82444715}
+The best epoch is  9
+Epoch 9 [5.9s]: train==[1.54055=0.86940 + 0.67065 + 0.00050]
+valid:{'recall': 0.8634273, 'hit_ratio': 0.9981998, 'precision': 0.108641386, 'ndcg': 0.6150947, 'mrr': 0.5938841, 'map': 0.53572214}
+test_id:{'recall': 0.84415627, 'hit_ratio': 1.0, 'precision': 0.15233365, 'ndcg': 0.8128185, 'mrr': 0.9422986, 'map': 0.8197807}
+The best epoch is  9
+valid:{'recall': 0.8634273, 'hit_ratio': 0.9981998, 'precision': 0.108641386, 'ndcg': 0.6150947, 'mrr': 0.5938841, 'map': 0.53572214}
+test_id:{'recall': 0.84415627, 'hit_ratio': 1.0, 'precision': 0.15233365, 'ndcg': 0.8128185, 'mrr': 0.9422986, 'map': 0.8197807}
+The best epoch is  9
+Epoch 9 [5.9s]: train==[1.53638=0.86225 + 0.67363 + 0.00050]
+valid:{'recall': 0.8655089, 'hit_ratio': 0.9990999, 'precision': 0.108416356, 'ndcg': 0.61195207, 'mrr': 0.5903894, 'map': 0.5280795}
+test_id:{'recall': 0.84334385, 'hit_ratio': 0.99916667, 'precision': 0.15200025, 'ndcg': 0.8081648, 'mrr': 0.9283087, 'map': 0.81327075}
+The best epoch is  9
+valid:{'recall': 0.8655089, 'hit_ratio': 0.9990999, 'precision': 0.108416356, 'ndcg': 0.61195207, 'mrr': 0.5903894, 'map': 0.5280795}
+test_id:{'recall': 0.84334385, 'hit_ratio': 0.99916667, 'precision': 0.15200025, 'ndcg': 0.8081648, 'mrr': 0.9283087, 'map': 0.81327075}
+The best epoch is  9
+Epoch 9 [5.8s]: train==[1.53420=0.85841 + 0.67529 + 0.00050]
+valid:{'recall': 0.86522543, 'hit_ratio': 0.9990999, 'precision': 0.10864141, 'ndcg': 0.60657346, 'mrr': 0.5750427, 'map': 0.5249481}
+test_id:{'recall': 0.8493351, 'hit_ratio': 1.0, 'precision': 0.15354195, 'ndcg': 0.8180443, 'mrr': 0.94062686, 'map': 0.82369995}
+The best epoch is  9
+valid:{'recall': 0.86522543, 'hit_ratio': 0.9990999, 'precision': 0.10864141, 'ndcg': 0.60657346, 'mrr': 0.5750427, 'map': 0.5249481}
+test_id:{'recall': 0.8493351, 'hit_ratio': 1.0, 'precision': 0.15354195, 'ndcg': 0.8180443, 'mrr': 0.94062686, 'map': 0.82369995}
+The best epoch is  9
+Epoch 9 [8.8s]: train==[1.53692=0.86630 + 0.67012 + 0.00050]
+valid:{'recall': 0.85477465, 'hit_ratio': 0.9990999, 'precision': 0.106931224, 'ndcg': 0.6001409, 'mrr': 0.56884325, 'map': 0.5241772}
+test_id:{'recall': 0.84357375, 'hit_ratio': 0.99916667, 'precision': 0.15254205, 'ndcg': 0.808838, 'mrr': 0.9339577, 'map': 0.812676}
+The best epoch is  9
+valid:{'recall': 0.85477465, 'hit_ratio': 0.9990999, 'precision': 0.106931224, 'ndcg': 0.6001409, 'mrr': 0.56884325, 'map': 0.5241772}
+test_id:{'recall': 0.84357375, 'hit_ratio': 0.99916667, 'precision': 0.15254205, 'ndcg': 0.808838, 'mrr': 0.9339577, 'map': 0.812676}
+The best epoch is  9

@@ -15,30 +15,6 @@ def hard_update(target, source):
     for target_param, param in zip(target.parameters(), source.parameters()):
         target_param.data.copy_(param.data)
 
-class LayerNorm(nn.Module):
-    def __init__(self, num_features, eps=1e-5, affine=True):
-        super(LayerNorm, self).__init__()
-        self.num_features = num_features
-        self.affine = affine
-        self.eps = eps
-
-        if self.affine:
-            self.gamma = nn.Parameter(torch.Tensor(num_features).uniform_())
-            self.beta = nn.Parameter(torch.zeros(num_features))
-
-    def forward(self, x):
-        shape = [-1] + [1] * (x.dim() - 1)
-        mean = x.view(x.size(0), -1).mean(1).view(*shape)
-        std = x.view(x.size(0), -1).std(1).view(*shape)
-
-        y = (x - mean) / (std + self.eps)
-        if self.affine:
-            shape = [1, -1] + [1] * (x.dim() - 2)
-            y = self.gamma.view(*shape) * y + self.beta.view(*shape)
-        return y
-
-nn.LayerNorm = LayerNorm
-
 class Net(nn.Module):
     def __init__(self, num_inputs, num_outputs, hidden_size, embd= None, dueling= False):
         super(Net, self).__init__()
@@ -137,8 +113,12 @@ class DQN(object):
         self.tau = tau
         self.train_loss = []
         self.args = args
+
         self.reward_mean = 0.0
         self.reward_std = 1.0
+        self.s_mean = 0.0
+        self.s_std = 1.0
+        self.std_smoothing = 1e-3 # Consult https://arxiv.org/pdf/2106.06860
 
         if embd is None:
             self.eval_net = Net(self.n_states, self.n_actions, 256, dueling= self.args.dueling_dqn)
@@ -210,6 +190,7 @@ class DQN(object):
         return rec_list
 
     def align_memory(self):
+        # Normalize rewards
         current_rewards = torch.tensor(self.memory[:, self.n_states + 1:self.n_states + 2], dtype=torch.float32)
         self.reward_mean = torch.mean(current_rewards)
         self.reward_std = torch.std(current_rewards)
@@ -221,7 +202,7 @@ class DQN(object):
         print('mean:', torch.mean(current_rewards), 'std:', torch.std(current_rewards))
 
     def store_transition(self, s, a, r, s_):
-        normalized_r = (r - self.reward_mean) / self.reward_std
+        normalized_r = (r - self.reward_mean) / (self.reward_std + self.std_smoothing)
         transition = np.hstack((s, [a, r], s_))
         
         # Shuffle memory. Preventing forgetting of interactions from early episodes
@@ -290,8 +271,6 @@ class DQN(object):
         if self.mode == 'vanilla':
             q_target = batch_reward + self.gamma * q_next.max(1)[0].view(self.batch_size, 1)
         elif self.mode == 'ddqn':
-            # q_eval_action = raw_q_eval.argmax(dim= 1).unsqueeze(0)
-            # q_target = batch_reward + self.gamma * q_next.gather(1, q_eval_action)[0].view(self.batch_size, 1)
             q_eval_action = raw_q_eval.argmax(dim=1).unsqueeze(1)
             q_target = batch_reward + self.gamma * q_next.gather(1, q_eval_action)
         else:
@@ -307,7 +286,7 @@ class DQN(object):
         # Minor update over eval_net
         self.optimizer.zero_grad()
         loss.backward()
-        torch.nn.utils.clip_grad_value_(self.eval_net.parameters(), 100)
+        torch.nn.utils.clip_grad_value_(self.eval_net.parameters(), 1.)
         self.optimizer.step()
         self.scheduler.step()
         

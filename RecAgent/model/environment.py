@@ -104,6 +104,6 @@ class Env():
             observation_ = np.delete(s_temp_, 0, axis=0)
         else:
             observation_ = so
-        s_ = self.build_state(so)
+        s_ = self.build_state(observation_) # observation_ is the new state
 
         return s_, r, done
