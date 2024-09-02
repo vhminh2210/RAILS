@@ -126,7 +126,8 @@ def train_dqn(train_df, test_df,
                         args.memory, args.agent_lr, args.epsilon,
                         args.replace_freq, args.agent_batch, args.gamma, args.tau, args.topk, 
                         mode= args.dqn_mode, 
-                        args= args)
+                        args= args,
+                        item_pop_dict= item_pop_dict)
     elif args.sim_mode == 'item_embedding':
         try:
             assert item_emb is not None
@@ -136,7 +137,8 @@ def train_dqn(train_df, test_df,
                 args.memory, args.agent_lr, args.epsilon,
                 args.replace_freq, args.agent_batch, args.gamma, args.tau, args.topk, 
                 embd= item_emb, mode= args.dqn_mode,
-                args= args)
+                args= args,
+                item_pop_dict= item_pop_dict)
     elif args.sim_mode == 'user_embedding':
         try:
             assert repr_user is not None
@@ -146,7 +148,8 @@ def train_dqn(train_df, test_df,
                 args.memory, args.agent_lr, args.epsilon,
                 args.replace_freq, args.agent_batch, args.gamma, args.tau, args.topk, 
                 embd= repr_user, mode= args.dqn_mode,
-                args= args) 
+                args= args,
+                item_pop_dict= item_pop_dict) 
     else:
         raise NotImplementedError(f"Similarity mode {self.args.sim_mode} not found!")
 

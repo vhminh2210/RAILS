@@ -137,6 +137,14 @@ if __name__ == "__main__":
                         help= 'Conservative Q learning weight')
     parser.add_argument('--cql_invZ', type=float, default=1.0,
                         help= 'Inverse normalization factor Z for CQL(rho)')
+    parser.add_argument('--seq_ratio', type=float, default=0.2,
+                        help= 'Sequential partition ratio')
+    parser.add_argument('--rare_ratio', type=float, default=0.3,
+                        help= 'Rare-action partition ratio')
+    parser.add_argument('--rand_ratio', type=float, default=0.5,
+                        help= 'Random partition ratio')
+    parser.add_argument('--rare_thresh', type=float, default=0.1,
+                        help= 'Rarity threshold')
 
     args = parser.parse_args()
     assert args.epoch >= args.freeze_epoch

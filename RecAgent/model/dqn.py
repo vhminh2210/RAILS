@@ -101,10 +101,11 @@ class Net(nn.Module):
 
 class DQN(object):
     def __init__(self, n_states, n_actions,
-                 memory_capacity, lr, epsilon, target_network_replace_freq, batch_size, gamma, tau, K, embd= None, mode= 'vanilla', args= None):
+                 memory_capacity, lr, epsilon, target_network_replace_freq, batch_size, gamma, tau, K, 
+                 embd= None, mode= 'vanilla', args= None,
+                 item_pop_dict= None):
         self.n_states = n_states # States size, i.e., observation windows
         self.n_actions = n_actions # Size of action space
-        self.memory_capacity = memory_capacity
         self.lr = lr
         self.epsilon = epsilon
         self.replace_freq = target_network_replace_freq
@@ -118,7 +119,11 @@ class DQN(object):
         self.reward_std = 1.0
         self.s_mean = 0.0
         self.s_std = 1.0
-        self.std_smoothing = 1e-3 # Consult https://arxiv.org/pdf/2106.06860
+        self.std_smoothing = 1e-5
+
+        self.rare_thresh = self.args.rare_thresh
+
+        self.item_pop_dict = item_pop_dict
 
         if embd is None:
             self.eval_net = Net(self.n_states, self.n_actions, 256, dueling= self.args.dueling_dqn)
@@ -138,9 +143,16 @@ class DQN(object):
             self.loss_func = self.loss_func.cuda()
 
         self.learn_step_counter = 0
-        self.memory_counter = 0
         self.K = K # topK
-        self.memory = np.zeros((0, self.n_states * 2 + 2))
+
+        # 0-th dimension for memory parition: 0-sequential, 1-rare, 2-random
+        self.memory = [np.zeros((0, self.n_states * 2 + 2))] * 3
+        self.memory_counter = np.array([0, 0, 0])
+        self.memory_capacity = memory_capacity
+        self.partition = np.array([self.args.seq_ratio, self.args.rare_ratio, self.args.rand_ratio])
+        self.pbatch_size = (self.batch_size * self.partition / np.sum(self.partition)).astype('int')
+        self.partition = (memory_capacity * self.partition / np.sum(self.partition)).astype('int')
+
         self.mode = mode
 
     def choose_action(self, obs, env, I_sim_list, mode= 'training'):
@@ -191,31 +203,75 @@ class DQN(object):
 
     def align_memory(self):
         # Normalize rewards
-        current_rewards = torch.tensor(self.memory[:, self.n_states + 1:self.n_states + 2], dtype=torch.float32)
-        self.reward_mean = torch.mean(current_rewards)
-        self.reward_std = torch.std(current_rewards)
+        current_rewards = [self.memory[x][:, self.n_states + 1:self.n_states + 2] for x in range(3)]
+        current_rewards = np.concatenate(current_rewards, axis= 0)
+        self.reward_mean = np.mean(current_rewards)
+        self.reward_std = np.std(current_rewards)
         print('Normalize initial rewards ...')
         print('mean:', self.reward_mean, 'std:', self.reward_std)
-        self.memory[:, self.n_states + 1:self.n_states + 2] = (current_rewards - self.reward_mean) / self.reward_std
+        for i in range(3):
+            self.memory[i][:, self.n_states + 1:self.n_states + 2] -= self.reward_mean
+            self.memory[i][:, self.n_states + 1:self.n_states + 2] /= (self.reward_std + self.std_smoothing)
         print('Verify normalization ...')
-        current_rewards = torch.tensor(self.memory[:, self.n_states + 1:self.n_states + 2], dtype=torch.float32)
-        print('mean:', torch.mean(current_rewards), 'std:', torch.std(current_rewards))
+        current_rewards = [self.memory[x][:, self.n_states + 1:self.n_states + 2] for x in range(3)]
+        current_rewards = np.concatenate(current_rewards, axis= 0)
+        print('mean:', np.mean(current_rewards), 'std:', np.std(current_rewards))
 
     def store_transition(self, s, a, r, s_):
         normalized_r = (r - self.reward_mean) / (self.reward_std + self.std_smoothing)
-        transition = np.hstack((s, [a, r], s_))
+        transition = np.hstack((s, [a, normalized_r], s_))
         
+        # Always store transition into random memory
         # Shuffle memory. Preventing forgetting of interactions from early episodes
-        random_index = np.arange(len(self.memory))
+        random_index = np.arange(len(self.memory[2]))
         np.random.shuffle(random_index)
-        self.memory = self.memory[random_index, :]
+        self.memory[2] = self.memory[2][random_index, :]
 
-        if len(self.memory) < self.memory_capacity:
-            self.memory = np.append(self.memory, [transition], axis=0)
+        if len(self.memory[2]) < self.partition[2]:
+            self.memory[2] = np.append(self.memory[2], [transition], axis=0)
         else:
-            index = self.memory_counter % self.memory_capacity
-            self.memory[index, :] = transition
-        self.memory_counter += 1
+            index = self.memory_counter[2] % self.partition[2]
+            self.memory[2][index, :] = transition
+        self.memory_counter[2] += 1
+
+        # Always store transition into sequential memory
+        # Round-Robin
+        if len(self.memory[0]) < self.partition[0]:
+            self.memory[0] = np.append(self.memory[0], [transition], axis=0)
+        else:
+            index = self.memory_counter[0] % self.partition[0]
+            self.memory[0][index, :] = transition
+        self.memory_counter[0] += 1
+
+        # Rare-action memory
+        if self.item_pop_dict[str(a)] <= self.rare_thresh:
+            if len(self.memory[1]) < self.partition[1]:
+                self.memory[1] = np.append(self.memory[1], [transition], axis=0)
+            else:
+                # Replace the most frequent item in the rare-item memory
+                actions = np.copy(self.memory[1][:, self.n_states]).reshape((-1)).tolist() # List of rare actions stored
+                action_ranks = np.array([self.item_pop_dict[str(int(x))] for x in actions])
+                index = np.argmax(action_ranks)
+                self.memory[1][index, :] = transition
+            self.memory_counter[1] += 1
+
+    def sampling(self):
+        samples = []
+        for mode in range(3):
+            sample_index = np.random.choice(len(self.memory[mode]), 
+                                            min(self.pbatch_size[mode], len(self.memory[mode])))
+            # (batch_size, transition_shape)
+            batch_memory = self.memory[mode][sample_index, :].reshape((self.pbatch_size[mode], -1))
+            samples.append(batch_memory)
+        
+        batch_memory = np.concatenate(samples, axis= 0)
+        
+        batch_state = torch.tensor(batch_memory[:, :self.n_states], dtype=torch.float32)
+        batch_action = torch.tensor(batch_memory[:, self.n_states:self.n_states + 1].astype(int), dtype=torch.long)
+        batch_reward = torch.tensor(batch_memory[:, self.n_states + 1:self.n_states + 2], dtype=torch.float32)
+        batch_state_ = torch.tensor(batch_memory[:, -self.n_states:], dtype=torch.float32)
+
+        return batch_state, batch_action, batch_reward, batch_state_
 
     def CQLLoss(self, q_values, current_action):
         '''
@@ -249,13 +305,7 @@ class DQN(object):
             self.target_net.load_state_dict(self.eval_net.state_dict())
         self.learn_step_counter += 1
 
-        sample_index = np.random.choice(len(self.memory), self.batch_size)
-        batch_memory = self.memory[sample_index, :]
-        batch_state = Variable(torch.tensor(batch_memory[:, :self.n_states], dtype=torch.float32))
-        batch_action = Variable(
-            torch.tensor(batch_memory[:, self.n_states:self.n_states + 1].astype(int), dtype=torch.long))
-        batch_reward = Variable(torch.tensor(batch_memory[:, self.n_states + 1:self.n_states + 2], dtype=torch.float32))
-        batch_state_ = Variable(torch.tensor(batch_memory[:, -self.n_states:], dtype=torch.float32))
+        batch_state, batch_action, batch_reward, batch_state_ = self.sampling()
 
         if (torch.cuda.is_available()):
             batch_state = batch_state.cuda()

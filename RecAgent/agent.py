@@ -39,12 +39,16 @@ def getAgent(repr_user, item_emb, args):
         else:
             sim_matrix_generate(dat_path, mat_path)
             item_sim_dict = load_dict(mat_path)
+        
         qua_path = os.path.join(dat_dir, f'{args.dataset}.qua')
         if os.path.exists(qua_path):
             item_quality_dict = load_dict(qua_path)
         else:
             item_quality_generate(dat_path, qua_path)
             item_quality_dict = load_dict(qua_path)
+        
+        # Popularity dict: {item1 : popularity_percentile_of_item1, ...}
+        # NOTE: Least popular item: percentile = 0.0, Most popular item: percentile = 1.0
         pop_path = os.path.join(dat_dir, f'{args.dataset}.pop')
         if os.path.exists(pop_path):
             item_pop_dict = load_dict(pop_path)
