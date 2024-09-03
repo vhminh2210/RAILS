@@ -16,7 +16,7 @@ python main.py --modeltype BC_LOSS \
                 --agent_batch 128 \
                 --dqn_mode ddqn \
                 --eta 1.0 \
-                --agent_lr 1e-4 \
+                --agent_lr 5e-5 \
                 --replace_freq 100 \
                 --tau 0.01 \
                 --gamma 0.9 \

@@ -50,7 +50,7 @@ def trainAgent(agent, step_max):
     # for step in range(step_max):
     #     agent.learn()
 
-def recommender(agent, ep_user, train_df, test_df, train_dict,
+def recommender(agent, train_episodes, ep_user, train_df, test_df, train_dict,
                 item_sim_dict, item_quality_dict, item_pop_dict,
                 max_item_id, mask_list, repr_user, item_emb, args):
     # Newest interaction made by [ep_user]
@@ -63,22 +63,28 @@ def recommender(agent, ep_user, train_df, test_df, train_dict,
     # Generate transitions (s, a, r, s_) and store in agent replay memory
     interaction_num = setInteraction(env, agent, ep_user, train_df, args.obswindow)
     if interaction_num <= 20:
-        return
+        return None, None
     else:
         global user_num
         user_num += 1
 
     trainAgent(agent, args.step_max)
+    prec, ndcg = evaluate(agent, train_episodes, train_df, test_df, train_dict,
+                        item_sim_dict, item_quality_dict, item_pop_dict,
+                        max_item_id, mask_list, repr_user, item_emb, args, ckpt= True)
+    return prec, ndcg
 
 def evaluate(agent, ep_users, train_df, test_df, train_dict,
             item_sim_dict, item_quality_dict, item_pop_dict,
-            max_item_id, mask_list, repr_user, item_emb, args):
+            max_item_id, mask_list, repr_user, item_emb, args, ckpt= False):
 
     global precision, ndcg, novelty, coverage, ils, interdiv
-    print(max_item_id)
+    if ckpt:
+        precision, ndcg, novelty, coverage, ils, interdiv = [], [], [], [], [], []
 
     for ep_user in ep_users:
-        print('Evaluating user', ep_user)
+        if not ckpt:
+            print('Evaluating user', ep_user)
         last_obs = train_dict[ep_user][-args.obswindow:]
         ep_mask_list = copy.copy(mask_list)
         ep_mask_list.extend(train_dict[ep_user][:-1])
@@ -107,6 +113,8 @@ def evaluate(agent, ep_users, train_df, test_df, train_dict,
         coverage.extend(rec_list)
         ils.append(ils_metric(rec_list, env.item_sim_matrix))
         interdiv.append(rec_list)
+
+    return float(np.mean(precision)), float(np.mean(ndcg))
 
 def train_dqn(train_df, test_df,
               item_sim_dict, item_quality_dict, item_pop_dict,
@@ -169,6 +177,7 @@ def train_dqn(train_df, test_df,
         interaction_num = setInteraction(env, agent, ep_user, train_df, args.obswindow)
     
     agent.align_memory()
+    ckpt_precision, ckpt_ndcg = [], []
 
     for ep_user in train_episodes:
         iter += 1
@@ -177,16 +186,20 @@ def train_dqn(train_df, test_df,
         #                         agent, ep_user, train_df, test_df, train_dict,
         #                         item_sim_dict, item_quality_dict, item_pop_dict,
         #                         max_item_id, mask_list, repr_user, item_emb, args)
-        recommender(agent, ep_user, train_df, test_df, train_dict,
+        _prec, _ndcg = recommender(agent, train_episodes, ep_user, train_df, test_df, train_dict,
                     item_sim_dict, item_quality_dict, item_pop_dict,
                     max_item_id, mask_list, repr_user, item_emb, args)
+        if _prec is not None:
+            ckpt_precision.append(_prec)
+        if _ndcg is not None:
+            ckpt_ndcg.append(_ndcg)
     #     futures.append(future)
     # wait(futures)
 
     print('RL agent training complete!')
     print('####################')
     print('Plotting train curve ...')
-    agent.stats_plot()
+    agent.stats_plot(args, ckpt_precision, ckpt_ndcg)
     print('Train curve finished!')
     print('####################')
     print('Running evaluations on trained agent ...')

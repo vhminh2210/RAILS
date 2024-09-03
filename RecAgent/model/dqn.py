@@ -5,6 +5,8 @@ import torch.nn.functional as F
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+from datetime import datetime
+import json
 # import seaborn as sns
 
 def soft_update(target, source, tau):
@@ -117,8 +119,8 @@ class DQN(object):
 
         self.reward_mean = 0.0
         self.reward_std = 1.0
-        self.s_mean = 0.0
-        self.s_std = 1.0
+        self.state_mean = 0.0
+        self.state_std = 1.0
         self.std_smoothing = 1e-5
 
         self.rare_thresh = self.args.rare_thresh
@@ -159,9 +161,10 @@ class DQN(object):
         if env.args.sim_mode == 'stats':
             obs = torch.unsqueeze(torch.tensor(obs, dtype=torch.float32), 0)
         state = env.build_state(obs)
+        state = (state - self.state_mean) / (self.state_std + self.std_smoothing)
         if (torch.cuda.is_available()):
             state = state.cuda()
-        actions_Q = self.eval_net.forward(torch.tensor(state))
+        actions_Q = self.eval_net.forward(torch.tensor(state.to(torch.float)))
 
         actions_Q = actions_Q.cpu().detach().numpy()
 
@@ -202,24 +205,53 @@ class DQN(object):
         return rec_list
 
     def align_memory(self):
-        # Normalize rewards
+        # RewardNorm
         current_rewards = [self.memory[x][:, self.n_states + 1:self.n_states + 2] for x in range(3)]
         current_rewards = np.concatenate(current_rewards, axis= 0)
         self.reward_mean = np.mean(current_rewards)
         self.reward_std = np.std(current_rewards)
+        print('####################')
         print('Normalize initial rewards ...')
         print('mean:', self.reward_mean, 'std:', self.reward_std)
         for i in range(3):
             self.memory[i][:, self.n_states + 1:self.n_states + 2] -= self.reward_mean
             self.memory[i][:, self.n_states + 1:self.n_states + 2] /= (self.reward_std + self.std_smoothing)
+        
         print('Verify normalization ...')
         current_rewards = [self.memory[x][:, self.n_states + 1:self.n_states + 2] for x in range(3)]
         current_rewards = np.concatenate(current_rewards, axis= 0)
         print('mean:', np.mean(current_rewards), 'std:', np.std(current_rewards))
 
+        # StateNorm
+        current_states = [self.memory[x][:, :self.n_states] for x in range(3)]
+        current_states_ = [self.memory[x][:, self.n_states + 2:] for x in range(3)]
+        current_states = np.concatenate(current_states, axis= 0)
+        self.state_mean = np.mean(current_states, axis= 0)
+        self.state_std = np.std(current_states, axis= 0)
+        print('####################')
+        print('Normalize initial states ...')
+        print('mean_norm:', np.linalg.norm(self.state_mean), 'std_norm:', np.linalg.norm(self.state_std))
+        for i in range(3):
+            self.memory[i][:, :self.n_states] -= self.state_mean
+            self.memory[i][:, :self.n_states] /= (self.state_std + self.std_smoothing)
+
+            self.memory[i][:, self.n_states + 2:] -= self.state_mean
+            self.memory[i][:, self.n_states + 2:] /= (self.state_std + self.std_smoothing)
+
+        print('Verify normalization ...')
+        current_states = [self.memory[x][:, :self.n_states] for x in range(3)]
+        current_states_ = [self.memory[x][:, self.n_states + 2:] for x in range(3)]
+        current_states = np.concatenate(current_states, axis= 0)
+        new_mean = np.mean(current_states, axis= 0)
+        new_std = np.std(current_states, axis= 0)
+        print('mean_norm:', np.linalg.norm(new_mean), 'std_norm:', np.linalg.norm(new_std))
+        print('####################')
+
     def store_transition(self, s, a, r, s_):
         normalized_r = (r - self.reward_mean) / (self.reward_std + self.std_smoothing)
-        transition = np.hstack((s, [a, normalized_r], s_))
+        normalized_s = (s - self.state_mean) / (self.state_std + self.std_smoothing)
+        normalized_s_ = (s_ - self.state_mean) / (self.state_std + self.std_smoothing)
+        transition = np.hstack((normalized_s, [a, normalized_r], normalized_s_))
         
         # Always store transition into random memory
         # Shuffle memory. Preventing forgetting of interactions from early episodes
@@ -343,8 +375,34 @@ class DQN(object):
         # Fuse eval_net into target_net with temperature tau
         soft_update(self.target_net, self.eval_net, self.tau)
 
-    def stats_plot(self):
-        save_pth = os.path.join('figs', f'{self.args.dqn_mode}-{self.args.episode_max}.episodes-{self.args.step_max}.step-{self.args.gamma}.gamma.png')
+    def stats_plot(self, args, precision= None, ndcg= None):
+        if not os.path.exists('exps'):
+            os.mkdir('exps')
+        now = datetime.now()
+        dt_string = now.strftime("%d-%m-%Y_%H:%M:%S")
+        root = os.path.join('exps', dt_string)
+        os.makedirs(root)
+
+        with open(os.path.join(root, 'args.txt'), 'w') as f:
+            json.dump(args.__dict__, f, indent=2)
+
+        save_pth = os.path.join(root, f'{self.args.episode_max}.episodes-{self.args.step_max}.step-{self.args.gamma}.gamma.png')
         reduced_loss = [np.mean(self.train_loss[x * 256 : (x+1) * 256]) for x in range(int(len(self.train_loss) / 256))]
         plt.plot(reduced_loss)
+        plt.title('Training Loss')
         plt.savefig(save_pth)
+        plt.clf()
+
+        if precision is not None:
+            save_pth = os.path.join(root, f'precision.png')
+            plt.plot(precision)
+            plt.title('Test accucracy')
+            plt.savefig(save_pth)
+            plt.clf()
+
+        if ndcg is not None:
+            save_pth = os.path.join(root, f'ndcg.png')
+            plt.plot(ndcg)
+            plt.title(f'Test NDCG@{args.topk}')
+            plt.savefig(save_pth)    
+            plt.clf()    
