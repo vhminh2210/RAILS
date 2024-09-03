@@ -5,5 +5,5 @@
 *.o
 *.cpp
 *.tar
-*.txt
 *.png
+exps

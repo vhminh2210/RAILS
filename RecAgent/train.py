@@ -10,6 +10,19 @@ import copy
 user_num = 0
 precision, ndcg, novelty, coverage, ils, interdiv = [], [], [], [], [], []
 
+def stateAugment(observation, action, n_augment):
+    n_obs = len(observation)
+    aug_obsevations = [observation]
+    aug_actions = [action]
+    idx = random.choices(list(range(n_obs)), weights= list(range(n_obs)).reverse(), k= n_augment)
+    for i in range(n_augment):
+        _observation = observation.copy()
+        aug_actions.append(_observation[idx[i]])
+        _observation[idx[i]] = action
+        aug_obsevations.append(_observation)
+    
+    return aug_obsevations, aug_actions
+
 def setInteraction(env, agent, ep_user, train_df, obswindow):
     user_df = train_df[train_df['user_id'] == ep_user]
     state_list = []
@@ -18,12 +31,20 @@ def setInteraction(env, agent, ep_user, train_df, obswindow):
             continue
         state_list.append(list(obs))
     interaction_num = 0
+    args = agent.args
     for s_idx in range(len(state_list) - 1):
-        s = np.array(env.reset(state_list[s_idx]))
-        a = int(state_list[s_idx + 1][0])
-        s_, r, done = env.step(a)
-        agent.store_transition(env.build_state(s).reshape((-1)), a, r, s_.reshape((-1)))
+        observation = state_list[s_idx]
+        action = state_list[s_idx + 1][0]
+        aug_obsevations, aug_actions = stateAugment(observation, action, args.n_augment)
+
+        for i in range(len(aug_actions)):
+            s = np.array(env.reset(aug_obsevations[i]))
+            a = int(aug_actions[i])
+            s_, r, done = env.step(a)
+            agent.store_transition(env.build_state(s).reshape((-1)), a, r, s_.reshape((-1)))
+        
         interaction_num += 1
+    
     return interaction_num
 
 
@@ -69,10 +90,14 @@ def recommender(agent, train_episodes, ep_user, train_df, test_df, train_dict,
         user_num += 1
 
     trainAgent(agent, args.step_max)
-    prec, ndcg = evaluate(agent, train_episodes, train_df, test_df, train_dict,
-                        item_sim_dict, item_quality_dict, item_pop_dict,
-                        max_item_id, mask_list, repr_user, item_emb, args, ckpt= True)
-    return prec, ndcg
+    if ep_user % 3 == 0:
+        # prec, ndcg = evaluate(agent, train_episodes, train_df, test_df, train_dict,
+        #                     item_sim_dict, item_quality_dict, item_pop_dict,
+        #                     max_item_id, mask_list, repr_user, item_emb, args, ckpt= True)
+        # return prec, ndcg
+        return None, None
+    else:
+        return None, None
 
 def evaluate(agent, ep_users, train_df, test_df, train_dict,
             item_sim_dict, item_quality_dict, item_pop_dict,

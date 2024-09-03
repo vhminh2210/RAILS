@@ -145,6 +145,8 @@ if __name__ == "__main__":
                         help= 'Random partition ratio')
     parser.add_argument('--rare_thresh', type=float, default=0.1,
                         help= 'Rarity threshold')
+    parser.add_argument('--n_augment', type=int, default=5,
+                        help= 'Number of augmented transition generated per existed transition')
 
     args = parser.parse_args()
     assert args.epoch >= args.freeze_epoch
