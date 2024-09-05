@@ -14,7 +14,7 @@ def stateAugment(observation, action, n_augment):
     n_obs = len(observation)
     aug_obsevations = [observation]
     aug_actions = [action]
-    idx = random.choices(list(range(n_obs)), weights= list(range(n_obs)).reverse(), k= n_augment)
+    idx = random.choices(list(range(n_obs)), k= n_augment)
     for i in range(n_augment):
         _observation = observation.copy()
         aug_actions.append(_observation[idx[i]])
@@ -23,7 +23,7 @@ def stateAugment(observation, action, n_augment):
     
     return aug_obsevations, aug_actions
 
-def setInteraction(env, agent, ep_user, train_df, obswindow):
+def setInteraction(env, agent, ep_user, train_df, obswindow, augment= True):
     user_df = train_df[train_df['user_id'] == ep_user]
     state_list = []
     for obs in user_df['item_id'].rolling(obswindow):
@@ -34,8 +34,11 @@ def setInteraction(env, agent, ep_user, train_df, obswindow):
     args = agent.args
     for s_idx in range(len(state_list) - 1):
         observation = state_list[s_idx]
-        action = state_list[s_idx + 1][0]
-        aug_obsevations, aug_actions = stateAugment(observation, action, args.n_augment)
+        action = state_list[s_idx + 1][-1]
+        if augment:
+            aug_obsevations, aug_actions = stateAugment(observation, action, args.n_augment)
+        else:
+            aug_obsevations, aug_actions = stateAugment(observation, action, int(args.n_augment / 5))
 
         for i in range(len(aug_actions)):
             s = np.array(env.reset(aug_obsevations[i]))
@@ -76,10 +79,11 @@ def recommender(agent, train_episodes, ep_user, train_df, test_df, train_dict,
                 max_item_id, mask_list, repr_user, item_emb, args):
     # Newest interaction made by [ep_user]
     last_obs = train_dict[ep_user][-args.obswindow:]
-    mask_list.extend(train_dict[ep_user][:-1])
+    new_mask_list = copy.copy(mask_list)
+    new_mask_list.extend(train_dict[ep_user][:-1])
     # Simulate the enviroment, regarding [ep_user] preferences
     env = environment.Env(ep_user, train_dict[ep_user][-args.obswindow:], list(range(max_item_id + 1)),
-                          item_sim_dict, item_pop_dict, item_quality_dict, mask_list, args.sim_mode, repr_user, item_emb, args)
+                          item_sim_dict, item_pop_dict, item_quality_dict, new_mask_list, args.sim_mode, repr_user, item_emb, args)
 
     # Generate transitions (s, a, r, s_) and store in agent replay memory
     interaction_num = setInteraction(env, agent, ep_user, train_df, args.obswindow)
@@ -113,11 +117,11 @@ def evaluate(agent, ep_users, train_df, test_df, train_dict,
         last_obs = train_dict[ep_user][-args.obswindow:]
         ep_mask_list = copy.copy(mask_list)
         ep_mask_list.extend(train_dict[ep_user][:-1])
-        
+
         # Simulate the enviroment, regarding [ep_user] preferences
         env = environment.Env(ep_user, train_dict[ep_user][-args.obswindow:], list(range(max_item_id + 1)),
                           item_sim_dict, item_pop_dict, item_quality_dict, ep_mask_list, args.sim_mode, repr_user, item_emb, args)
-        interaction_num = setInteraction(env, agent, ep_user, train_df, args.obswindow)
+        interaction_num = setInteraction(env, agent, ep_user, train_df, args.obswindow, augment= False)
         if interaction_num <= 20:
             continue
         
@@ -199,7 +203,7 @@ def train_dqn(train_df, test_df,
                           item_sim_dict, item_pop_dict, item_quality_dict, mask_list, args.sim_mode, repr_user, item_emb, args)
 
         # Generate transitions (s, a, r, s_) and store in agent replay memory
-        interaction_num = setInteraction(env, agent, ep_user, train_df, args.obswindow)
+        interaction_num = setInteraction(env, agent, ep_user, train_df, args.obswindow, augment= False)
     
     agent.align_memory()
     ckpt_precision, ckpt_ndcg = [], []
