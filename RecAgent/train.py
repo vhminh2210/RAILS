@@ -129,7 +129,8 @@ def evaluate(agent, ep_users, train_df, test_df, train_dict,
         # Ground truth unseen interaction
         test_set = test_df.loc[test_df['user_id'] == ep_user, 'item_id'].tolist()
 
-        print(rec_list, test_set)
+        if not ckpt:
+            print(rec_list, test_set)
 
         # Evaluation stats
         if len(rec_list) == 0:
