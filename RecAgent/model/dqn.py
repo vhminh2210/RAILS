@@ -120,6 +120,7 @@ class DQN(object):
         self.lr = lr
         self.epsilon = epsilon
         self.replace_freq = target_network_replace_freq
+        self.replace_freq_unit = int(target_network_replace_freq * 0.25)
         self.batch_size = batch_size
         self.gamma = gamma
         self.tau = tau
