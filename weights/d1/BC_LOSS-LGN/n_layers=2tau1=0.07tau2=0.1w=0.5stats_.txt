@@ -2529,3 +2529,10 @@ The best epoch is  199
 valid:{'recall': 0.81752515, 'hit_ratio': 0.99459946, 'precision': 0.10247575, 'ndcg': 0.58290905, 'mrr': 0.5658874, 'map': 0.5242112}
 test_id:{'recall': 0.8138502, 'hit_ratio': 1.0, 'precision': 0.14454204, 'ndcg': 0.7932783, 'mrr': 0.93432325, 'map': 0.8288065}
 The best epoch is  199
+Epoch 199 [14.9s]: train==[1.93753=1.05184 + 0.88466 + 0.00102]
+valid:{'recall': 0.81787205, 'hit_ratio': 0.99459946, 'precision': 0.102520764, 'ndcg': 0.5821309, 'mrr': 0.5647121, 'map': 0.523109}
+test_id:{'recall': 0.8133503, 'hit_ratio': 1.0, 'precision': 0.14441706, 'ndcg': 0.79276335, 'mrr': 0.9339096, 'map': 0.8286806}
+The best epoch is  199
+valid:{'recall': 0.81787205, 'hit_ratio': 0.99459946, 'precision': 0.102520764, 'ndcg': 0.5821309, 'mrr': 0.5647121, 'map': 0.523109}
+test_id:{'recall': 0.8133503, 'hit_ratio': 1.0, 'precision': 0.14441706, 'ndcg': 0.79276335, 'mrr': 0.9339096, 'map': 0.8286806}
+The best epoch is  199

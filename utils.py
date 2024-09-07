@@ -48,8 +48,8 @@ def split_data(args, train_ratio= 0.8, val_ratio= 0.1, test_ratio= 0.1, seed= 10
     TEST_OOD = os.path.join(args.root, args.dataset, 'test_ood.txt')
 
     if os.path.exists(TRAIN) or os.path.exists(VAL) or os.path.exists(TEST):
-        print('Data splits seems to have already existed. \
-              Delete existring train.txt, val.txt, test.txt to re-split the dataset.')
+        print('Data splits seems to have already existed.')
+        print('Delete existring train.txt, val.txt, test.txt to re-split the dataset.')
         return
 
     with open(TXT, 'r') as file:

@@ -86,7 +86,7 @@ def restore_checkpoint(model, checkpoint_dir, device, force=False, pretrain=Fals
               .format(epoch), "Enter 0 to train from scratch.")
         # print(">> ", end = '')
         # inp_epoch = int(input())
-        print(f">> {epoch}", end = '')
+        print(f">> {epoch}\n", end = '')
         inp_epoch = epoch
         if inp_epoch not in range(epoch + 1):
             raise Exception("Invalid epoch number")

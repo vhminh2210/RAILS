@@ -149,9 +149,9 @@ class DQN(object):
             self.target_net = Net(self.n_states, self.n_actions, 256, dueling= self.args.dueling_dqn)
         else:
             self.eval_net = Net(self.n_states, embd.weight.shape[-1], 256, 
-                                embd= embd.to(device), dueling= self.args.dueling_dqn)
+                                embd= embd.to(self.device), dueling= self.args.dueling_dqn)
             self.target_net = Net(self.n_states, embd.weight.shape[-1], 256, 
-                                embd= embd.to(device), dueling= self.args.dueling_dqn)
+                                embd= embd.to(self.device), dueling= self.args.dueling_dqn)
         self.optimizer = torch.optim.Adam(self.eval_net.parameters(), lr=self.lr)
         self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optimizer, 
                                                                     T_max = int(self.args.episode_max * self.args.step_max / 2))
