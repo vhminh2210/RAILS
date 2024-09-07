@@ -199,8 +199,8 @@ if __name__ == "__main__":
         repr_user = nn.Embedding.from_pretrained(repr_user)
         item_emb = nn.Embedding.from_pretrained(item_emb)
 
-        print(np.linalg.norm(repr_user.weight.detach()[1]))
-        print(np.linalg.norm(item_emb.weight.detach()[1]))
+        print(torch.linalg.norm(repr_user.weight.detach()[1]))
+        print(torch.linalg.norm(item_emb.weight.detach()[1]))
 
     # Interactive RL Agent
     print('RL Agent training starts...')
