@@ -177,7 +177,7 @@ if __name__ == "__main__":
         # Get user, item embeddings
         user_emb, item_emb = encoder.compute()
 
-        user_emb, item_emb = user_emb.detach(), item_emb.detach()
+        user_emb, item_emb = user_emb.detach().cpu(), item_emb.detach().cpu()
 
         # Normalize user embeddings
         for i in range(user_emb.shape[0]):
@@ -210,6 +210,6 @@ if __name__ == "__main__":
 
     # Interactive RL Agent
     print('RL Agent training starts...')
-    agent = getAgent(repr_user.to(device), item_emb.to(device), args)
+    agent = getAgent(repr_user, item_emb, args)
     print('####################')
     print('Runtime:', time.time() - start_time, 'seconds')
