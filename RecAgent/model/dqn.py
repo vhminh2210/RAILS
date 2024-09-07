@@ -129,6 +129,11 @@ class DQN(object):
 
         self.buffered_q = None
 
+        if self.args.cuda < 0:
+            self.device = 'cpu'
+        else:
+            self.device = f'cuda:{self.args.cuda}'
+
         self.reward_mean = 0.0
         self.reward_std = 1.0
         self.state_mean = 0.0
@@ -152,10 +157,6 @@ class DQN(object):
                                                                     T_max = int(self.args.episode_max * self.args.step_max / 2))
         self.loss_func = nn.MSELoss()
         hard_update(self.target_net, self.eval_net) # Transfer weights from eval_q_net to target_q_net
-        if (torch.cuda.is_available()):
-            self.eval_net = self.eval_net.cuda()
-            self.target_net = self.target_net.cuda()
-            self.loss_func = self.loss_func.cuda()
 
         self.learn_step_counter = 0
         self.K = K # topK
@@ -169,6 +170,13 @@ class DQN(object):
         self.partition = (memory_capacity * self.partition / np.sum(self.partition)).astype('int')
 
         self.mode = mode
+
+        # Load components to device
+        if self.embd is not None:
+            self.embd = self.embd.to(self.device)
+        self.eval_net = self.eval_net.to(self.device)
+        self.target_net = self.target_net.to(self.device)
+        self.loss_func = self.loss_func.to(self.device)
 
     def choose_action(self, obs, env, I_sim_list, mode= 'training'):
         if env.args.sim_mode == 'stats':
@@ -357,11 +365,10 @@ class DQN(object):
 
         batch_state, batch_action, batch_reward, batch_state_ = self.sampling()
 
-        if (torch.cuda.is_available()):
-            batch_state = batch_state.cuda()
-            batch_action = batch_action.cuda()
-            batch_reward = batch_reward.cuda()
-            batch_state_ = batch_state_.cuda()
+        batch_state = batch_state.to(self.device)
+        batch_action = batch_action.to(self.device)
+        batch_reward = batch_reward.to(self.device)
+        batch_state_ = batch_state_.to(self.device)
 
         raw_q_eval = self.eval_net(batch_state) # batch_size, n_actions
         q_eval = raw_q_eval.gather(1, batch_action) # batch_size, 1
