@@ -181,8 +181,7 @@ class DQN(object):
             obs = torch.unsqueeze(torch.tensor(obs, dtype=torch.float32), 0)
         state = env.build_state(obs)
         state = (state - self.state_mean) / (self.state_std + self.std_smoothing)
-        if (torch.cuda.is_available()):
-            state = state.cuda()
+        state = state.to(self.device)
         actions_Q = self.eval_net.forward(torch.tensor(state.to(torch.float)))
 
         actions_Q = actions_Q.cpu().detach().numpy()

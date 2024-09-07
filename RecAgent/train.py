@@ -172,7 +172,7 @@ def train_dqn(train_df, test_df,
         agent = dqn.DQN(args.embed_size, max_item_id + 1,
                 args.memory, args.agent_lr, args.epsilon,
                 args.replace_freq, args.agent_batch, args.gamma, args.tau, args.topk, 
-                embd= item_emb, mode= args.dqn_mode,
+                embd= item_emb.detach(), mode= args.dqn_mode,
                 args= args,
                 item_pop_dict= item_pop_dict)
     elif args.sim_mode == 'user_embedding':
@@ -183,7 +183,7 @@ def train_dqn(train_df, test_df,
         agent = dqn.DQN(args.embed_size, max_item_id + 1,
                 args.memory, args.agent_lr, args.epsilon,
                 args.replace_freq, args.agent_batch, args.gamma, args.tau, args.topk, 
-                embd= repr_user, mode= args.dqn_mode,
+                embd= repr_user.detach(), mode= args.dqn_mode,
                 args= args,
                 item_pop_dict= item_pop_dict) 
     else:
