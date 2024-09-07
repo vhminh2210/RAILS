@@ -172,8 +172,6 @@ class DQN(object):
         self.mode = mode
 
         # Load components to device
-        if self.embd is not None:
-            self.embd = self.embd.to(self.device)
         self.eval_net = self.eval_net.to(self.device)
         self.target_net = self.target_net.to(self.device)
         self.loss_func = self.loss_func.to(self.device)

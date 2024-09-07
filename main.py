@@ -151,8 +151,14 @@ if __name__ == "__main__":
     args = parser.parse_args()
     assert args.epoch >= args.freeze_epoch
 
+    if args.cuda < 0:
+        device = 'cpu'
+    else:
+        device = f'cuda:{args.cuda}'
+
     start_time = time.time()
     print('####################')
+    print('Device used:', device)
     print('Preparing data ...')
     split_data(args)
     print('Setup finished!')
@@ -204,6 +210,6 @@ if __name__ == "__main__":
 
     # Interactive RL Agent
     print('RL Agent training starts...')
-    agent = getAgent(repr_user, item_emb, args)
+    agent = getAgent(repr_user.to(device), item_emb.to(device), args)
     print('####################')
     print('Runtime:', time.time() - start_time, 'seconds')
