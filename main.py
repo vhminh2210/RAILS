@@ -137,13 +137,13 @@ if __name__ == "__main__":
                         help= 'Conservative Q learning weight')
     parser.add_argument('--cql_invZ', type=float, default=1.0,
                         help= 'Inverse normalization factor Z for CQL(rho)')
-    parser.add_argument('--seq_ratio', type=float, default=0.2,
+    parser.add_argument('--seq_ratio', type=float, default=0.1,
                         help= 'Sequential partition ratio')
-    parser.add_argument('--rare_ratio', type=float, default=0.3,
+    parser.add_argument('--rare_ratio', type=float, default=0.4,
                         help= 'Rare-action partition ratio')
     parser.add_argument('--rand_ratio', type=float, default=0.5,
                         help= 'Random partition ratio')
-    parser.add_argument('--rare_thresh', type=float, default=0.1,
+    parser.add_argument('--rare_thresh', type=float, default=0.3,
                         help= 'Rarity threshold')
     parser.add_argument('--n_augment', type=int, default=5,
                         help= 'Number of augmented transition generated per existed transition')

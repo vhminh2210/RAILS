@@ -23,7 +23,7 @@ def stateAugment(observation, action, n_augment):
     
     return aug_obsevations, aug_actions
 
-def setInteraction(env, agent, ep_user, train_df, obswindow, augment= True):
+def setInteraction(env, agent, ep_user, train_df, obswindow, augment= True, ckpt= False):
     user_df = train_df[train_df['user_id'] == ep_user]
     state_list = []
     for obs in user_df['item_id'].rolling(obswindow):
@@ -38,7 +38,10 @@ def setInteraction(env, agent, ep_user, train_df, obswindow, augment= True):
         if augment:
             aug_obsevations, aug_actions = stateAugment(observation, action, args.n_augment)
         else:
-            aug_obsevations, aug_actions = stateAugment(observation, action, int(args.n_augment / 5))
+            if not ckpt:
+                aug_obsevations, aug_actions = stateAugment(observation, action, int(args.n_augment / 5))
+            else:
+                aug_obsevations, aug_actions = stateAugment(observation, action, 0)
 
         for i in range(len(aug_actions)):
             s = np.array(env.reset(aug_obsevations[i]))
@@ -94,14 +97,10 @@ def recommender(agent, train_episodes, ep_user, train_df, test_df, train_dict,
         user_num += 1
 
     trainAgent(agent, args.step_max)
-    if ep_user % 3 == 0:
-        # prec, ndcg = evaluate(agent, train_episodes, train_df, test_df, train_dict,
-        #                     item_sim_dict, item_quality_dict, item_pop_dict,
-        #                     max_item_id, mask_list, repr_user, item_emb, args, ckpt= True)
-        # return prec, ndcg
-        return None, None
-    else:
-        return None, None
+    prec, ndcg = evaluate(agent, train_episodes, train_df, test_df, train_dict,
+                        item_sim_dict, item_quality_dict, item_pop_dict,
+                        max_item_id, mask_list, repr_user, item_emb, args, ckpt= True)
+    return prec, ndcg
 
 def evaluate(agent, ep_users, train_df, test_df, train_dict,
             item_sim_dict, item_quality_dict, item_pop_dict,
@@ -121,7 +120,7 @@ def evaluate(agent, ep_users, train_df, test_df, train_dict,
         # Simulate the enviroment, regarding [ep_user] preferences
         env = environment.Env(ep_user, train_dict[ep_user][-args.obswindow:], list(range(max_item_id + 1)),
                           item_sim_dict, item_pop_dict, item_quality_dict, ep_mask_list, args.sim_mode, repr_user, item_emb, args)
-        interaction_num = setInteraction(env, agent, ep_user, train_df, args.obswindow, augment= False)
+        interaction_num = setInteraction(env, agent, ep_user, train_df, args.obswindow, augment= False, ckpt= ckpt)
         if interaction_num <= 20:
             continue
         

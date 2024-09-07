@@ -94,9 +94,9 @@ class Env():
                         if str(action) in self.item_sim_matrix[str(s[-(i + 1)])].keys():
                             r_acc += (self.eta ** i) * self.item_sim_matrix[str(s[-(i + 1)])][str(action)]
 
-            # # Normalized similarity score to [-1, 1]
-            # r = r_acc / self.n_observation + r_div
-            r = r_acc + r_div
+            # Normalized similarity score to [-1, 1]
+            r = r_acc / self.n_observation + r_div
+            # r = r_acc + r_div
         if r > 0:
             # If the reward is positive, append [action] to [observations]
             s_temp_ = np.append(so, action)

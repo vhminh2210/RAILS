@@ -67,6 +67,15 @@ class Net(nn.Module):
         else:
             self.embd = None
 
+        # Consult https://wandb.ai/wandb_fc/tips/reports/How-to-Initialize-Weights-in-PyTorch--VmlldzoxNjcwOTg1
+        self.apply(self._init_weights) 
+
+    def _init_weights(self, module):
+        if isinstance(module, nn.Linear):
+            nn.init.kaiming_normal_(module.weight, mode='fan_out', nonlinearity='relu')
+            if module.bias is not None:
+                module.bias.data.zero_()
+
     def forward(self, inputs):
         if self.dueling:
             # Dueling DQN
@@ -117,6 +126,8 @@ class DQN(object):
         self.train_loss = []
         self.args = args
 
+        self.buffered_q = None
+
         self.reward_mean = 0.0
         self.reward_std = 1.0
         self.state_mean = 0.0
@@ -136,7 +147,8 @@ class DQN(object):
             self.target_net = Net(self.n_states, embd.weight.shape[-1], 256, 
                                 embd= embd, dueling= self.args.dueling_dqn)
         self.optimizer = torch.optim.Adam(self.eval_net.parameters(), lr=self.lr)
-        self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optimizer, T_max = self.args.episode_max * self.args.step_max)
+        self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optimizer, 
+                                                                    T_max = int(self.args.episode_max * self.args.step_max / 2))
         self.loss_func = nn.MSELoss()
         hard_update(self.target_net, self.eval_net) # Transfer weights from eval_q_net to target_q_net
         if (torch.cuda.is_available()):
@@ -305,12 +317,13 @@ class DQN(object):
 
         return batch_state, batch_action, batch_reward, batch_state_
 
-    def CQLLoss(self, q_values, current_action):
+    def CQLLoss(self, q_values, current_action, buffered_q = None):
         '''
         Consult: https://github.com/BY571/CQL/blob/main/CQL-DQN/agent.py#L45
         Notations follow https://arxiv.org/pdf/2006.04779 
 
-        q_values.shape = batch_size, n_actions
+        q_values.shape = batch_size, n_actions # Q_values under current policy
+        buffered_q.shape = batch_size, n_actions # Q_values under previous policy
         current_actinos.shape = batch_size, 1
         '''
         if self.args.cql_mode == 'none':
@@ -322,11 +335,15 @@ class DQN(object):
             q_a = q_values.gather(1, current_action)
             return (logsumexp - q_a).mean()
         elif self.args.cql_mode == 'cql_Rho':
-            policy_max_Q, _ = torch.max(q_values, dim= 1)
-            # Minimize Q-values
-            minimizer = self.args.cql_invZ * policy_max_Q * torch.exp(policy_max_Q)
+            try:
+                assert buffered_q is not None
+            except:
+                raise ValueError('Q_values from previous policy must not be None for CQL(rho)!')
             # Maximize Q-values under data
             maximizer = q_values.gather(1, current_action)
+            # Minimize Q-values
+            buffered_max_Q, _ = torch.max(buffered_q, dim= 1)
+            minimizer = self.args.cql_invZ * buffered_max_Q * torch.exp(buffered_max_Q)
             return (minimizer - maximizer).mean()
         else:
             raise NotImplementedError(f'CQL mode {self.args.cql_mode} not defined!')
@@ -345,7 +362,7 @@ class DQN(object):
             batch_reward = batch_reward.cuda()
             batch_state_ = batch_state_.cuda()
 
-        raw_q_eval = self.eval_net(batch_state) # batch_size, n_actinos
+        raw_q_eval = self.eval_net(batch_state) # batch_size, n_actions
         q_eval = raw_q_eval.gather(1, batch_action) # batch_size, 1
         q_next = self.target_net(batch_state_).detach() # detach target_net from gradient updates (?)
 
@@ -359,8 +376,11 @@ class DQN(object):
             raise NotImplementedError(f'DQN update mode {self.mode} not found!')
 
         # Conservative Q learning
-        cql_loss = self.CQLLoss(raw_q_eval, batch_action)
+        if self.buffered_q is None:
+            self.buffered_q = raw_q_eval.detach().clone() # Initialized self.buffered_q
+        cql_loss = self.CQLLoss(raw_q_eval, batch_action, self.buffered_q)
         bellman_loss = self.loss_func(q_eval, q_target.detach()) # Detach q_target
+        self.buffered_q = raw_q_eval.detach().clone() # Update self.buffered_q
 
         loss = self.args.cql_alpha * cql_loss + 0.5 * bellman_loss
         self.train_loss.append(loss.item())
