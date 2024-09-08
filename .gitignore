@@ -1,9 +1,9 @@
 *.npy
-*.npz
+# *.npz
 *.pyc
 *.so
 *.o
 *.cpp
-*.tar
+# *.tar
 *.png
 exps
