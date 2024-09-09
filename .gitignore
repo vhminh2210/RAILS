@@ -5,5 +5,6 @@
 *.o
 *.cpp
 # *.tar
-*.png
+# *.png
 exps
+figs
