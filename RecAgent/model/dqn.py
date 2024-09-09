@@ -307,12 +307,14 @@ class DQN(object):
 
     def sampling(self):
         samples = []
+        splits = []
         for mode in range(3):
             sample_index = np.random.choice(len(self.memory[mode]), 
                                             min(self.pbatch_size[mode], len(self.memory[mode])))
             # (batch_size, transition_shape)
             batch_memory = self.memory[mode][sample_index, :].reshape((self.pbatch_size[mode], -1))
             samples.append(batch_memory)
+            splits.append(min(self.pbatch_size[mode], len(self.memory[mode])))
         
         batch_memory = np.concatenate(samples, axis= 0)
         
@@ -321,7 +323,7 @@ class DQN(object):
         batch_reward = torch.tensor(batch_memory[:, self.n_states + 1:self.n_states + 2], dtype=torch.float32)
         batch_state_ = torch.tensor(batch_memory[:, -self.n_states:], dtype=torch.float32)
 
-        return batch_state, batch_action, batch_reward, batch_state_
+        return batch_state, batch_action, batch_reward, batch_state_, torch.tensor(splits)
 
     def CQLLoss(self, q_values, current_action, buffered_q = None):
         '''
@@ -360,12 +362,13 @@ class DQN(object):
             self.target_net.load_state_dict(self.eval_net.state_dict())
         self.learn_step_counter += 1
 
-        batch_state, batch_action, batch_reward, batch_state_ = self.sampling()
+        batch_state, batch_action, batch_reward, batch_state_, splits = self.sampling()
 
         batch_state = batch_state.to(self.device)
         batch_action = batch_action.to(self.device)
         batch_reward = batch_reward.to(self.device)
         batch_state_ = batch_state_.to(self.device)
+        splits = splits.to(self.device)
 
         raw_q_eval = self.eval_net(batch_state) # batch_size, n_actions
         q_eval = raw_q_eval.gather(1, batch_action) # batch_size, 1
@@ -380,11 +383,19 @@ class DQN(object):
         else:
             raise NotImplementedError(f'DQN update mode {self.mode} not found!')
 
+        # Partition-weighted Bellman loss
+        weights = splits / torch.sum(splits)
+
+        seq_loss = self.loss_func(q_eval[ : splits[0]], q_target[ : splits[0]].detach())
+        rare_loss = self.loss_func(q_eval[splits[0] : splits[1]], q_target[splits[0] : splits[1]].detach())
+        rand_loss = self.loss_func(q_eval[splits[1] : ], q_target[splits[1] : ].detach())
+
+        bellman_loss = weights[0] * seq_loss + weights[1] * rare_loss + weights[2] * rand_loss
+
         # Conservative Q learning
         if self.buffered_q is None:
             self.buffered_q = raw_q_eval.detach().clone() # Initialized self.buffered_q
         cql_loss = self.CQLLoss(raw_q_eval, batch_action, self.buffered_q)
-        bellman_loss = self.loss_func(q_eval, q_target.detach()) # Detach q_target
         self.buffered_q = raw_q_eval.detach().clone() # Update self.buffered_q
 
         loss = self.args.cql_alpha * cql_loss + 0.5 * bellman_loss

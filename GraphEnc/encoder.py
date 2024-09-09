@@ -688,14 +688,18 @@ def getEncoder(args):
     print('####################')
     print('Running evaluations on trained encoder ...')
 
-    model = restore_best_checkpoint(data.best_valid_epoch, model, base_path, device)
-    print_str = "The best epoch is % d" % data.best_valid_epoch
-    with open(base_path +'stats_{}.txt'.format(args.saveID), 'a') as f:
-        f.write(print_str + "\n")
+    if args.pretrained_graph:
+        model, start_epoch = restore_checkpoint(model, base_path, device)
 
-    for i,evaluator in enumerate(evaluators[:]):
-        evaluation(args, data, model, epoch, base_path, evaluator, eval_names[i])
-    with open(base_path +'stats_{}.txt'.format(args.saveID), 'a') as f:
-        f.write(print_str + "\n")
+    else:
+        model = restore_best_checkpoint(data.best_valid_epoch, model, base_path, device)
+        print_str = "The best epoch is % d" % data.best_valid_epoch
+        with open(base_path +'stats_{}.txt'.format(args.saveID), 'a') as f:
+            f.write(print_str + "\n")
+
+        for i,evaluator in enumerate(evaluators[:]):
+            evaluation(args, data, model, epoch, base_path, evaluator, eval_names[i])
+        with open(base_path +'stats_{}.txt'.format(args.saveID), 'a') as f:
+            f.write(print_str + "\n")
 
     return model, data

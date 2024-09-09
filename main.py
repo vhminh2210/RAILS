@@ -22,6 +22,8 @@ if __name__ == "__main__":
                         help= 'Datasets root directory')
     parser.add_argument('--sim_mode', type=str, default='stats',
                         help= 'Similarity mode for relevance score')
+    parser.add_argument('--pretrained_graph', action='store_true', default=False,
+                        help= 'Use pretrained graph')
     
     # Graph encoder params
     parser.add_argument('--vis', nargs='?', default=-1,
@@ -137,13 +139,13 @@ if __name__ == "__main__":
                         help= 'Conservative Q learning weight')
     parser.add_argument('--cql_invZ', type=float, default=1.0,
                         help= 'Inverse normalization factor Z for CQL(rho)')
-    parser.add_argument('--seq_ratio', type=float, default=0.2,
+    parser.add_argument('--seq_ratio', type=float, default=0.3,
                         help= 'Sequential partition ratio')
-    parser.add_argument('--rare_ratio', type=float, default=0.3,
+    parser.add_argument('--rare_ratio', type=float, default=0.2,
                         help= 'Rare-action partition ratio')
     parser.add_argument('--rand_ratio', type=float, default=0.5,
                         help= 'Random partition ratio')
-    parser.add_argument('--rare_thresh', type=float, default=0.3,
+    parser.add_argument('--rare_thresh', type=float, default=0.1,
                         help= 'Rarity threshold')
     parser.add_argument('--n_augment', type=int, default=5,
                         help= 'Number of augmented transition generated per existed transition')
