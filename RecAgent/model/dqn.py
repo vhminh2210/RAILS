@@ -127,8 +127,6 @@ class DQN(object):
         self.train_loss = []
         self.args = args
 
-        self.buffered_q = None
-
         if self.args.cuda < 0:
             self.device = 'cpu'
         else:
@@ -146,9 +144,12 @@ class DQN(object):
 
         if embd is None:
             self.eval_net = Net(self.n_states, self.n_actions, 256, dueling= self.args.dueling_dqn)
+            self.buffered_net = Net(self.n_states, self.n_actions, 256, dueling= self.args.dueling_dqn)
             self.target_net = Net(self.n_states, self.n_actions, 256, dueling= self.args.dueling_dqn)
         else:
             self.eval_net = Net(self.n_states, embd.weight.shape[-1], 256, 
+                                embd= embd.to(self.device), dueling= self.args.dueling_dqn)
+            self.buffered_net = Net(self.n_states, embd.weight.shape[-1], 256, 
                                 embd= embd.to(self.device), dueling= self.args.dueling_dqn)
             self.target_net = Net(self.n_states, embd.weight.shape[-1], 256, 
                                 embd= embd.to(self.device), dueling= self.args.dueling_dqn)
@@ -173,6 +174,7 @@ class DQN(object):
 
         # Load components to device
         self.eval_net = self.eval_net.to(self.device)
+        self.buffered_net = self.buffered_net.to(self.device)
         self.target_net = self.target_net.to(self.device)
         self.loss_func = self.loss_func.to(self.device)
 
@@ -325,14 +327,14 @@ class DQN(object):
 
         return batch_state, batch_action, batch_reward, batch_state_, torch.tensor(splits)
 
-    def CQLLoss(self, q_values, current_action, buffered_q = None):
+    def CQLLoss(self, q_values, current_action, buffered_action = None):
         '''
         Consult: https://github.com/BY571/CQL/blob/main/CQL-DQN/agent.py#L45
         Notations follow https://arxiv.org/pdf/2006.04779 
 
         q_values.shape = batch_size, n_actions # Q_values under current policy
-        buffered_q.shape = batch_size, n_actions # Q_values under previous policy
-        current_actinos.shape = batch_size, 1
+        buffered_action.shape = batch_size, 1
+        current_action.shape = batch_size, 1
         '''
         if self.args.cql_mode == 'none':
             return 0
@@ -344,14 +346,13 @@ class DQN(object):
             return (logsumexp - q_a).mean()
         elif self.args.cql_mode == 'cql_Rho':
             try:
-                assert buffered_q is not None
+                assert buffered_action is not None
             except:
                 raise ValueError('Q_values from previous policy must not be None for CQL(rho)!')
             # Maximize Q-values under data
             maximizer = q_values.gather(1, current_action)
             # Minimize Q-values
-            buffered_max_Q, _ = torch.max(buffered_q, dim= 1)
-            minimizer = self.args.cql_invZ * buffered_max_Q * torch.exp(buffered_max_Q)
+            minimizer = q_values.gather(1, buffered_action) # batch_size, 1
             return (minimizer - maximizer).mean()
         else:
             raise NotImplementedError(f'CQL mode {self.args.cql_mode} not defined!')
@@ -371,6 +372,7 @@ class DQN(object):
         splits = splits.to(self.device)
 
         raw_q_eval = self.eval_net(batch_state) # batch_size, n_actions
+        buffered_q_eval = self.buffered_net(batch_state) # batch_size, n_actions
         q_eval = raw_q_eval.gather(1, batch_action) # batch_size, 1
         q_next = self.target_net(batch_state_).detach() # detach target_net from gradient updates (?)
 
@@ -393,10 +395,8 @@ class DQN(object):
         bellman_loss = weights[0] * seq_loss + weights[1] * rare_loss + weights[2] * rand_loss
 
         # Conservative Q learning
-        if self.buffered_q is None:
-            self.buffered_q = raw_q_eval.detach().clone() # Initialized self.buffered_q
-        cql_loss = self.CQLLoss(raw_q_eval, batch_action, self.buffered_q)
-        self.buffered_q = raw_q_eval.detach().clone() # Update self.buffered_q
+        buffered_action = torch.argmax(buffered_q_eval, dim= 1).unsqueeze(dim= 1)
+        cql_loss = self.CQLLoss(raw_q_eval, batch_action, buffered_action)
 
         loss = self.args.cql_alpha * cql_loss + 0.5 * bellman_loss
         self.train_loss.append(loss.item())
@@ -410,6 +410,10 @@ class DQN(object):
         
         # Fuse eval_net into target_net with temperature tau
         soft_update(self.target_net, self.eval_net, self.tau)
+
+        # Update buffered 
+        if self.args.cql_mode == 'cql_Rho':
+            hard_update(self.buffered_net, self.eval_net)
 
     def stats_plot(self, args, precision= None, ndcg= None):
         if not os.path.exists('exps'):
