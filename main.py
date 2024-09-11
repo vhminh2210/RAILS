@@ -193,15 +193,24 @@ if __name__ == "__main__":
 
         # Build representative user embeddings for each item
         repr_user = []
+        wild_items = []
         for item in range(data.n_items):
-            ru_item = 0 # Representative user for item
-            for user in data.train_item_list[item]:
-                ru_item = ru_item + user_emb[user] / torch.linalg.norm(user_emb[user])
-            ru_item = ru_item / len(data.train_item_list[item])
-            # Normalize representatives embedding
-            # ru_item = ru_item / torch.linalg.norm(ru_item)
+            ru_item = torch.zeros_like(user_emb[0]) # Representative user for item
+
+            if item in data.train_item_list.keys():
+                for user in data.train_item_list[item]:
+                    ru_item = ru_item + user_emb[user] / torch.linalg.norm(user_emb[user])
+                ru_item = ru_item / len(data.train_item_list[item])
+            else:
+                # Wild item found!
+                wild_items.append(item)
+
             repr_user.append(ru_item)
-        repr_user = torch.stack(repr_user, axis= 0)
+
+        wild_items = torch.tensor(wild_items).int()
+        repr_user = torch.stack(repr_user, axis= 0) # n_item, embedding_dim
+        repr_user[wild_items] = torch.mean(repr_user, dim= 0)
+        print(f'{wild_items.shape[0]} wild items found!')
         print('Representative user embeddings shape:', repr_user.shape)
         
         repr_user = nn.Embedding.from_pretrained(repr_user)

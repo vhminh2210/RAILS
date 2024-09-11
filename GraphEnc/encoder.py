@@ -676,6 +676,7 @@ def getEncoder(args):
                 is_best, temp_flag = evaluation(args, data, model, epoch, base_path, evaluator,eval_names[i])
                 
                 if is_best:
+                    print('Saving GraphEnc checkpoint!!!')
                     checkpoint_buffer=save_checkpoint(model, epoch, base_path, checkpoint_buffer, args.max2keep)
                 
                 if temp_flag:
