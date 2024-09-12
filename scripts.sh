@@ -1,7 +1,7 @@
 #/bin/sh
 # python GraphEnc/setup.py build_ext --inplace 2> /dev/null
 python main.py --modeltype BC_LOSS \
-                --epoch 30 \
+                --epoch 410 \
                 --enc_batch_size 512 \
                 --root datasets \
                 --dataset d1 \
@@ -10,7 +10,7 @@ python main.py --modeltype BC_LOSS \
                 --sim_mode user_embedding \
                 --freeze_epoch 5 \
                 --cuda -1 \
-                --episode_max 128\
+                --episode_max 256\
                 --step_max 2048 \
                 --memory 16394 \
                 --nov_beta 0.0 \
@@ -20,11 +20,12 @@ python main.py --modeltype BC_LOSS \
                 --agent_lr 5e-5 \
                 --replace_freq 100 \
                 --tau 0.01 \
-                --gamma 0.99 \
+                --gamma 0.999 \
                 --cql_mode cql_H \
                 --dueling_dqn \
                 --n_augment 20 \
-                --rare_thresh 0.05 \
+                --rare_thresh 0.1 \
                 --seq_ratio 0.2 \
                 --rare_ratio 0.3 \
                 --rand_ratio 0.5 \
+                --topk 20

@@ -20,6 +20,9 @@ def hard_update(target, source):
 class Net(nn.Module):
     def __init__(self, num_inputs, num_outputs, hidden_size, embd= None, dueling= False):
         super(Net, self).__init__()
+        # self.linear0 = nn.Linear(num_inputs, hidden_size)
+        # self.ln0 = nn.LayerNorm(hidden_size)
+
         self.linear1 = nn.Linear(num_inputs, hidden_size)
         self.ln1 = nn.LayerNorm(hidden_size)
 
@@ -80,6 +83,7 @@ class Net(nn.Module):
         if self.dueling:
             # Dueling DQN
             x = inputs
+            # x = F.relu(self.ln0(self.linear0(x)))
             x = F.relu(self.ln1(self.linear1(x)))
 
             # Value branch
@@ -99,6 +103,7 @@ class Net(nn.Module):
         
         else:
             x = inputs
+            # x = F.relu(self.ln0(self.linear0(x)))
             x = F.relu(self.ln1(self.linear1(x)))
             x = F.relu(self.ln2(self.linear2(x)))
 
@@ -373,7 +378,9 @@ class DQN(object):
         splits = splits.to(self.device)
 
         raw_q_eval = self.eval_net(batch_state) # batch_size, n_actions
-        buffered_q_eval = self.buffered_net(batch_state) # batch_size, n_actions
+        buffered_q_eval = None
+        if self.args.cql_mode == 'cql_Rho':
+            buffered_q_eval = self.buffered_net(batch_state) # batch_size, n_actions
         q_eval = raw_q_eval.gather(1, batch_action) # batch_size, 1
         q_next = self.target_net(batch_state_).detach() # detach target_net from gradient updates (?)
 
@@ -396,7 +403,9 @@ class DQN(object):
         bellman_loss = weights[0] * seq_loss + weights[1] * rare_loss + weights[2] * rand_loss
 
         # Conservative Q learning
-        buffered_action = torch.argmax(buffered_q_eval, dim= 1).unsqueeze(dim= 1)
+        buffered_action = None
+        if self.args.cql_mode == 'cql_Rho':
+            buffered_action = torch.argmax(buffered_q_eval, dim= 1).unsqueeze(dim= 1)
         cql_loss = self.CQLLoss(raw_q_eval, batch_action, buffered_action)
 
         loss = self.args.cql_alpha * cql_loss + 0.5 * bellman_loss
