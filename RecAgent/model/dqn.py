@@ -425,7 +425,7 @@ class DQN(object):
         if self.args.cql_mode == 'cql_Rho':
             hard_update(self.buffered_net, self.eval_net)
 
-    def stats_plot(self, args, precision= None, ndcg= None):
+    def stats_plot(self, args, precision= None, recall= None, ndcg= None):
         if not os.path.exists('exps'):
             os.mkdir('exps')
         now = datetime.now()
@@ -446,7 +446,14 @@ class DQN(object):
         if precision is not None:
             save_pth = os.path.join(root, f'precision.png')
             plt.plot(precision)
-            plt.title('Test accucracy')
+            plt.title(f'Test Precision@{args.topk}')
+            plt.savefig(save_pth)
+            plt.clf()
+
+        if recall is not None:
+            save_pth = os.path.join(root, f'recall.png')
+            plt.plot(recall)
+            plt.title(f'Test Recall@{args.topk}')
             plt.savefig(save_pth)
             plt.clf()
 
