@@ -13,9 +13,18 @@ def agent_data(filename, args):
 
     fields = ['user_id', 'item_id', 'ratings', 'timestamp']
 
-    with open(TXT, 'r') as file:
-        Lines = file.readlines()
-        file.close()
+    try:
+        with open(TXT, 'r') as file:
+            Lines = file.readlines()
+            file.close()
+    except:
+        root = os.path.join(args.root, args.dataset)
+        lst = ['train', 'val', 'test']
+        df = pd.concat([
+            pd.read_csv(os.path.join(root, f'{args.dataset}.{filename}')) for filename in lst
+        ], ignore_index= True)
+        df.to_csv(CSV)
+        return
 
     rows = []
 
@@ -50,6 +59,12 @@ def split_data(args, train_ratio= 0.8, val_ratio= 0.1, test_ratio= 0.1, seed= 10
     if os.path.exists(TRAIN) or os.path.exists(VAL) or os.path.exists(TEST):
         print('Data splits seems to have already existed.')
         print('Delete existring train.txt, val.txt, test.txt to re-split the dataset.')
+        
+        # Data for RL agents
+        agent_data('train', args)
+        agent_data('val', args)
+        agent_data('test', args)
+        agent_data('dat', args)
         return
 
     with open(TXT, 'r') as file:

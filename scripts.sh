@@ -1,20 +1,21 @@
 #/bin/sh
 # python GraphEnc/setup.py build_ext --inplace 2> /dev/null
 python main.py --modeltype BC_LOSS \
-                --epoch 410 \
-                --enc_batch_size 512 \
+                --epoch 35 \
+                --pretrained_graph \
+                --enc_batch_size 1024 \
                 --root datasets \
-                --dataset d1 \
+                --dataset amazon-book \
                 --n_layers 2 \
                 --neg_sample 128 \
                 --sim_mode user_embedding \
                 --freeze_epoch 5 \
                 --cuda -1 \
-                --episode_max 256\
+                --episode_max 128\
                 --step_max 2048 \
                 --memory 16394 \
                 --nov_beta 0.0 \
-                --agent_batch 128 \
+                --agent_batch 512 \
                 --dqn_mode ddqn \
                 --eta 1.0 \
                 --agent_lr 5e-5 \
