@@ -5,17 +5,17 @@ python main.py --modeltype BC_LOSS \
                 --pretrained_graph \
                 --enc_batch_size 1024 \
                 --root datasets \
-                --dataset amazon-book \
+                --dataset d1 \
                 --n_layers 2 \
                 --neg_sample 128 \
                 --sim_mode user_embedding \
                 --freeze_epoch 5 \
                 --cuda -1 \
                 --episode_max 128\
-                --step_max 2048 \
+                --step_max 128 \
                 --memory 16394 \
                 --nov_beta 0.0 \
-                --agent_batch 512 \
+                --agent_batch 256 \
                 --dqn_mode ddqn \
                 --eta 1.0 \
                 --agent_lr 5e-5 \
@@ -29,4 +29,5 @@ python main.py --modeltype BC_LOSS \
                 --seq_ratio 0.2 \
                 --rare_ratio 0.3 \
                 --rand_ratio 0.5 \
-                --topk 20
+                --topk 20 \
+                --eval_freq 5

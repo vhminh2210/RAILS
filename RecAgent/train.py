@@ -96,6 +96,8 @@ def recommender(agent, train_episodes, ep_user, train_df, test_df, train_dict, i
         user_num += 1
 
     trainAgent(agent, args.step_max)
+    if ep_user % args.eval_freq != 0:
+        return None, None, None
     prec, recall, ndcg = evaluate(agent, train_episodes, train_df, test_df, train_dict, item_pop_dict,
                         max_item_id, mask_list, repr_user, item_emb, args, ckpt= True)
     return prec, recall, ndcg
@@ -110,6 +112,8 @@ def evaluate(agent, ep_users, train_df, test_df, train_dict, item_pop_dict,
     for ep_user in ep_users:
         if not ckpt:
             print('Evaluating user', ep_user)
+        if ckpt and ep_user % args.eval_freq != 0:
+            continue
         last_obs = train_dict[ep_user][-args.obswindow:]
         ep_mask_list = copy.copy(mask_list)
         ep_mask_list.extend(train_dict[ep_user][:-1])

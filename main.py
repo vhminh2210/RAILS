@@ -149,6 +149,8 @@ if __name__ == "__main__":
                         help= 'Rarity threshold')
     parser.add_argument('--n_augment', type=int, default=5,
                         help= 'Number of augmented transition generated per existed transition')
+    parser.add_argument('--eval_freq', type=int, default=1,
+                        help= 'Frequency of RL Agent evaluation')
 
     args = parser.parse_args()
     assert args.epoch >= args.freeze_epoch
