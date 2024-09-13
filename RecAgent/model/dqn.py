@@ -192,42 +192,21 @@ class DQN(object):
         state = state.to(torch.float).to(self.device)
         actions_Q = self.eval_net.forward(state)
 
-        actions_Q = actions_Q.cpu().detach().numpy()
-
-        temp_actions_Qvalue = []
-        for index in range(env.n_actions):
-            temp_actions_Qvalue.append(actions_Q[0][index])
-
-        actions_Qvalue = torch.from_numpy(np.array(temp_actions_Qvalue))
-        actions_Qvalue = torch.unsqueeze(actions_Qvalue, 0)
-
-        actions_Qvalue_list = actions_Qvalue.tolist()[0]
-        sorted_Qvalue = sorted(actions_Qvalue_list, reverse= True)
+        actions_Q = actions_Q.cpu().detach().numpy().squeeze() # (n_actions)
+        sorted_ids = sorted(range(actions_Q.size), key= lambda x:actions_Q[x])
 
         rec_list = []
         cnt = 0
-        patient = 0
 
-        while len(rec_list) < self.K:
-            patient += 1
-            flag = False
-            # Exploitation
-            if np.random.uniform() < self.epsilon or mode == 'infer':
-                if cnt < len(actions_Qvalue_list):
-                    action = actions_Qvalue_list.index(sorted_Qvalue[cnt])
-                    flag = True
-                    cnt += 1
-                else:
-                    action = np.random.randint(0, self.n_actions)
-            # Exploration - epsilon greedy
-            else:
-                action = np.random.randint(0, self.n_actions)
-            # If action is not masked (by being chosen before, etc...)
-            if action not in env.mask_list and action not in rec_list:
-                rec_list.append(action)
-                env.mask_list.append(action)
-            if patient == 10000:
+        for i in range(actions_Q.size):
+            candidate = sorted_ids[i]
+            if candidate in env.mask_list:
+                continue
+            rec_list.append(candidate)
+            cnt += 1
+            if cnt == self.args.topk:
                 break
+
         return rec_list
 
     def align_memory(self):

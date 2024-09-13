@@ -11,7 +11,7 @@ python main.py --modeltype BC_LOSS \
                 --sim_mode user_embedding \
                 --freeze_epoch 5 \
                 --cuda -1 \
-                --episode_max 128\
+                --episode_max 32\
                 --step_max 128 \
                 --memory 16394 \
                 --nov_beta 0.0 \
@@ -30,4 +30,4 @@ python main.py --modeltype BC_LOSS \
                 --rare_ratio 0.3 \
                 --rand_ratio 0.5 \
                 --topk 20 \
-                --eval_freq 5
+                --eval_freq 1
