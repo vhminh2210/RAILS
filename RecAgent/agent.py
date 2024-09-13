@@ -33,32 +33,9 @@ def getAgent(repr_user, item_emb, args):
         mask_list = list(set(list(range(max_item_id + 1))) - set(item_list))
         mat_path = os.path.join(dat_dir, f'{args.dataset}.mat')
 
-        # # Generate pre-calculated similarity, popularity and quality matrix
-        # if os.path.exists(mat_path):
-        #     item_sim_dict = load_dict(mat_path)
-        # else:
-        #     sim_matrix_generate(dat_path, mat_path)
-        #     item_sim_dict = load_dict(mat_path)
-        
-        # qua_path = os.path.join(dat_dir, f'{args.dataset}.qua')
-        # if os.path.exists(qua_path):
-        #     item_quality_dict = load_dict(qua_path)
-        # else:
-        #     item_quality_generate(dat_path, qua_path)
-        #     item_quality_dict = load_dict(qua_path)
-        
-        # Popularity dict: {item1 : popularity_percentile_of_item1, ...}
-        # NOTE: Least popular item: percentile = 0.0, Most popular item: percentile = 1.0
-        pop_path = os.path.join(dat_dir, f'{args.dataset}.pop')
-        if os.path.exists(pop_path):
-            item_pop_dict = load_dict(pop_path)
-        else:
-            item_popularity_generate(dat_path, pop_path)
-            item_pop_dict = load_dict(pop_path)
-
         # Train - val - test split
         train_path = os.path.join(dat_dir, f'{args.dataset}.train')
-        valid_path = os.path.join(dat_dir, f'{args.dataset}.valid')
+        valid_path = os.path.join(dat_dir, f'{args.dataset}.val')
         test_path = os.path.join(dat_dir, f'{args.dataset}.test')
         if (os.path.exists(train_path)) \
                 & (os.path.exists(valid_path)) \
@@ -77,6 +54,16 @@ def getAgent(repr_user, item_emb, args):
                                    names=['user_id', 'item_id', 'ratings', 'timestamp'])
             test_df = pd.read_csv(test_path, sep=',',
                                   names=['user_id', 'item_id', 'ratings', 'timestamp'])
+            
+        # Popularity dict: {item1 : popularity_percentile_of_item1, ...}
+        # NOTE: Least popular item: percentile = 0.0, Most popular item: percentile = 1.0
+        pop_path = os.path.join(dat_dir, f'{args.dataset}.pop')
+        if os.path.exists(pop_path):
+            item_pop_dict = load_dict(pop_path)
+        else:
+            # item_popularity_generate(dat_path, pop_path)
+            item_popularity_generate(train_path, pop_path) # Use training set to generate popularity info
+            item_pop_dict = load_dict(pop_path)
     else:
         print("Please check if the dataset file exists!")
 
