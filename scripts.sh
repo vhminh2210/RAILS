@@ -15,7 +15,7 @@ python main.py --modeltype BC_LOSS \
                 --step_max 2048 \
                 --memory 16394 \
                 --nov_beta 0.0 \
-                --agent_batch 256 \
+                --agent_batch 128 \
                 --dqn_mode ddqn \
                 --eta 1.0 \
                 --agent_lr 5e-5 \
@@ -30,4 +30,4 @@ python main.py --modeltype BC_LOSS \
                 --rare_ratio 0.3 \
                 --rand_ratio 0.5 \
                 --topk 20 \
-                --eval_freq 1
+                --eval_freq 100

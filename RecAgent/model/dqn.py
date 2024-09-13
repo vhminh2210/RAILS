@@ -193,7 +193,7 @@ class DQN(object):
         actions_Q = self.eval_net.forward(state)
 
         actions_Q = actions_Q.cpu().detach().numpy().squeeze() # (n_actions)
-        sorted_ids = sorted(range(actions_Q.size), key= lambda x:actions_Q[x])
+        sorted_ids = sorted(range(actions_Q.size), key= lambda x:-actions_Q[x])
 
         rec_list = []
         cnt = 0
