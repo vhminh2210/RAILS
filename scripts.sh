@@ -1,7 +1,7 @@
 #/bin/sh
 # python GraphEnc/setup.py build_ext --inplace 2> /dev/null
 python main.py --modeltype BC_LOSS \
-                --epoch 35 \
+                --epoch 410 \
                 --pretrained_graph \
                 --enc_batch_size 1024 \
                 --root datasets \
@@ -11,8 +11,8 @@ python main.py --modeltype BC_LOSS \
                 --sim_mode user_embedding \
                 --freeze_epoch 5 \
                 --cuda -1 \
-                --episode_max 32\
-                --step_max 128 \
+                --episode_max 256\
+                --step_max 2048 \
                 --memory 16394 \
                 --nov_beta 0.0 \
                 --agent_batch 256 \

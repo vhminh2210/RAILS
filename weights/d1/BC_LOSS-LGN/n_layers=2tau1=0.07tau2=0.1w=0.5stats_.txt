@@ -3631,3 +3631,6 @@ test_id:{'recall': 0.814591, 'hit_ratio': 1.0, 'precision': 0.14675045, 'ndcg': 
 Epoch 409 [11.3s]: train==[1.93496=1.05025 + 0.88364 + 0.00107]
 valid:{'recall': 0.8156832, 'hit_ratio': 0.98739874, 'precision': 0.10441101, 'ndcg': 0.591407, 'mrr': 0.581043, 'map': 0.539035}
 test_id:{'recall': 0.8137541, 'hit_ratio': 1.0, 'precision': 0.14612544, 'ndcg': 0.7958835, 'mrr': 0.945133, 'map': 0.84022975}
+Epoch 409 [11.0s]: train==[1.94115=1.05390 + 0.88618 + 0.00107]
+valid:{'recall': 0.81242555, 'hit_ratio': 0.98649865, 'precision': 0.10400597, 'ndcg': 0.58779854, 'mrr': 0.57751256, 'map': 0.53740644}
+test_id:{'recall': 0.80625206, 'hit_ratio': 1.0, 'precision': 0.14420873, 'ndcg': 0.7870183, 'mrr': 0.93566304, 'map': 0.8383272}

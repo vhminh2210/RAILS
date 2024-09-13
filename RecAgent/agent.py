@@ -23,7 +23,7 @@ def getAgent(repr_user, item_emb, args):
     dataset = args.dataset
     dat_dir = os.path.join(args.root, args.dataset)
     dat_path = os.path.join(dat_dir, f'{args.dataset}.dat')
-    if os.path.exists(dat_path):
+    if os.path.exists(train_path):
         df = pd.read_csv(dat_path, sep=',',
                          names=['user_id', 'item_id', 'ratings', 'timestamp'])
         max_item_id = df['item_id'].max()
