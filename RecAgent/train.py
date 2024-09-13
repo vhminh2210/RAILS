@@ -136,7 +136,10 @@ def evaluate(agent, ep_users, train_df, test_df, train_dict, item_pop_dict,
         else:
             precision.append(match_ / (len(rec_list)))
         recall.append(match_ / (len(test_set)))
-        ndcg.append(ndcg_metric({ep_user: rec_list}, {ep_user: test_set}))
+        try:
+            ndcg.append(ndcg_metric({ep_user: rec_list}, {ep_user: test_set}))
+        except:
+            ndcg.append(0.0)
         novelty.append(novelty_metric(rec_list, env.item_pop_dict))
         coverage.extend(rec_list)
         # ils.append(ils_metric(rec_list, env.item_sim_matrix))
@@ -238,8 +241,8 @@ def train_dqn(train_df, test_df, item_pop_dict,
     print(f"Precision@{args.topk}: ", np.round(np.mean(precision), 4))
     print(f"Recall@{args.topk}: ", np.round(np.mean(recall), 4))
     print(f"NDCG@{args.topk}: ", np.round(np.mean(ndcg), 4))
-    print("Novelty: ", 1 - np.mean(novelty))
-    print("ILS: ", np.mean(ils))
+    # print("Novelty: ", 1 - np.mean(novelty))
+    # print("ILS: ", np.mean(ils))
 
     return agent
 
