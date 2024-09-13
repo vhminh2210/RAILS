@@ -58,17 +58,17 @@ def recommend_offpolicy(env, agent, last_obs):
     state = np.array(last_obs)
     so = env.reset(state)
 
-    item_sim_dict_1 = env.item_sim_matrix[str(so[-1])]
-    item_sim_dict_2 = {}
-    for each_item in item_sim_dict_1.keys():
-        if int(each_item) not in env.mask_list:
-            item_sim_dict_2[int(each_item)] = item_sim_dict_1[each_item]
-    sorted_I = sorted(item_sim_dict_2.items(), key=lambda x: x[1], reverse=True)
-    index = env.K
-    I_sim, I_div = sorted_I[:index], sorted_I[index:]
-    I_sim_list = [list(i)[0] for i in I_sim]
+    # item_sim_dict_1 = env.item_sim_matrix[str(so[-1])]
+    # item_sim_dict_2 = {}
+    # for each_item in item_sim_dict_1.keys():
+    #     if int(each_item) not in env.mask_list:
+    #         item_sim_dict_2[int(each_item)] = item_sim_dict_1[each_item]
+    # sorted_I = sorted(item_sim_dict_2.items(), key=lambda x: x[1], reverse=True)
+    # index = env.K
+    # I_sim, I_div = sorted_I[:index], sorted_I[index:]
+    # I_sim_list = [list(i)[0] for i in I_sim]
 
-    return agent.choose_action(so, env, I_sim_list, mode= 'infer')
+    return agent.choose_action(so, env, mode= 'infer')
 
 
 def trainAgent(agent, step_max):
@@ -77,8 +77,7 @@ def trainAgent(agent, step_max):
     # for step in range(step_max):
     #     agent.learn()
 
-def recommender(agent, train_episodes, ep_user, train_df, test_df, train_dict,
-                item_sim_dict, item_quality_dict, item_pop_dict,
+def recommender(agent, train_episodes, ep_user, train_df, test_df, train_dict, item_pop_dict,
                 max_item_id, mask_list, repr_user, item_emb, args):
     # Newest interaction made by [ep_user]
     last_obs = train_dict[ep_user][-args.obswindow:]
@@ -86,7 +85,7 @@ def recommender(agent, train_episodes, ep_user, train_df, test_df, train_dict,
     new_mask_list.extend(train_dict[ep_user][:-1])
     # Simulate the enviroment, regarding [ep_user] preferences
     env = environment.Env(ep_user, train_dict[ep_user][-args.obswindow:], list(range(max_item_id + 1)),
-                          item_sim_dict, item_pop_dict, item_quality_dict, new_mask_list, args.sim_mode, repr_user, item_emb, args)
+                          item_pop_dict, new_mask_list, args.sim_mode, repr_user, item_emb, args)
 
     # Generate transitions (s, a, r, s_) and store in agent replay memory
     interaction_num = setInteraction(env, agent, ep_user, train_df, args.obswindow)
@@ -97,13 +96,11 @@ def recommender(agent, train_episodes, ep_user, train_df, test_df, train_dict,
         user_num += 1
 
     trainAgent(agent, args.step_max)
-    prec, recall, ndcg = evaluate(agent, train_episodes, train_df, test_df, train_dict,
-                        item_sim_dict, item_quality_dict, item_pop_dict,
+    prec, recall, ndcg = evaluate(agent, train_episodes, train_df, test_df, train_dict, item_pop_dict,
                         max_item_id, mask_list, repr_user, item_emb, args, ckpt= True)
     return prec, recall, ndcg
 
-def evaluate(agent, ep_users, train_df, test_df, train_dict,
-            item_sim_dict, item_quality_dict, item_pop_dict,
+def evaluate(agent, ep_users, train_df, test_df, train_dict, item_pop_dict,
             max_item_id, mask_list, repr_user, item_emb, args, ckpt= False):
 
     global precision, ndcg, novelty, coverage, ils, interdiv, recall
@@ -119,7 +116,7 @@ def evaluate(agent, ep_users, train_df, test_df, train_dict,
 
         # Simulate the enviroment, regarding [ep_user] preferences
         env = environment.Env(ep_user, train_dict[ep_user][-args.obswindow:], list(range(max_item_id + 1)),
-                          item_sim_dict, item_pop_dict, item_quality_dict, ep_mask_list, args.sim_mode, repr_user, item_emb, args)
+                          item_pop_dict, ep_mask_list, args.sim_mode, repr_user, item_emb, args)
         interaction_num = setInteraction(env, agent, ep_user, train_df, args.obswindow, augment= False, ckpt= ckpt)
         if interaction_num <= 20:
             continue
@@ -142,13 +139,12 @@ def evaluate(agent, ep_users, train_df, test_df, train_dict,
         ndcg.append(ndcg_metric({ep_user: rec_list}, {ep_user: test_set}))
         novelty.append(novelty_metric(rec_list, env.item_pop_dict))
         coverage.extend(rec_list)
-        ils.append(ils_metric(rec_list, env.item_sim_matrix))
+        # ils.append(ils_metric(rec_list, env.item_sim_matrix))
         interdiv.append(rec_list)
 
     return float(np.mean(precision)), float(np.mean(recall)), float(np.mean(ndcg))
 
-def train_dqn(train_df, test_df,
-              item_sim_dict, item_quality_dict, item_pop_dict,
+def train_dqn(train_df, test_df, item_pop_dict,
               max_item_id, item_list, mask_list, repr_user, item_emb, args):
     
     global precision, ndcg, novelty, coverage, ils, interdiv
@@ -190,7 +186,7 @@ def train_dqn(train_df, test_df,
                 args= args,
                 item_pop_dict= item_pop_dict) 
     else:
-        raise NotImplementedError(f"Similarity mode {self.args.sim_mode} not found!")
+        raise NotImplementedError(f"Similarity mode {args.sim_mode} not found!")
 
     # futures = []
     # executor = ThreadPoolExecutor(max_workers=args.j)
@@ -202,7 +198,7 @@ def train_dqn(train_df, test_df,
     print('Initializing memory ...')
     for ep_user in train_episodes:
         env = environment.Env(ep_user, train_dict[ep_user][-args.obswindow:], list(range(max_item_id + 1)),
-                          item_sim_dict, item_pop_dict, item_quality_dict, mask_list, args.sim_mode, repr_user, item_emb, args)
+                          item_pop_dict, mask_list, args.sim_mode, repr_user, item_emb, args)
 
         # Generate transitions (s, a, r, s_) and store in agent replay memory
         interaction_num = setInteraction(env, agent, ep_user, train_df, args.obswindow, augment= False)
@@ -217,9 +213,9 @@ def train_dqn(train_df, test_df,
         #                         agent, ep_user, train_df, test_df, train_dict,
         #                         item_sim_dict, item_quality_dict, item_pop_dict,
         #                         max_item_id, mask_list, repr_user, item_emb, args)
-        _prec, _recall, _ndcg = recommender(agent, train_episodes, ep_user, train_df, test_df, train_dict,
-                    item_sim_dict, item_quality_dict, item_pop_dict,
-                    max_item_id, mask_list, repr_user, item_emb, args)
+        _prec, _recall, _ndcg = recommender(agent, train_episodes, ep_user, train_df, test_df, 
+                                            train_dict, item_pop_dict,
+                                            max_item_id, mask_list, repr_user, item_emb, args)
         if _prec is not None:
             ckpt_precision.append(_prec)
         if _recall is not None:
@@ -236,8 +232,7 @@ def train_dqn(train_df, test_df,
     print('Train curve finished!')
     print('####################')
     print('Running evaluations on trained agent ...')
-    evaluate(agent, train_episodes, train_df, test_df, train_dict,
-            item_sim_dict, item_quality_dict, item_pop_dict,
+    evaluate(agent, train_episodes, train_df, test_df, train_dict, item_pop_dict,
             max_item_id, mask_list, repr_user, item_emb, args)
 
     print(f"Precision@{args.topk}: ", np.round(np.mean(precision), 4))

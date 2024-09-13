@@ -5,15 +5,15 @@ import torch
 
 class Env():
     def __init__(self, user, observation_data, I,
-                 item_sim_matrix, item_pop_dict, quality_dict, mask_list, sim_mode, repr_user, item_emb, args):
+                 item_pop_dict, mask_list, sim_mode, repr_user, item_emb, args):
         self.observation = np.array(observation_data)
         self.n_observation = len(self.observation)
         self.action_space = I
         self.n_actions = len(self.action_space)
         self.user = user
-        self.item_sim_matrix = item_sim_matrix
+        # self.item_sim_matrix = item_sim_matrix
         self.item_pop_dict = item_pop_dict
-        self.quality_dict = quality_dict
+        # self.quality_dict = quality_dict
         self.mask_list = mask_list
         self.sim_mode = sim_mode
         self.repr_user = repr_user
@@ -62,12 +62,12 @@ class Env():
 
         # If action is chosen in the previous step (due to similarity reasons), discard the step
         if so[-1] == action:
-            self.item_sim_matrix[str(so[-1])][str(action)] = 0
+            # self.item_sim_matrix[str(so[-1])][str(action)] = 0
             r = -1
         else:
-            quality = self.quality_dict[str(action)]
-            # Novelty score
-            r_div = self.args.nov_beta * quality * 1 / math.log((self.item_pop_dict[str(action)] + 1.1), 10)
+            # # Novelty score
+            # quality = self.quality_dict[str(action)]
+            # r_div = self.args.nov_beta * quality * 1 / math.log((self.item_pop_dict[str(action)] + 1.1), 10)
             # Similarity score
             r_acc = 0
             for i in range(self.n_observation):
@@ -89,13 +89,14 @@ class Env():
                 
                 # Cosine Similarity using user-item statistics
                 elif self.sim_mode == 'stats':
-                    if str(s[-(i + 1)]) in self.item_sim_matrix.keys():
-                        # If candidate action has no similarity with past action -> skip this pair
-                        if str(action) in self.item_sim_matrix[str(s[-(i + 1)])].keys():
-                            r_acc += (self.eta ** i) * self.item_sim_matrix[str(s[-(i + 1)])][str(action)]
+                    pass
+                    # if str(s[-(i + 1)]) in self.item_sim_matrix.keys():
+                    #     # If candidate action has no similarity with past action -> skip this pair
+                    #     if str(action) in self.item_sim_matrix[str(s[-(i + 1)])].keys():
+                    #         r_acc += (self.eta ** i) * self.item_sim_matrix[str(s[-(i + 1)])][str(action)]
 
             # Normalized similarity score to [-1, 1]
-            r = r_acc / self.n_observation + r_div
+            r = r_acc / self.n_observation
             # r = r_acc + r_div
         if r > 0:
             # If the reward is positive, append [action] to [observations]

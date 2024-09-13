@@ -33,19 +33,19 @@ def getAgent(repr_user, item_emb, args):
         mask_list = list(set(list(range(max_item_id + 1))) - set(item_list))
         mat_path = os.path.join(dat_dir, f'{args.dataset}.mat')
 
-        # Generate pre-calculated similarity, popularity and quality matrix
-        if os.path.exists(mat_path):
-            item_sim_dict = load_dict(mat_path)
-        else:
-            sim_matrix_generate(dat_path, mat_path)
-            item_sim_dict = load_dict(mat_path)
+        # # Generate pre-calculated similarity, popularity and quality matrix
+        # if os.path.exists(mat_path):
+        #     item_sim_dict = load_dict(mat_path)
+        # else:
+        #     sim_matrix_generate(dat_path, mat_path)
+        #     item_sim_dict = load_dict(mat_path)
         
-        qua_path = os.path.join(dat_dir, f'{args.dataset}.qua')
-        if os.path.exists(qua_path):
-            item_quality_dict = load_dict(qua_path)
-        else:
-            item_quality_generate(dat_path, qua_path)
-            item_quality_dict = load_dict(qua_path)
+        # qua_path = os.path.join(dat_dir, f'{args.dataset}.qua')
+        # if os.path.exists(qua_path):
+        #     item_quality_dict = load_dict(qua_path)
+        # else:
+        #     item_quality_generate(dat_path, qua_path)
+        #     item_quality_dict = load_dict(qua_path)
         
         # Popularity dict: {item1 : popularity_percentile_of_item1, ...}
         # NOTE: Least popular item: percentile = 0.0, Most popular item: percentile = 1.0
@@ -86,6 +86,5 @@ def getAgent(repr_user, item_emb, args):
     if args.sim_mode == 'user_embedding':
         assert repr_user is not None
 
-    return train_dqn(train_df, test_df,
-              item_sim_dict, item_quality_dict, item_pop_dict,
-              max_item_id, item_list, mask_list, repr_user, item_emb, args)
+    return train_dqn(train_df, test_df, item_pop_dict,
+                    max_item_id, item_list, mask_list, repr_user, item_emb, args)

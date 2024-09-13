@@ -58,7 +58,7 @@ def split_data(args, train_ratio= 0.8, val_ratio= 0.1, test_ratio= 0.1, seed= 10
 
     if os.path.exists(TRAIN) or os.path.exists(VAL) or os.path.exists(TEST):
         print('Data splits seems to have already existed.')
-        print('Delete existring train.txt, val.txt, test.txt to re-split the dataset.')
+        print('Please delete existing train.txt, val.txt, test.txt to re-split the dataset.')
         
         # Data for RL agents
         agent_data('train', args)

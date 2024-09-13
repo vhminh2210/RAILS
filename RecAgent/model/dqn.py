@@ -184,7 +184,7 @@ class DQN(object):
         self.target_net = self.target_net.to(self.device)
         self.loss_func = self.loss_func.to(self.device)
 
-    def choose_action(self, obs, env, I_sim_list, mode= 'training'):
+    def choose_action(self, obs, env, mode= 'training'):
         if env.args.sim_mode == 'stats':
             obs = torch.unsqueeze(torch.tensor(obs, dtype=torch.float32), 0)
         state = env.build_state(obs)

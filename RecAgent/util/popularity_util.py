@@ -19,6 +19,7 @@ def item_popularity_generate(dat_path, pop_path):
 
     min_value = min(item_popularity.values())
     max_value = max(item_popularity.values())
+    print(item_popularity)
     for key in item_popularity:
         normalized_value = (item_popularity[key] - min_value) / (max_value - min_value)
         item_popularity[key] = normalized_value
