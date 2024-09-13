@@ -23,15 +23,9 @@ def getAgent(repr_user, item_emb, args):
     dataset = args.dataset
     dat_dir = os.path.join(args.root, args.dataset)
     dat_path = os.path.join(dat_dir, f'{args.dataset}.dat')
-    if os.path.exists(train_path):
+    if os.path.exists(dat_path):
         df = pd.read_csv(dat_path, sep=',',
                          names=['user_id', 'item_id', 'ratings', 'timestamp'])
-        max_item_id = df['item_id'].max()
-        if args.sim_mode != 'stats':
-            max_item_id = item_emb.weight.shape[0] - 1 # When the training sets doesnt contain all possible item
-        item_list = df['item_id'].tolist()
-        mask_list = list(set(list(range(max_item_id + 1))) - set(item_list))
-        mat_path = os.path.join(dat_dir, f'{args.dataset}.mat')
 
         # Train - val - test split
         train_path = os.path.join(dat_dir, f'{args.dataset}.train')
@@ -54,6 +48,12 @@ def getAgent(repr_user, item_emb, args):
                                    names=['user_id', 'item_id', 'ratings', 'timestamp'])
             test_df = pd.read_csv(test_path, sep=',',
                                   names=['user_id', 'item_id', 'ratings', 'timestamp'])
+            
+        max_item_id = train_df['item_id'].max()
+        if args.sim_mode != 'stats':
+            max_item_id = item_emb.weight.shape[0] - 1 # When the training sets doesnt contain all possible item
+        item_list = train_df['item_id'].tolist()
+        mask_list = list(set(list(range(max_item_id + 1))) - set(item_list))
             
         # Popularity dict: {item1 : popularity_percentile_of_item1, ...}
         # NOTE: Least popular item: percentile = 0.0, Most popular item: percentile = 1.0
