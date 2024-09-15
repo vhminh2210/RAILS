@@ -151,6 +151,8 @@ if __name__ == "__main__":
                         help= 'Number of augmented transition generated per existed transition')
     parser.add_argument('--eval_freq', type=int, default=1,
                         help= 'Frequency of RL Agent evaluation')
+    parser.add_argument('--policy', type=str, default='max',
+                        help= 'Policy mode: max, stochastic or gradient')
 
     args = parser.parse_args()
     assert args.epoch >= args.freeze_epoch
