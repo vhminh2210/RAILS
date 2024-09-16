@@ -431,7 +431,7 @@ class DQN(object):
             json.dump(args.__dict__, f, indent=2)
 
         save_pth = os.path.join(root, f'{self.args.episode_max}.episodes-{self.args.step_max}.step-{self.args.gamma}.gamma.png')
-        reduced_loss = [np.mean(self.train_loss[x * 256 : (x+1) * 256]) for x in range(int(len(self.train_loss) / 256))]
+        reduced_loss = [np.mean(self.train_loss[x * 256 : (x+1) * 256]) for x in range(4, int(len(self.train_loss) / 256))]
         plt.plot(reduced_loss)
         plt.title('Training Loss')
         plt.savefig(save_pth)
