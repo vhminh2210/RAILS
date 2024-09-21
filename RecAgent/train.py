@@ -10,38 +10,38 @@ import copy
 user_num = 0
 precision, ndcg, novelty, coverage, ils, interdiv, recall = [], [], [], [], [], [], []
 
-def stateAugment(observation, action, n_augment):
-    n_obs = len(observation)
-    aug_obsevations = [observation]
-    aug_actions = [action]
-    idx = random.choices(list(range(n_obs)), k= n_augment)
+def stateAugment(observations, history_size, n_augment):
+    n_obs = len(observations)
+    try:
+        assert n_obs >= history_size + 1
+    except:
+        raise ValueError('Sampling history size exceed known observations size!')
+    aug_obsevations = []
+    aug_actions = []
     for i in range(n_augment):
-        _observation = observation.copy()
-        aug_actions.append(_observation[idx[i]])
-        _observation[idx[i]] = action
-        aug_obsevations.append(_observation)
+        idx = random.choices(list(range(n_obs)), k= history_size + 1)
+        history = idx[:-1]
+        action = idx[-1]
+
+        aug_actions.append(action)
+        aug_obsevations.append(history.copy())
     
     return aug_obsevations, aug_actions
 
 def setInteraction(env, agent, ep_user, train_df, obswindow, augment= True, ckpt= False):
     user_df = train_df[train_df['user_id'] == ep_user]
-    state_list = []
-    for obs in user_df['item_id'].rolling(obswindow):
-        if len(obs) != obswindow:
-            continue
-        state_list.append(list(obs))
+    observations = user_df['item_id']
+
     interaction_num = 0
     args = agent.args
-    for s_idx in range(len(state_list) - 1):
-        observation = state_list[s_idx]
-        action = state_list[s_idx + 1][-1]
+    for history_size in range(1, len(observations)):
         if augment:
-            aug_obsevations, aug_actions = stateAugment(observation, action, args.n_augment)
+            aug_obsevations, aug_actions = stateAugment(observations, history_size, args.n_augment)
         else:
             if not ckpt:
-                aug_obsevations, aug_actions = stateAugment(observation, action, int(args.n_augment / 5))
+                aug_obsevations, aug_actions = stateAugment(observations, history_size, int(args.n_augment / 5))
             else:
-                aug_obsevations, aug_actions = stateAugment(observation, action, 0)
+                aug_obsevations, aug_actions = stateAugment(observations, history_size, 1)
 
         for i in range(len(aug_actions)):
             s = np.array(env.reset(aug_obsevations[i]))
@@ -58,16 +58,6 @@ def recommend_offpolicy(env, agent, last_obs):
     state = np.array(last_obs)
     so = env.reset(state)
 
-    # item_sim_dict_1 = env.item_sim_matrix[str(so[-1])]
-    # item_sim_dict_2 = {}
-    # for each_item in item_sim_dict_1.keys():
-    #     if int(each_item) not in env.mask_list:
-    #         item_sim_dict_2[int(each_item)] = item_sim_dict_1[each_item]
-    # sorted_I = sorted(item_sim_dict_2.items(), key=lambda x: x[1], reverse=True)
-    # index = env.K
-    # I_sim, I_div = sorted_I[:index], sorted_I[index:]
-    # I_sim_list = [list(i)[0] for i in I_sim]
-
     return agent.choose_action(so, env, mode= 'infer')
 
 
@@ -78,7 +68,7 @@ def trainAgent(agent, step_max):
     #     agent.learn()
 
 def recommender(agent, train_episodes, ep_user, train_df, test_df, train_dict, item_pop_dict,
-                max_item_id, mask_list, repr_user, item_emb, args):
+                max_item_id, mask_list, repr_user, item_emb, episode_id, args):
     # Newest interaction made by [ep_user]
     last_obs = train_dict[ep_user][-args.obswindow:]
     new_mask_list = copy.copy(mask_list)
@@ -89,14 +79,14 @@ def recommender(agent, train_episodes, ep_user, train_df, test_df, train_dict, i
 
     # Generate transitions (s, a, r, s_) and store in agent replay memory
     interaction_num = setInteraction(env, agent, ep_user, train_df, args.obswindow)
-    if interaction_num <= 20:
+    if interaction_num <= args.min_obs:
         return None, None, None
     else:
         global user_num
         user_num += 1
 
     trainAgent(agent, args.step_max)
-    if ep_user % args.eval_freq != 0:
+    if episode_id % args.eval_freq != 0:
         return None, None, None
     prec, recall, ndcg = evaluate(agent, train_episodes, train_df, test_df, train_dict, item_pop_dict,
                         max_item_id, mask_list, repr_user, item_emb, args, ckpt= True)
@@ -108,12 +98,12 @@ def evaluate(agent, ep_users, train_df, test_df, train_dict, item_pop_dict,
     global precision, ndcg, novelty, coverage, ils, interdiv, recall
     if ckpt:
         precision, ndcg, novelty, coverage, ils, interdiv, recall = [], [], [], [], [], [], []
+        print('Evaluating checkpoint ...')
 
     for ep_user in ep_users:
         if not ckpt:
             print('Evaluating user', ep_user)
-        if ckpt and ep_user % args.eval_freq != 0:
-            continue
+
         last_obs = train_dict[ep_user][-args.obswindow:]
         ep_mask_list = copy.copy(mask_list)
         ep_mask_list.extend(train_dict[ep_user][:-1])
@@ -122,7 +112,7 @@ def evaluate(agent, ep_users, train_df, test_df, train_dict, item_pop_dict,
         env = environment.Env(ep_user, train_dict[ep_user][-args.obswindow:], list(range(max_item_id + 1)),
                           item_pop_dict, ep_mask_list, args.sim_mode, repr_user, item_emb, args)
         interaction_num = setInteraction(env, agent, ep_user, train_df, args.obswindow, augment= False, ckpt= ckpt)
-        if interaction_num <= 20:
+        if interaction_num <= args.min_obs:
             continue
         
         # Generated unseen interaction using learned policy
@@ -149,6 +139,13 @@ def evaluate(agent, ep_users, train_df, test_df, train_dict, item_pop_dict,
         # ils.append(ils_metric(rec_list, env.item_sim_matrix))
         interdiv.append(rec_list)
 
+    if ckpt:
+        print('Evaluation complete!')
+        print('####################')
+        print(f"Precision@{args.topk}: ", np.round(np.mean(precision), 4))
+        print(f"Recall@{args.topk}: ", np.round(np.mean(recall), 4))
+        print(f"NDCG@{args.topk}: ", np.round(np.mean(ndcg), 4))
+        print('####################')
     return float(np.mean(precision)), float(np.mean(recall)), float(np.mean(ndcg))
 
 def train_dqn(train_df, test_df, item_pop_dict,
@@ -199,7 +196,7 @@ def train_dqn(train_df, test_df, item_pop_dict,
     # executor = ThreadPoolExecutor(max_workers=args.j)
     train_episodes = random.sample(list(train_dict.keys()), args.episode_max)
     # train_episodes = [125]
-    iter = 0 # Each episode corresponds to 1 user interactive session
+    episode_id = 0 # Each episode corresponds to 1 user interactive session
 
     # Generating initial memory
     print('Initializing memory ...')
@@ -214,15 +211,15 @@ def train_dqn(train_df, test_df, item_pop_dict,
     ckpt_precision, ckpt_recall, ckpt_ndcg = [], [], []
 
     for ep_user in train_episodes:
-        iter += 1
-        print(f'Episode {iter}: User : {ep_user}')
+        episode_id += 1
+        print(f'Episode {episode_id}: User : {ep_user}')
         # future = executor.submit(recommender,
         #                         agent, ep_user, train_df, test_df, train_dict,
         #                         item_sim_dict, item_quality_dict, item_pop_dict,
         #                         max_item_id, mask_list, repr_user, item_emb, args)
         _prec, _recall, _ndcg = recommender(agent, train_episodes, ep_user, train_df, test_df, 
                                             train_dict, item_pop_dict,
-                                            max_item_id, mask_list, repr_user, item_emb, args)
+                                            max_item_id, mask_list, repr_user, item_emb, episode_id, args)
         if _prec is not None:
             ckpt_precision.append(_prec)
         if _recall is not None:

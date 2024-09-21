@@ -12,22 +12,22 @@ python main.py --modeltype BC_LOSS \
                 --freeze_epoch 5 \
                 --cuda -1 \
                 --episode_max 64\
-                --step_max 2048 \
+                --step_max 1024 \
                 --memory 16394 \
                 --nov_beta 0.0 \
                 --agent_batch 128 \
                 --dqn_mode ddqn \
                 --eta 1.0 \
-                --agent_lr 5e-5 \
-                --replace_freq 100 \
+                --agent_lr 1e-5 \
+                --replace_freq 1000 \
                 --tau 0.01 \
-                --gamma 0.99 \
+                --gamma 0.999 \
                 --cql_mode cql_H \
                 --dueling_dqn \
-                --n_augment 20 \
+                --n_augment 5 \
                 --rare_thresh 0.1 \
                 --seq_ratio 0.2 \
                 --rare_ratio 0.3 \
                 --rand_ratio 0.5 \
                 --topk 10 \
-                --eval_freq 1 
+                --eval_freq 5
