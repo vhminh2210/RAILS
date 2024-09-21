@@ -20,7 +20,7 @@ python main.py --modeltype BC_LOSS \
                 --eta 1.0 \
                 --agent_lr 1e-5 \
                 --replace_freq 1000 \
-                --tau 0.01 \
+                --tau 0.005 \
                 --gamma 0.999 \
                 --cql_mode cql_H \
                 --dueling_dqn \
