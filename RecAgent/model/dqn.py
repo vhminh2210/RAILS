@@ -256,8 +256,8 @@ class DQN(object):
         normalized_r = (r - self.reward_mean) / (self.reward_std + self.std_smoothing)
         normalized_s = (s - self.state_mean) / (self.state_std + self.std_smoothing)
         normalized_s_ = (s_ - self.state_mean) / (self.state_std + self.std_smoothing)
-        transition = np.hstack((normalized_s, [a, normalized_r], normalized_s_))
-        
+        transition = np.hstack((normalized_s, np.array([a, float(normalized_r)]), normalized_s_))
+
         # Always store transition into random memory
         # Shuffle memory. Preventing forgetting of interactions from early episodes
         random_index = np.arange(len(self.memory[2]))

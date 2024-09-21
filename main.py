@@ -204,7 +204,7 @@ if __name__ == "__main__":
             if item in data.train_item_list.keys():
                 for user in data.train_item_list[item]:
                     ru_item = ru_item + user_emb[user] / torch.linalg.norm(user_emb[user])
-                ru_item = ru_item / len(data.train_item_list[item])
+                ru_item = ru_item / len(data.train_item_list[item]) # Normalized by item popularity
             else:
                 # Wild item found!
                 wild_items.append(item)
