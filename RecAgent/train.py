@@ -128,7 +128,7 @@ def evaluate(agent, ep_users, train_df, test_df, train_dict, item_pop_dict,
         print('Evaluating checkpoint ...')
 
     if encoder:
-        assert user_emb is not None and not ckpt
+        assert user_emb is not None
 
     user_loader = tqdm(ep_users)
     if not ckpt:
@@ -255,6 +255,19 @@ def train_dqn(train_df, test_df, item_pop_dict,
     train_episodes = random.sample(list(train_dict.keys()), args.episode_max)
     # train_episodes = [125]
     episode_id = 0 # Each episode corresponds to 1 user interactive session
+
+    print('####################')
+    print('Running evaluations on trained encoder ...')
+    _, _, _, epc, coverage = evaluate(agent, train_episodes, train_df, test_df, train_dict, item_pop_dict,
+                                      max_item_id, mask_list, repr_user, item_emb, args, encoder= True,
+                                      min_freq= min_freq, max_freq= max_freq, user_emb= user_emb, ckpt= True)
+
+    print(f"Precision@{args.topk}: ", np.round(np.mean(precision), 4))
+    print(f"Recall@{args.topk}: ", np.round(np.mean(recall), 4))
+    print(f"NDCG@{args.topk}: ", np.round(np.mean(ndcg), 4))
+    print(f"EPC@{args.topk}: ", np.round(epc, 4))
+    print(f"Coverage@{args.topk}: ", np.round(coverage, 4))
+    print('####################')
 
     # Generating initial memory
     print('Initializing memory ...')
