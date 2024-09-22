@@ -224,9 +224,9 @@ if __name__ == "__main__":
         print(f'{wild_items.shape[0]} wild items found!')
         print('Representative user embeddings shape:', repr_user.shape)
         
-        repr_user = nn.Embedding.from_pretrained(repr_user).to(args.device)
-        item_emb = nn.Embedding.from_pretrained(item_emb).to(args.device)
-        user_emb = nn.Embedding.from_pretrained(user_emb).to(args.device)
+        repr_user = nn.Embedding.from_pretrained(repr_user)
+        item_emb = nn.Embedding.from_pretrained(item_emb)
+        user_emb = nn.Embedding.from_pretrained(user_emb)
 
         print(torch.linalg.norm(repr_user.weight.detach()[1]))
         print(torch.linalg.norm(item_emb.weight.detach()[1]))
