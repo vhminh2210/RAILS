@@ -67,7 +67,9 @@ def recommend_encoder(user_emb, item_emb, last_obs, args):
     '''
     Note: user_emb represent a SINGLE user embedding, NOT the complete user embedding matrix
     '''
-    scores = (user_emb @ (item_emb.weight).T).squeeze().cpu()
+    user_emb = user_emb.to(args.device)
+    item_weight = item_emb.weight.to(args.device)
+    scores = (user_emb @ item_weight.T).squeeze().cpu()
     sorted_ids = sorted(range(scores.shape[0]), key= lambda x:-scores[x])
 
     rec_list = []
