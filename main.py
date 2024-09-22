@@ -9,9 +9,11 @@ import numpy as np
 from tqdm import tqdm
 import subprocess
 
+import os
+
 from GraphEnc.encoder import getEncoder
 from RecAgent.agent import getAgent
-from utils import split_data
+from utils import split_data, get_minmax_freq
 
 if __name__ == "__main__":
 
@@ -163,6 +165,7 @@ if __name__ == "__main__":
         device = 'cpu'
     else:
         device = f'cuda:{args.cuda}'
+    args.device = device
 
     start_time = time.time()
     print('####################')
@@ -180,6 +183,8 @@ if __name__ == "__main__":
         # Graph encoder
         print('GCF training starts...')
         encoder, data = getEncoder(args)
+        _, min_freq, max_freq = get_minmax_freq(os.path.join(args.root, args.dataset, 'train.txt'), data.n_items)
+        print(f'Min frequency: {min_freq}. Max frequency: {max_freq}')
         print('####################')
 
         # Get user, item embeddings
@@ -219,14 +224,19 @@ if __name__ == "__main__":
         print(f'{wild_items.shape[0]} wild items found!')
         print('Representative user embeddings shape:', repr_user.shape)
         
-        repr_user = nn.Embedding.from_pretrained(repr_user)
-        item_emb = nn.Embedding.from_pretrained(item_emb)
+        repr_user = nn.Embedding.from_pretrained(repr_user).to(args.device)
+        item_emb = nn.Embedding.from_pretrained(item_emb).to(args.device)
+        user_emb = nn.Embedding.from_pretrained(user_emb).to(args.device)
 
         print(torch.linalg.norm(repr_user.weight.detach()[1]))
         print(torch.linalg.norm(item_emb.weight.detach()[1]))
+        print(torch.linalg.norm(user_emb.weight.detach()[1]))
+
+    else:
+        raise NotImplementedError('ERROR: `stats` similarity mode is deprecated!')
 
     # Interactive RL Agent
     print('RL Agent training starts...')
-    agent = getAgent(repr_user, item_emb, args)
+    agent = getAgent(repr_user, user_emb, item_emb, min_freq, max_freq, args)
     print('####################')
     print('Runtime:', time.time() - start_time, 'seconds')

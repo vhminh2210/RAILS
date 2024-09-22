@@ -9,7 +9,7 @@ from .util.popularity_util import item_popularity_generate
 from .util.quality_util import item_quality_generate
 from .util.simmatrix_util import sim_matrix_generate
 
-def getAgent(repr_user, item_emb, args):
+def getAgent(repr_user, user_emb, item_emb, min_freq, max_freq, args):
     train_df = None
     test_df = None
     item_sim_dict = None
@@ -74,4 +74,6 @@ def getAgent(repr_user, item_emb, args):
         assert repr_user is not None
 
     return train_dqn(train_df, test_df, item_pop_dict,
-                    max_item_id, item_list, mask_list, repr_user, item_emb, args)
+                    max_item_id, item_list, mask_list, 
+                    repr_user, item_emb, user_emb, 
+                    min_freq, max_freq, args)

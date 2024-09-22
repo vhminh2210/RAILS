@@ -160,7 +160,7 @@ class DQN(object):
                                 embd= embd.to(self.device), dueling= self.args.dueling_dqn)
         self.optimizer = torch.optim.Adam(self.eval_net.parameters(), lr=self.lr)
         self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optimizer, 
-                                                                    T_max = int(self.args.episode_max * self.args.step_max / 2))
+                                                                    T_max = int(self.args.episode_max * self.args.step_max))
         self.loss_func = nn.MSELoss()
         # self.loss_func = nn.HuberLoss()
         hard_update(self.target_net, self.eval_net) # Transfer weights from eval_q_net to target_q_net
@@ -419,7 +419,7 @@ class DQN(object):
         if self.args.cql_mode == 'cql_Rho':
             hard_update(self.buffered_net, self.eval_net)
 
-    def stats_plot(self, args, precision= None, recall= None, ndcg= None):
+    def stats_plot(self, args, precision= None, recall= None, ndcg= None, epc= None, coverage= None):
         if not os.path.exists('exps'):
             os.mkdir('exps')
         now = datetime.now()
@@ -457,3 +457,19 @@ class DQN(object):
             plt.title(f'Test NDCG@{args.topk}')
             plt.savefig(save_pth)    
             plt.clf()    
+
+        if epc is not None:
+            save_pth = os.path.join(root, f'epc.png')
+            plt.plot(epc)
+            plt.title(f'Test EPC@{args.topk}')
+            plt.savefig(save_pth)    
+            plt.clf()   
+
+        if coverage is not None:
+            save_pth = os.path.join(root, f'coverage.png')
+            plt.plot(coverage)
+            plt.title(f'Test Coverage@{args.topk}')
+            plt.savefig(save_pth)    
+            plt.clf()   
+
+        return root

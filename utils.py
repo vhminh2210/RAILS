@@ -1,7 +1,10 @@
 import random as rd
 import pandas as pd
+import numpy as np
 import os
 import csv
+
+from tqdm import tqdm
 
 def agent_data(filename, args):
 
@@ -131,3 +134,20 @@ def split_data(args, train_ratio= 0.8, val_ratio= 0.1, test_ratio= 0.1, seed= 10
     agent_data('train', args)
     agent_data('val', args)
     agent_data('test', args)
+
+def get_minmax_freq(train_txt, n_items):
+    freq = np.zeros(n_items)
+    with open(train_txt, 'r') as file:
+        Lines = file.readlines()
+        file.close()
+
+    print('Calculating popularity stats ...')
+
+    for line in tqdm(Lines):
+        words = line.strip().split()
+        user = int(words[0])
+        items = words[1:]
+        for item in items:
+            freq[int(item)] += 1
+
+    return freq, np.min(freq), np.max(freq)
