@@ -13,12 +13,15 @@ import os
 user_num = 0
 precision, ndcg, novelty, coverage, ils, interdiv, recall, epc = [], [], [], [], [], [], [], []
 
-def stateAugment(observations, history_size, n_augment):
+def stateAugment(observations, history_size, n_augment_):
     n_obs = len(observations)
     try:
         assert n_obs >= history_size + 1
     except:
         raise ValueError('Sampling history size exceed known observations size!')
+    n_augment = n_augment_
+    if history_size == n_obs - 1:
+        n_augment = min(n_augment, n_obs)
     aug_obsevations = []
     aug_actions = []
     for i in range(n_augment):
@@ -254,22 +257,12 @@ def train_dqn(train_df, test_df, item_pop_dict,
 
     # futures = []
     # executor = ThreadPoolExecutor(max_workers=args.j)
-    train_episodes = random.sample(list(train_dict.keys()), args.episode_max)
+    if not args.all_episodes:
+        train_episodes = random.sample(list(train_dict.keys()), args.episode_max)
+    else:
+        train_episodes = list(train_dict.keys())
     # train_episodes = [125]
     episode_id = 0 # Each episode corresponds to 1 user interactive session
-
-    print('####################')
-    print('Running evaluations on trained encoder ...')
-    _, _, _, epc, coverage = evaluate(agent, train_episodes, train_df, test_df, train_dict, item_pop_dict,
-                                      max_item_id, mask_list, repr_user, item_emb, args, encoder= True,
-                                      min_freq= min_freq, max_freq= max_freq, user_emb= user_emb, ckpt= True)
-
-    print(f"Precision@{args.topk}: ", np.round(np.mean(precision), 4))
-    print(f"Recall@{args.topk}: ", np.round(np.mean(recall), 4))
-    print(f"NDCG@{args.topk}: ", np.round(np.mean(ndcg), 4))
-    print(f"EPC@{args.topk}: ", np.round(epc, 4))
-    print(f"Coverage@{args.topk}: ", np.round(coverage, 4))
-    print('####################')
 
     # Generating initial memory
     print('Initializing memory ...')
@@ -280,7 +273,7 @@ def train_dqn(train_df, test_df, item_pop_dict,
         # Generate transitions (s, a, r, s_) and store in agent replay memory
         _ = setInteraction(env, agent, ep_user, train_df, args.obswindow, augment= False)
     
-    agent.align_memory()
+    # agent.align_memory()
     ckpt_precision, ckpt_recall, ckpt_ndcg, ckpt_epc, ckpt_coverage = [], [], [], [], []
 
     for ep_user in train_episodes:

@@ -157,6 +157,8 @@ if __name__ == "__main__":
                         help= 'Exclude all users with less than `min_obs` training interaction ')
     parser.add_argument('--policy', type=str, default='max',
                         help= 'Policy mode: max, stochastic or gradient')
+    parser.add_argument('--all_episodes', action='store_true', default=False,
+                        help= 'Enable training on full trainset')
 
     args = parser.parse_args()
     assert args.epoch >= args.freeze_epoch

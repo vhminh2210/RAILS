@@ -150,4 +150,4 @@ def get_minmax_freq(train_txt, n_items):
         for item in items:
             freq[int(item)] += 1
 
-    return freq, np.min(freq), np.max(freq)
+    return freq, np.min([x for x in freq if x != 0]), np.max(freq)

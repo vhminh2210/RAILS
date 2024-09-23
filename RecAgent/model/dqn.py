@@ -159,8 +159,10 @@ class DQN(object):
             self.target_net = Net(self.n_states, embd.weight.shape[-1], 256, 
                                 embd= embd.to(self.device), dueling= self.args.dueling_dqn)
         self.optimizer = torch.optim.Adam(self.eval_net.parameters(), lr=self.lr)
+        # self.scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(self.optimizer, 
+        #                                                                       T_0 = int(self.args.step_max), verbose= True)
         self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optimizer, 
-                                                                    T_max = int(self.args.episode_max * self.args.step_max))
+                                                            T_max = int(self.args.episode_max * self.args.step_max))
         self.loss_func = nn.MSELoss()
         # self.loss_func = nn.HuberLoss()
         hard_update(self.target_net, self.eval_net) # Transfer weights from eval_q_net to target_q_net
@@ -341,11 +343,23 @@ class DQN(object):
             return (minimizer - maximizer).mean()
         else:
             raise NotImplementedError(f'CQL mode {self.args.cql_mode} not defined!')
+        
+    def setTrain(self):
+        self.eval_net.train()
+        self.buffered_net.train()
+        self.target_net.eval()
+
+    def setEval(self):
+        self.eval_net.eval()
+        self.buffered_net.eval()
+        self.target_net.eval()
 
     def learn(self):
         # Major update: Replace target net by evaluation net
         if self.learn_step_counter % self.replace_freq == 0:
+            self.setEval()
             self.target_net.load_state_dict(self.eval_net.state_dict())
+            
         self.learn_step_counter += 1
 
         batch_state, batch_action, batch_reward, batch_state_, splits = self.sampling()
@@ -355,6 +369,8 @@ class DQN(object):
         batch_reward = batch_reward.to(self.device)
         batch_state_ = batch_state_.to(self.device)
         splits = splits.to(self.device)
+
+        self.setTrain()
 
         raw_q_eval = self.eval_net(batch_state) # batch_size, n_actions
         buffered_q_eval = None
