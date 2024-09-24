@@ -34,12 +34,16 @@ def stateAugment(observations, history_size, n_augment_):
     
     return aug_obsevations, aug_actions
 
-def setInteraction(env, agent, ep_user, train_df, obswindow, augment= True, ckpt= False):
+def setInteraction(env, agent, ep_user, train_df, obswindow, augment= True, ckpt= False, evalmode= False):
     user_df = train_df[train_df['user_id'] == ep_user]
     observations = user_df['item_id']
 
     interaction_num = 0
     args = agent.args
+
+    if evalmode:
+        return len(observations) - 1
+    
     for history_size in range(1, len(observations)):
         if augment:
             aug_obsevations, aug_actions = stateAugment(observations, history_size, args.n_augment)
@@ -150,7 +154,8 @@ def evaluate(agent, ep_users, train_df, test_df, train_dict, item_pop_dict,
         # Simulate the enviroment, regarding [ep_user] preferences
         env = environment.Env(ep_user, train_dict[ep_user], list(range(max_item_id + 1)),
                           item_pop_dict, ep_mask_list, args.sim_mode, repr_user, item_emb, args)
-        interaction_num = setInteraction(env, agent, ep_user, train_df, args.obswindow, augment= False, ckpt= ckpt)
+        interaction_num = setInteraction(env, agent, ep_user, train_df, args.obswindow, 
+                                         augment= False, ckpt= ckpt, evalmode= True)
         if interaction_num <= args.min_obs:
             continue
         

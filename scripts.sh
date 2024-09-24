@@ -15,10 +15,10 @@ python main.py --modeltype BC_LOSS \
                 --step_max 256 \
                 --memory 16394 \
                 --nov_beta 0.0 \
-                --agent_batch 1024 \
+                --agent_batch 2048 \
                 --dqn_mode ddqn \
                 --eta 1.0 \
-                --agent_lr 1e-5 \
+                --agent_lr 5e-6 \
                 --replace_freq 10000 \
                 --tau 0.0005 \
                 --gamma 0.999 \
