@@ -69,7 +69,9 @@ class Env():
             act_tensor = torch.IntTensor([action])
             va = self.item_emb(act_tensor).reshape((-1)) # Action item embedding
 
-            r = np.dot(s, va) # Cold-start user and candidate reward
+            s, va = s.squeeze().to(self.args.device), va.to(self.args.device)
+
+            r =  torch.dot(s, va) # Cold-start user and candidate reward
             
         s_temp_ = np.append(so, action) # Append [action] to [observations]
         observation_ = np.delete(s_temp_, 0, axis=0) # Remove the oldest [observation]

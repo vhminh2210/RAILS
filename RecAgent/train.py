@@ -275,7 +275,7 @@ def train_dqn(train_df, test_df, item_pop_dict,
 
     # Generating initial memory
     print('Initializing memory ...')
-    for ep_user in train_episodes:
+    for ep_user in tqdm(train_episodes):
         env = environment.Env(ep_user, train_dict[ep_user], list(range(max_item_id + 1)),
                           item_pop_dict, mask_list, args.sim_mode, repr_user, item_emb, args)
 
