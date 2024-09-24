@@ -169,7 +169,11 @@ def evaluate(agent, ep_users, train_df, test_df, train_dict, item_pop_dict,
         test_set = test_df.loc[test_df['user_id'] == ep_user, 'item_id'].tolist()
 
         if not ckpt:
+            # Skip users without test interactions
             print(rec_list, test_set)
+
+        if len(test_set) == 0:
+            continue
 
         # Evaluation stats
         match_ = len(set(rec_list) & set(test_set))
