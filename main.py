@@ -173,6 +173,12 @@ if __name__ == "__main__":
         device = f'cuda:{args.cuda}'
     args.device = device
 
+    if args.num_gpu > 0:
+        try:
+            assert args.cuda >= 0
+        except:
+            raise ValueError('One CUDA device must be specified for --cuda regarding --num_gpu > 0')
+
     start_time = time.time()
     print('####################')
     print('Device used:', device)
@@ -242,7 +248,6 @@ if __name__ == "__main__":
         raise NotImplementedError('ERROR: `stats` similarity mode is deprecated!')
 
     # Interactive RL Agent
-    print('RL Agent training starts...')
     agent = getAgent(repr_user, user_emb, item_emb, min_freq, max_freq, args)
     print('####################')
     print('Runtime:', time.time() - start_time, 'seconds')

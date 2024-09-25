@@ -23,17 +23,24 @@ def stateAugment(observations, history_size, n_augment_):
     n_augment = n_augment_
     if history_size == n_obs - 1:
         n_augment = min(n_augment, n_obs)
-    aug_obsevations = []
-    aug_actions = []
+
+    # idxs = [g.choice(n_obs, size= (history_size + 1), replace= False) for _ in range(n_augment)]
+    # idxs = np.stack(idxs)
+    # aug_observations = idxs[:, :-1]
+    # aug_actions = idxs[:, -1]
+
+    aug_observations, aug_actions = [], []
+
     for i in range(n_augment):
-        idx = g.choice(n_obs, size= (history_size + 1), replace= False)
+        # idx = g.choice(n_obs, size= (history_size + 1), replace= False)
+        idx = random.choices(list(range(n_obs)), k= history_size + 1)
         history = idx[:-1]
         action = idx[-1]
 
         aug_actions.append(action)
-        aug_obsevations.append(history.copy())
+        aug_observations.append(history)
     
-    return aug_obsevations, aug_actions
+    return aug_observations, aug_actions
 
 def setInteraction(env, agent, ep_user, train_df, obswindow, augment= True, ckpt= False, evalmode= False):
     user_df = train_df[train_df['user_id'] == ep_user]
@@ -227,8 +234,10 @@ def train_dqn(train_df, test_df, item_pop_dict,
     global precision, ndcg, novelty, coverage, ils, interdiv, epc
 
     # {user1 : [item1, item3, item5, ...], user2 : [item1, item2], ...}
+    print('RL Agent training starts...')
+
     train_dict = {}
-    for index, row in tqdm(train_df.iterrows()):
+    for index, row in tqdm(train_df.iterrows(), desc= f'Loading train_dict, nrows = {len(train_df)}'):
         train_dict.setdefault(int(row['user_id']), list())
         train_dict[int(row['user_id'])].append(int(row['item_id']))
 
