@@ -159,6 +159,8 @@ if __name__ == "__main__":
                         help= 'Policy mode: max, stochastic or gradient')
     parser.add_argument('--all_episodes', action='store_true', default=False,
                         help= 'Enable training on full trainset')
+    parser.add_argument('--num_gpu', type=int, default= 0,
+                        help= 'Specify number of GPU for multi-GPU training')
     parser.add_argument('--eval_batch', type=int, default=16,
                         help= 'Number of episode per evaluation batch')
 

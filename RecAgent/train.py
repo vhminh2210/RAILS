@@ -15,6 +15,7 @@ precision, ndcg, novelty, coverage, ils, interdiv, recall, epc = [], [], [], [],
 
 def stateAugment(observations, history_size, n_augment_):
     n_obs = len(observations)
+    g = np.random.Generator(np.random.PCG64())
     try:
         assert n_obs >= history_size + 1
     except:
@@ -25,7 +26,7 @@ def stateAugment(observations, history_size, n_augment_):
     aug_obsevations = []
     aug_actions = []
     for i in range(n_augment):
-        idx = random.choices(list(range(n_obs)), k= history_size + 1)
+        idx = g.choice(n_obs, size= (history_size + 1), replace= False)
         history = idx[:-1]
         action = idx[-1]
 
@@ -76,7 +77,7 @@ def recommend_encoder(user_emb, item_emb, last_obs, args):
     '''
     user_emb = user_emb.to(args.device)
     item_weight = item_emb.weight.to(args.device)
-    scores = (user_emb @ item_weight.T).squeeze().cpu()
+    scores = torch.matmul(user_emb, item_weight.T).squeeze()
     sorted_ids = sorted(range(scores.shape[0]), key= lambda x:-scores[x])
 
     rec_list = []
@@ -227,7 +228,7 @@ def train_dqn(train_df, test_df, item_pop_dict,
 
     # {user1 : [item1, item3, item5, ...], user2 : [item1, item2], ...}
     train_dict = {}
-    for index, row in train_df.iterrows():
+    for index, row in tqdm(train_df.iterrows()):
         train_dict.setdefault(int(row['user_id']), list())
         train_dict[int(row['user_id'])].append(int(row['item_id']))
 

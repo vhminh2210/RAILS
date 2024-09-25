@@ -18,7 +18,7 @@ python main.py --modeltype BC_LOSS \
                 --agent_batch 2048 \
                 --dqn_mode ddqn \
                 --eta 1.0 \
-                --agent_lr 5e-6 \
+                --agent_lr 5e-5 \
                 --replace_freq 10000 \
                 --tau 0.0005 \
                 --gamma 0.999 \
