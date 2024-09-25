@@ -164,7 +164,7 @@ def evaluate(agent, ep_users, train_df, test_df, train_dict, item_pop_dict,
                           item_pop_dict, ep_mask_list, args.sim_mode, repr_user, item_emb, args)
         interaction_num = setInteraction(env, agent, ep_user, train_df, args.obswindow, 
                                          augment= False, ckpt= ckpt, evalmode= True)
-        if interaction_num <= args.min_obs:
+        if interaction_num <= args.min_obs and not ckpt:
             continue
         
         if not encoder:
