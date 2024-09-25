@@ -15,7 +15,7 @@ precision, ndcg, novelty, coverage, ils, interdiv, recall, epc = [], [], [], [],
 
 def stateAugment(observations, history_size, n_augment_):
     n_obs = len(observations)
-    g = np.random.Generator(np.random.PCG64())
+    # g = np.random.Generator(np.random.PCG64())
     try:
         assert n_obs >= history_size + 1
     except:
@@ -33,7 +33,7 @@ def stateAugment(observations, history_size, n_augment_):
 
     for i in range(n_augment):
         # idx = g.choice(n_obs, size= (history_size + 1), replace= False)
-        idx = random.sample(list(range(n_obs)), k= history_size + 1)
+        idx = random.sample(observations, k= history_size + 1)
         history = idx[:-1]
         action = idx[-1]
 
@@ -44,7 +44,7 @@ def stateAugment(observations, history_size, n_augment_):
 
 def setInteraction(env, agent, ep_user, train_df, obswindow, augment= True, ckpt= False, evalmode= False):
     user_df = train_df[train_df['user_id'] == ep_user]
-    observations = user_df['item_id']
+    observations = user_df['item_id'].to_list()
 
     interaction_num = 0
     args = agent.args
