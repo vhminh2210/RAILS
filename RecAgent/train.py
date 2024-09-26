@@ -53,8 +53,8 @@ def setInteraction(env, agent, ep_user, train_df, args, augment= True, ckpt= Fal
         size_loader = range(1, len(observations))
     else:
         tmp = list(range(1, len(observations) - 1))
-        scale = min(len(observations) - 2, args.n_aug_scale)
-        size_loader = random.sample(tmp, k = scale)
+        scale = min(len(tmp) - 1, args.n_aug_scale)
+        size_loader = random.sample(tmp, k = max(scale, 1))
         size_loader.append(len(observations) - 1)
     
     for history_size in size_loader:
