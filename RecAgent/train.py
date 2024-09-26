@@ -1,4 +1,6 @@
 import random
+random.seed(101)
+
 import numpy as np
 from concurrent.futures import ThreadPoolExecutor, wait
 from .model import environment, dqn
@@ -21,18 +23,13 @@ def stateAugment(observations, history_size, n_augment_):
     except:
         raise ValueError('Sampling history size exceed known observations size!')
     n_augment = n_augment_
+
     if history_size == n_obs - 1:
         n_augment = min(n_augment, n_obs)
-
-    # idxs = [g.choice(n_obs, size= (history_size + 1), replace= False) for _ in range(n_augment)]
-    # idxs = np.stack(idxs)
-    # aug_observations = idxs[:, :-1]
-    # aug_actions = idxs[:, -1]
 
     aug_observations, aug_actions = [], []
 
     for i in range(n_augment):
-        # idx = g.choice(n_obs, size= (history_size + 1), replace= False)
         idx = random.sample(observations, k= history_size + 1)
         history = idx[:-1]
         action = idx[-1]
@@ -42,7 +39,7 @@ def stateAugment(observations, history_size, n_augment_):
     
     return aug_observations, aug_actions
 
-def setInteraction(env, agent, ep_user, train_df, obswindow, augment= True, ckpt= False, evalmode= False):
+def setInteraction(env, agent, ep_user, train_df, args, augment= True, ckpt= False, evalmode= False):
     user_df = train_df[train_df['user_id'] == ep_user]
     observations = user_df['item_id'].to_list()
 
@@ -52,7 +49,15 @@ def setInteraction(env, agent, ep_user, train_df, obswindow, augment= True, ckpt
     if evalmode:
         return len(observations) - 1
     
-    for history_size in range(1, len(observations)):
+    if args.n_aug_scale < 1:
+        size_loader = range(1, len(observations))
+    else:
+        tmp = list(range(1, len(observations) - 1))
+        scale = min(len(observations) - 2, args.n_aug_scale)
+        size_loader = random.sample(tmp, k = scale)
+        size_loader.append(len(observations) - 1)
+    
+    for history_size in size_loader:
         if augment:
             aug_obsevations, aug_actions = stateAugment(observations, history_size, args.n_augment)
         else:
@@ -118,7 +123,7 @@ def recommender(agent, train_episodes, ep_user, train_df, test_df, train_dict, i
                           item_pop_dict, new_mask_list, args.sim_mode, repr_user, item_emb, args)
 
     # Generate transitions (s, a, r, s_) and store in agent replay memory
-    interaction_num = setInteraction(env, agent, ep_user, train_df, args.obswindow)
+    interaction_num = setInteraction(env, agent, ep_user, train_df, args)
     if interaction_num <= args.min_obs:
         return None, None, None, None, None
     else:
@@ -162,7 +167,7 @@ def evaluate(agent, ep_users, train_df, test_df, train_dict, item_pop_dict,
         # Simulate the enviroment, regarding [ep_user] preferences
         env = environment.Env(ep_user, train_dict[ep_user], list(range(max_item_id + 1)),
                           item_pop_dict, ep_mask_list, args.sim_mode, repr_user, item_emb, args)
-        interaction_num = setInteraction(env, agent, ep_user, train_df, args.obswindow, 
+        interaction_num = setInteraction(env, agent, ep_user, train_df, args, 
                                          augment= False, ckpt= ckpt, evalmode= True)
         if interaction_num <= args.min_obs and not ckpt:
             continue
@@ -290,7 +295,7 @@ def train_dqn(train_df, test_df, item_pop_dict,
                           item_pop_dict, mask_list, args.sim_mode, repr_user, item_emb, args)
 
         # Generate transitions (s, a, r, s_) and store in agent replay memory
-        _ = setInteraction(env, agent, ep_user, train_df, args.obswindow, augment= False)
+        _ = setInteraction(env, agent, ep_user, train_df, args, augment= False)
     
     # agent.align_memory()
     ckpt_precision, ckpt_recall, ckpt_ndcg, ckpt_epc, ckpt_coverage = [], [], [], [], []

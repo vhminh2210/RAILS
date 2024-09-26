@@ -151,6 +151,8 @@ if __name__ == "__main__":
                         help= 'Rarity threshold')
     parser.add_argument('--n_augment', type=int, default=5,
                         help= 'Number of augmented transition generated per existed transition')
+    parser.add_argument('--n_aug_scale', type=int, default=-1,
+                        help= 'Number of sample scales for augmentation. -1 for dense augmentation')
     parser.add_argument('--eval_freq', type=int, default=1,
                         help= 'Frequency of RL Agent evaluation')
     parser.add_argument('--min_obs', type=int, default=5,
@@ -159,10 +161,10 @@ if __name__ == "__main__":
                         help= 'Policy mode: max, stochastic or gradient')
     parser.add_argument('--all_episodes', action='store_true', default=False,
                         help= 'Enable training on full trainset')
-    parser.add_argument('--num_gpu', type=int, default= 0,
-                        help= 'Specify number of GPU for multi-GPU training')
-    parser.add_argument('--eval_batch', type=int, default=16,
-                        help= 'Number of episode per evaluation batch')
+    # parser.add_argument('--num_gpu', type=int, default= 0,
+    #                     help= 'Specify number of GPU for multi-GPU training')
+    # parser.add_argument('--eval_batch', type=int, default=16,
+    #                     help= 'Number of episode per evaluation batch')
 
     args = parser.parse_args()
     assert args.epoch >= args.freeze_epoch
@@ -173,11 +175,11 @@ if __name__ == "__main__":
         device = f'cuda:{args.cuda}'
     args.device = device
 
-    if args.num_gpu > 0:
-        try:
-            assert args.cuda >= 0
-        except:
-            raise ValueError('One CUDA device must be specified for --cuda regarding --num_gpu > 0')
+    # if args.num_gpu > 0:
+    #     try:
+    #         assert args.cuda >= 0
+    #     except:
+    #         raise ValueError('One CUDA device must be specified for --cuda regarding --num_gpu > 0')
 
     start_time = time.time()
     print('####################')

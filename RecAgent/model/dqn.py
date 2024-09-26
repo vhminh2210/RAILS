@@ -185,13 +185,7 @@ class DQN(object):
         self.eval_net = self.eval_net.to(self.device)
         self.buffered_net = self.buffered_net.to(self.device)
         self.target_net = self.target_net.to(self.device)
-        # self.loss_func = self.loss_func.to(self.device)
-
-        if args.num_gpu > 1:
-            device_ids = list(range(args.num_gpu))
-            self.eval_net = nn.DataParallel(self.eval_net, device_ids= device_ids)
-            self.buffered_net_net = nn.DataParallel(self.buffered_net, device_ids= device_ids)
-            self.target_net = nn.DataParallel(self.target_net, device_ids= device_ids)
+        self.loss_func = self.loss_func.to(self.device)
 
     def choose_action(self, obs, env, mode= 'training'):
         self.setEval()
