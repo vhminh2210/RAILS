@@ -224,10 +224,10 @@ def evaluate(agent, ep_users, train_df, test_df, train_dict, item_pop_dict,
     if ckpt:
         print('Evaluation complete!')
         print('####################')
-        print(f"Precision@{args.topk}: ", np.round(np.mean(precision), 4))
-        print(f"Recall@{args.topk}: ", np.round(np.mean(recall), 4))
-        print(f"NDCG@{args.topk}: ", np.round(np.mean(ndcg), 4))
-        print(f"EPC@{args.topk}: ", np.round(final_epc, 4))
+        print(f"Precision@{args.topk}: ", np.round(np.mean(precision), 4), end= '     ')
+        print(f"Recall@{args.topk}: ", np.round(np.mean(recall), 4), end= '     ')
+        print(f"NDCG@{args.topk}: ", np.round(np.mean(ndcg), 4), end= '     ')
+        print(f"EPC@{args.topk}: ", np.round(final_epc, 4), end= '     ')
         print(f"Coverage@{args.topk}: ", np.round(final_coverage, 4))
         print('####################')
     return float(np.mean(precision)), float(np.mean(recall)), float(np.mean(ndcg)), final_epc, final_coverage
@@ -314,7 +314,7 @@ def train_dqn(train_df, test_df, item_pop_dict,
                                                 max_item_id, mask_list, repr_user, item_emb, episode_id, args,
                                                 min_freq, max_freq)
 
-        prec, recall, ndcg, epc, coverage = evaluate(agent, train_episodes, train_df, test_df, train_dict, item_pop_dict,
+        _prec, _recall, _ndcg, _epc, _coverage = evaluate(agent, train_episodes, train_df, test_df, train_dict, item_pop_dict,
                     max_item_id, mask_list, repr_user, item_emb, args, ckpt= True,
                     min_freq= min_freq, max_freq= max_freq)
         

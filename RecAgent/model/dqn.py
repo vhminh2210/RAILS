@@ -428,7 +428,7 @@ class DQN(object):
         loss.backward()
         torch.nn.utils.clip_grad_value_(self.eval_net.parameters(), 1.)
         self.optimizer.step()
-        self.scheduler.step()
+        # self.scheduler.step()
         
         # Fuse eval_net into target_net with temperature tau
         soft_update(self.target_net, self.eval_net, self.tau)
