@@ -106,10 +106,10 @@ def recommend_encoder(user_emb, item_emb, last_obs, args):
     return rec_list
 
 def trainAgent(agent, step_max):
-    for step in tqdm(range(step_max)):
-        agent.learn()
-    # for step in range(step_max):
+    # for step in tqdm(range(step_max)):
     #     agent.learn()
+    for step in range(step_max):
+        agent.learn()
 
 def recommender(agent, train_episodes, ep_user, train_df, test_df, train_dict, item_pop_dict,
                 max_item_id, mask_list, repr_user, item_emb, episode_id, args,
@@ -130,13 +130,17 @@ def recommender(agent, train_episodes, ep_user, train_df, test_df, train_dict, i
         global user_num
         user_num += 1
 
-    trainAgent(agent, args.step_max)
-    if episode_id % args.eval_freq != 0:
-        return None, None, None, None, None
-    prec, recall, ndcg, epc, coverage = evaluate(agent, train_episodes, train_df, test_df, train_dict, item_pop_dict,
-                        max_item_id, mask_list, repr_user, item_emb, args, ckpt= True,
-                        min_freq= min_freq, max_freq= max_freq)
-    return prec, recall, ndcg, epc, coverage
+    if episode_id % args.episode_batch == 0:
+        trainAgent(agent, args.step_max)
+        
+    # if episode_id % args.eval_freq != 0:
+    #     return None, None, None, None, None
+    # prec, recall, ndcg, epc, coverage = evaluate(agent, train_episodes, train_df, test_df, train_dict, item_pop_dict,
+    #                     max_item_id, mask_list, repr_user, item_emb, args, ckpt= True,
+    #                     min_freq= min_freq, max_freq= max_freq)
+    # return prec, recall, ndcg, epc, coverage
+
+    return None, None, None, None, None
 
 def evaluate(agent, ep_users, train_df, test_df, train_dict, item_pop_dict,
             max_item_id, mask_list, repr_user, item_emb, args, 
@@ -146,13 +150,10 @@ def evaluate(agent, ep_users, train_df, test_df, train_dict, item_pop_dict,
     global precision, ndcg, novelty, coverage, ils, interdiv, recall, epc
     precision, ndcg, novelty, coverage, ils, interdiv, recall, epc = [], [], [], [], [], [], [], []
 
-    if ckpt:
-        print('Evaluating checkpoint ...')
-
     if encoder:
         assert user_emb is not None
 
-    user_loader = tqdm(ep_users)
+    user_loader = tqdm(ep_users, desc= 'Evaluate ckpt')
     if not ckpt:
         user_loader = ep_users
 
@@ -300,17 +301,23 @@ def train_dqn(train_df, test_df, item_pop_dict,
     # agent.align_memory()
     ckpt_precision, ckpt_recall, ckpt_ndcg, ckpt_epc, ckpt_coverage = [], [], [], [], []
 
-    for ep_user in train_episodes:
-        episode_id += 1
-        print(f'Episode {episode_id}: User : {ep_user}')
-        # future = executor.submit(recommender,
-        #                         agent, ep_user, train_df, test_df, train_dict,
-        #                         item_sim_dict, item_quality_dict, item_pop_dict,
-        #                         max_item_id, mask_list, repr_user, item_emb, args, min_freq, max_freq)
-        _prec, _recall, _ndcg, _epc, _coverage = recommender(agent, train_episodes, ep_user, train_df, test_df, 
-                                            train_dict, item_pop_dict,
-                                            max_item_id, mask_list, repr_user, item_emb, episode_id, args,
-                                            min_freq, max_freq)
+    for t in range(args.epoch_max):
+        for ep_user in tqdm(train_episodes, desc= f'Epoch {t}'):
+            episode_id += 1
+            # print(f'Episode {episode_id}: User : {ep_user}')
+            # future = executor.submit(recommender,
+            #                         agent, ep_user, train_df, test_df, train_dict,
+            #                         item_sim_dict, item_quality_dict, item_pop_dict,
+            #                         max_item_id, mask_list, repr_user, item_emb, args, min_freq, max_freq)
+            _prec, _recall, _ndcg, _epc, _coverage = recommender(agent, train_episodes, ep_user, train_df, test_df, 
+                                                train_dict, item_pop_dict,
+                                                max_item_id, mask_list, repr_user, item_emb, episode_id, args,
+                                                min_freq, max_freq)
+
+        prec, recall, ndcg, epc, coverage = evaluate(agent, train_episodes, train_df, test_df, train_dict, item_pop_dict,
+                    max_item_id, mask_list, repr_user, item_emb, args, ckpt= True,
+                    min_freq= min_freq, max_freq= max_freq)
+        
         if _prec is not None:
             ckpt_precision.append(_prec)
         if _recall is not None:
@@ -321,8 +328,8 @@ def train_dqn(train_df, test_df, item_pop_dict,
             ckpt_epc.append(_epc)
         if _coverage is not None:
             ckpt_coverage.append(_coverage)
-    #     futures.append(future)
-    # wait(futures)
+        #     futures.append(future)
+        # wait(futures)
 
     print('RL agent training complete!')
     print('####################')

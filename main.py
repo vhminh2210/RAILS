@@ -129,6 +129,8 @@ if __name__ == "__main__":
                         help= 'Maximum number of episode')
     parser.add_argument('--step_max', type=int, default=10000,
                         help= 'Number of DQN update iteration for each episode')
+    parser.add_argument('--epoch_max', type=int, default=10,
+                        help= 'Maximum number of epoch')
     parser.add_argument('--dqn_mode', type=str, default='vanilla',
                         help= 'DQN update mode: vanilla/ddqn')
     parser.add_argument('--dueling_dqn', action='store_true', default=False,
@@ -161,6 +163,8 @@ if __name__ == "__main__":
                         help= 'Policy mode: max, stochastic or gradient')
     parser.add_argument('--all_episodes', action='store_true', default=False,
                         help= 'Enable training on full trainset')
+    parser.add_argument('--episode_batch', type=int, default=1,
+                        help= 'Number of episode per evaluation batch / Learn frequency')
     # parser.add_argument('--num_gpu', type=int, default= 0,
     #                     help= 'Specify number of GPU for multi-GPU training')
     # parser.add_argument('--eval_batch', type=int, default=16,
@@ -174,6 +178,10 @@ if __name__ == "__main__":
     else:
         device = f'cuda:{args.cuda}'
     args.device = device
+
+    if args.episode_batch * (args.n_aug_scale + 1) * args.n_augment > args.memory * args.seq_ratio:
+        print('WARNING: Current configurations may cause skips on sequential partition!')
+        print('Please modify episode_batch, n_aug_scale, n_augment if needed!')
 
     # if args.num_gpu > 0:
     #     try:
