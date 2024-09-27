@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 import os
 from datetime import datetime
 import json
+import random
+random.seed(101)
 # import seaborn as sns
 
 def soft_update(target, source, tau):
@@ -300,8 +302,8 @@ class DQN(object):
         samples = []
         splits = []
         for mode in range(3):
-            sample_index = np.random.choice(len(self.memory[mode]), 
-                                            min(self.pbatch_size[mode], len(self.memory[mode])))
+            sample_index = random.sample(list(range(len(self.memory[mode]))), 
+                                            k= min(self.pbatch_size[mode], len(self.memory[mode])))
             # (batch_size, transition_shape)
             batch_memory = self.memory[mode][sample_index, :].reshape((self.pbatch_size[mode], -1))
             samples.append(batch_memory)
@@ -409,11 +411,11 @@ class DQN(object):
         weights = splits / torch.sum(splits)
 
         seq_loss = self.loss_func(q_eval[ : splits[0]], q_target[ : splits[0]].detach())
-        rare_loss = self.loss_func(q_eval[splits[0] : splits[1]], q_target[splits[0] : splits[1]].detach())
-        rand_loss = self.loss_func(q_eval[splits[1] : ], q_target[splits[1] : ].detach())
+        rare_loss = self.loss_func(q_eval[splits[0] : splits[0] + splits[1]], q_target[splits[0] : splits[0] + splits[1]].detach())
+        rand_loss = self.loss_func(q_eval[splits[0] + splits[1] : ], q_target[splits[0] + splits[1] : ].detach())
 
         bellman_loss = weights[0] * seq_loss + weights[1] * rare_loss + weights[2] * rand_loss
-
+        
         # Conservative Q learning
         buffered_action = None
         if self.args.cql_mode == 'cql_Rho':
