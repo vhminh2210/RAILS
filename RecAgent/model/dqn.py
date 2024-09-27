@@ -415,7 +415,7 @@ class DQN(object):
         rand_loss = self.loss_func(q_eval[splits[0] + splits[1] : ], q_target[splits[0] + splits[1] : ].detach())
 
         bellman_loss = weights[0] * seq_loss + weights[1] * rare_loss + weights[2] * rand_loss
-        
+
         # Conservative Q learning
         buffered_action = None
         if self.args.cql_mode == 'cql_Rho':
@@ -449,6 +449,9 @@ class DQN(object):
 
         with open(os.path.join(root, 'args.txt'), 'w') as f:
             json.dump(args.__dict__, f, indent=2)
+
+        with open(os.path.join(root, 'loss.txt'), 'w') as f:
+            f.write(str(self.train_loss))
 
         save_pth = os.path.join(root, f'{self.args.episode_max}.episodes-{self.args.step_max}.step-{self.args.gamma}.gamma.png')
         reduced_loss = [np.mean(self.train_loss[x * 256 : (x+1) * 256]) for x in range(4, int(len(self.train_loss) / 256))]

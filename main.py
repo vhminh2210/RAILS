@@ -157,7 +157,7 @@ if __name__ == "__main__":
                         help= 'Number of sample scales for augmentation. -1 for dense augmentation')
     parser.add_argument('--eval_freq', type=int, default=1,
                         help= 'Frequency of RL Agent evaluation')
-    parser.add_argument('--min_obs', type=int, default=5,
+    parser.add_argument('--min_obs', type=int, default=2,
                         help= 'Exclude all users with less than `min_obs` training interaction ')
     parser.add_argument('--policy', type=str, default='max',
                         help= 'Policy mode: max, stochastic or gradient')
