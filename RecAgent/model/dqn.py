@@ -217,6 +217,9 @@ class DQN(object):
 
         return rec_list
 
+    def check_memory(self):
+        return ((len(self.memory[0]) + len(self.memory[1]) + len(self.memory[2])) >= self.memory_capacity)
+
     def align_memory(self):
         # RewardNorm
         current_rewards = [self.memory[x][:, self.n_states + 1:self.n_states + 2] for x in range(3)]

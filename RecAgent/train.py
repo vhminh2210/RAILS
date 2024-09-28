@@ -300,6 +300,10 @@ def train_dqn(train_df, test_df, item_pop_dict,
 
         # Generate transitions (s, a, r, s_) and store in agent replay memory
         _ = setInteraction(env, agent, ep_user, train_df, args, augment= False)
+
+        # Check if memory is full
+        if agent.check_memory():
+            break
     
     # agent.align_memory()
     ckpt_precision, ckpt_recall, ckpt_ndcg, ckpt_epc, ckpt_coverage = [], [], [], [], []
