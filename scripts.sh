@@ -11,7 +11,7 @@ python main.py --modeltype BC_LOSS \
                 --sim_mode user_embedding \
                 --freeze_epoch 5 \
                 --cuda -1 \
-                --epoch_max 10 \
+                --epoch_max 3 \
                 --episode_max 128\
                 --step_max 8 \
                 --memory 16394 \
