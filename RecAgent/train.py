@@ -304,6 +304,8 @@ def train_dqn(train_df, test_df, item_pop_dict,
         # Check if memory is full
         if agent.check_memory():
             break
+
+    print('Agent memory is completely filled! Training started ...')
     
     # agent.align_memory()
     ckpt_precision, ckpt_recall, ckpt_ndcg, ckpt_epc, ckpt_coverage = [], [], [], [], []
