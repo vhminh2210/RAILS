@@ -361,26 +361,27 @@ def train_dqn(train_df, test_df, item_pop_dict,
         file.write(f"Coverage@{args.topk}: {np.round(coverage, 4)}\n")
         file.close()
 
-    print('####################')
-    print('Running evaluations on trained encoder ...')
-    _, _, _, epc, coverage = evaluate(agent, train_episodes, train_df, test_df, train_dict, item_pop_dict,
-                                      max_item_id, mask_list, repr_user, item_emb, args, encoder= True,
-                                      min_freq= min_freq, max_freq= max_freq, user_emb= user_emb)
+    if args.eval_graph:
+        print('####################')
+        print('Running evaluations on trained encoder ...')
+        _, _, _, epc, coverage = evaluate(agent, train_episodes, train_df, test_df, train_dict, item_pop_dict,
+                                        max_item_id, mask_list, repr_user, item_emb, args, encoder= True,
+                                        min_freq= min_freq, max_freq= max_freq, user_emb= user_emb)
 
-    print(f"Precision@{args.topk}: ", np.round(np.mean(precision), 4))
-    print(f"Recall@{args.topk}: ", np.round(np.mean(recall), 4))
-    print(f"NDCG@{args.topk}: ", np.round(np.mean(ndcg), 4))
-    print(f"EPC@{args.topk}: ", np.round(epc, 4))
-    print(f"Coverage@{args.topk}: ", np.round(coverage, 4))
+        print(f"Precision@{args.topk}: ", np.round(np.mean(precision), 4))
+        print(f"Recall@{args.topk}: ", np.round(np.mean(recall), 4))
+        print(f"NDCG@{args.topk}: ", np.round(np.mean(ndcg), 4))
+        print(f"EPC@{args.topk}: ", np.round(epc, 4))
+        print(f"Coverage@{args.topk}: ", np.round(coverage, 4))
 
-    with open(os.path.join(exps_log, 'graphenc.txt'), 'w') as file:
-        file.write('########### ENCODER EVALUATIONS ###########\n')
-        file.write(f"Precision@{args.topk}: {np.round(np.mean(precision), 4)}\n")
-        file.write(f"Recall@{args.topk}: {np.round(np.mean(recall), 4)}\n")
-        file.write(f"NDCG@{args.topk}: {np.round(np.mean(ndcg), 4)}\n")
-        file.write(f"EPC@{args.topk}: {np.round(epc, 4)}\n")
-        file.write(f"Coverage@{args.topk}: {np.round(coverage, 4)}\n")
-        file.close()
+        with open(os.path.join(exps_log, 'graphenc.txt'), 'w') as file:
+            file.write('########### ENCODER EVALUATIONS ###########\n')
+            file.write(f"Precision@{args.topk}: {np.round(np.mean(precision), 4)}\n")
+            file.write(f"Recall@{args.topk}: {np.round(np.mean(recall), 4)}\n")
+            file.write(f"NDCG@{args.topk}: {np.round(np.mean(ndcg), 4)}\n")
+            file.write(f"EPC@{args.topk}: {np.round(epc, 4)}\n")
+            file.write(f"Coverage@{args.topk}: {np.round(coverage, 4)}\n")
+            file.close()
 
     return agent
 

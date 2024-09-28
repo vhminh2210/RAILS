@@ -163,6 +163,8 @@ if __name__ == "__main__":
                         help= 'Policy mode: max, stochastic or gradient')
     parser.add_argument('--all_episodes', action='store_true', default=False,
                         help= 'Enable training on full trainset')
+    parser.add_argument('--eval_graph', action='store_true', default=False,
+                        help= 'Enable evaluation on trained encoder')
     parser.add_argument('--episode_batch', type=int, default=1,
                         help= 'Number of episode per evaluation batch / Learn frequency')
     parser.add_argument('--num_hidden', type=int, default=256,
