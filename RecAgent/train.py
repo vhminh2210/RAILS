@@ -133,7 +133,7 @@ def recommender(agent, train_episodes, ep_user, train_df, test_df, train_dict, i
         global user_num
         user_num += 1
 
-    if episode_id % args.episode_batch == 0:
+    if episode_id % args.episode_batch == 0 or episode_id == len(train_episodes):
         trainAgent(agent, args.step_max)
         
     # if episode_id % args.eval_freq != 0:
@@ -305,6 +305,7 @@ def train_dqn(train_df, test_df, item_pop_dict,
     ckpt_precision, ckpt_recall, ckpt_ndcg, ckpt_epc, ckpt_coverage = [], [], [], [], []
 
     for t in range(args.epoch_max):
+        episode_id = 0
         for ep_user in tqdm(train_episodes, desc= f'Epoch {t}'):
             episode_id += 1
             # print(f'Episode {episode_id}: User : {ep_user}')

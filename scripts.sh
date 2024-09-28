@@ -13,7 +13,7 @@ python main.py --modeltype BC_LOSS \
                 --cuda -1 \
                 --epoch_max 3 \
                 --episode_max 128\
-                --step_max 64 \
+                --step_max 8 \
                 --memory 16394 \
                 --nov_beta 0.0 \
                 --agent_batch 2048 \
@@ -27,12 +27,12 @@ python main.py --modeltype BC_LOSS \
                 --cql_mode cql_H \
                 --dueling_dqn \
                 --n_augment 10 \
-                --n_aug_scale 4 \
+                --n_aug_scale 5 \
                 --rare_thresh 0.1 \
                 --seq_ratio 0.4 \
                 --rare_ratio 0.1 \
                 --rand_ratio 0.5 \
                 --topk 10 \
                 --eval_freq 50 \
-                --episode_batch 32 \
-                # --all_episodes
+                --episode_batch 5 \
+                --all_episodes
