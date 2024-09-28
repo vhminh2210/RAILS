@@ -218,8 +218,8 @@ class DQN(object):
         return rec_list
 
     def check_memory(self):
-        print(len(self.memory[0]), len(self.memory[1]), len(self.memory[2]))
-        print(len(self.memory[0]) + len(self.memory[1]) + len(self.memory[2]), np.sum(self.partition))
+        # print(len(self.memory[0]), len(self.memory[1]), len(self.memory[2]))
+        # print(len(self.memory[0]) + len(self.memory[1]) + len(self.memory[2]), np.sum(self.partition))
         return ((len(self.memory[0]) + len(self.memory[1]) + len(self.memory[2])) >= np.sum(self.partition))
 
     def align_memory(self):
