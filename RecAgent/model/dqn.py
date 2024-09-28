@@ -149,16 +149,18 @@ class DQN(object):
 
         self.item_pop_dict = item_pop_dict
 
+        self.num_hidden = self.args.num_hidden
+
         if embd is None:
-            self.eval_net = Net(self.n_states, self.n_actions, 256, dueling= self.args.dueling_dqn)
-            self.buffered_net = Net(self.n_states, self.n_actions, 256, dueling= self.args.dueling_dqn)
-            self.target_net = Net(self.n_states, self.n_actions, 256, dueling= self.args.dueling_dqn)
+            self.eval_net = Net(self.n_states, self.n_actions, self.num_hidden, dueling= self.args.dueling_dqn)
+            self.buffered_net = Net(self.n_states, self.n_actions, self.num_hidden, dueling= self.args.dueling_dqn)
+            self.target_net = Net(self.n_states, self.n_actions, self.num_hidden, dueling= self.args.dueling_dqn)
         else:
-            self.eval_net = Net(self.n_states, embd.weight.shape[-1], 256, 
+            self.eval_net = Net(self.n_states, embd.weight.shape[-1], self.num_hidden, 
                                 embd= embd.to(self.device), dueling= self.args.dueling_dqn)
-            self.buffered_net = Net(self.n_states, embd.weight.shape[-1], 256, 
+            self.buffered_net = Net(self.n_states, embd.weight.shape[-1], self.num_hidden, 
                                 embd= embd.to(self.device), dueling= self.args.dueling_dqn)
-            self.target_net = Net(self.n_states, embd.weight.shape[-1], 256, 
+            self.target_net = Net(self.n_states, embd.weight.shape[-1], self.num_hidden, 
                                 embd= embd.to(self.device), dueling= self.args.dueling_dqn)
 
         self.optimizer = torch.optim.Adam(self.eval_net.parameters(), lr=self.lr)

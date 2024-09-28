@@ -1,11 +1,11 @@
 #/bin/sh
 # python GraphEnc/setup.py build_ext --inplace 2> /dev/null
 python main.py --modeltype BC_LOSS \
-                --epoch 35 \
+                --epoch 409 \
                 --pretrained_graph \
                 --enc_batch_size 1024 \
                 --root datasets \
-                --dataset amazon-book \
+                --dataset d1 \
                 --n_layers 2 \
                 --neg_sample 128 \
                 --sim_mode user_embedding \
@@ -21,6 +21,7 @@ python main.py --modeltype BC_LOSS \
                 --eta 1.0 \
                 --agent_lr 1e-5 \
                 --replace_freq 10000 \
+                --num_hidden 128 \
                 --tau 0.0005 \
                 --gamma 0.999 \
                 --cql_mode cql_H \

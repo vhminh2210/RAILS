@@ -165,6 +165,8 @@ if __name__ == "__main__":
                         help= 'Enable training on full trainset')
     parser.add_argument('--episode_batch', type=int, default=1,
                         help= 'Number of episode per evaluation batch / Learn frequency')
+    parser.add_argument('--num_hidden', type=int, default=256,
+                        help= 'Number of hidden activations for DQN.')
     # parser.add_argument('--num_gpu', type=int, default= 0,
     #                     help= 'Specify number of GPU for multi-GPU training')
     # parser.add_argument('--eval_batch', type=int, default=16,
