@@ -22,7 +22,7 @@ def stateAugment(observations, history_size, n_augment_, freq):
     p = freq[observations] / np.sum(freq[observations])
 
     g = np.random.default_rng(seed= 101)
-    np_observations = g.shuffle(np_observations)
+    g.shuffle(np_observations)
 
     try:
         assert n_obs >= history_size + 1
