@@ -34,11 +34,11 @@ def stateAugment(observations, history_size, n_augment_, freq):
     if history_size == n_obs - 1:
         n_augment = min(n_augment, n_obs)
 
-    s_idx = random.sample(list(range(n_obs - history_size)), k= n_augment - 1)
+    s_idx = random.sample(list(range(n_obs - history_size)), k= min(n_augment - 1, n_obs - history_size))
     aug_observations, aug_actions = [], []
 
     # Pure random sampling
-    for i in range(n_augment - 1):
+    for i in range(len(s_idx)):
         s = s_idx[i]
         history = np_observations[s : s + history_size].tolist()
         action = int(np_observations[s + history_size])
