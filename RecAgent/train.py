@@ -76,7 +76,7 @@ def setInteraction(env, agent, ep_user, train_df, args, freq, augment= True, ckp
             aug_obsevations, aug_actions = stateAugment(observations, history_size, args.n_augment, freq)
         else:
             if not ckpt:
-                aug_obsevations, aug_actions = stateAugment(observations, history_size, int(args.n_augment / 2), freq)
+                aug_obsevations, aug_actions = stateAugment(observations, history_size, int(args.n_augment), freq)
             else:
                 aug_obsevations, aug_actions = stateAugment(observations, history_size, 1, freq)
 
