@@ -57,7 +57,7 @@ def setInteraction(env, agent, ep_user, train_df, args, freq, augment= True, ckp
     interaction_num = 0
     args = agent.args
 
-    if evalmode:
+    if evalmode or len(observations) < args.min_obs:
         return len(observations) - 1
     
     if args.n_aug_scale < 1:
