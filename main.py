@@ -209,7 +209,7 @@ if __name__ == "__main__":
         # Graph encoder
         print('GCF training starts...')
         encoder, data = getEncoder(args)
-        _, min_freq, max_freq = get_minmax_freq(os.path.join(args.root, args.dataset, 'train.txt'), data.n_items)
+        freq, min_freq, max_freq = get_minmax_freq(os.path.join(args.root, args.dataset, 'train.txt'), data.n_items)
         print(f'Min frequency: {min_freq}. Max frequency: {max_freq}')
         print('####################')
 
@@ -262,6 +262,6 @@ if __name__ == "__main__":
         raise NotImplementedError('ERROR: `stats` similarity mode is deprecated!')
 
     # Interactive RL Agent
-    agent = getAgent(repr_user, user_emb, item_emb, min_freq, max_freq, args)
+    agent = getAgent(repr_user, user_emb, item_emb, min_freq, max_freq, freq, args)
     print('####################')
     print('Runtime:', time.time() - start_time, 'seconds')

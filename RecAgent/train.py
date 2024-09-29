@@ -15,8 +15,10 @@ import os
 user_num = 0
 precision, ndcg, novelty, coverage, ils, interdiv, recall, epc = [], [], [], [], [], [], [], []
 
-def stateAugment(observations, history_size, n_augment_):
+def stateAugment(observations, history_size, n_augment_, freq):
     n_obs = len(observations)
+    np_observations = np.array(observations)
+    p = freq[observations] / np.sum(freq[observations])
     # g = np.random.Generator(np.random.PCG64())
     try:
         assert n_obs >= history_size + 1
@@ -30,16 +32,25 @@ def stateAugment(observations, history_size, n_augment_):
     aug_observations, aug_actions = [], []
 
     for i in range(n_augment):
-        idx = random.sample(observations, k= history_size + 1)
-        history = idx[:-1]
-        action = idx[-1]
+        # Pure random sampling
+        if i % 2 == 0:
+            idx = random.sample(observations, k= history_size + 1)
+            history = idx[:-1]
+            action = idx[-1]
+
+        # Rare-item seeker
+        else:
+            g = np.random.default_rng()
+            idx = g.choice(n_obs, size= history_size + 1, p= p)
+            history = np_observations[idx[:-1]].tolist()
+            action = int(np_observations[idx[-1]])
 
         aug_actions.append(action)
         aug_observations.append(history)
-    
+
     return aug_observations, aug_actions
 
-def setInteraction(env, agent, ep_user, train_df, args, augment= True, ckpt= False, evalmode= False):
+def setInteraction(env, agent, ep_user, train_df, args, freq, augment= True, ckpt= False, evalmode= False):
     user_df = train_df[train_df['user_id'] == ep_user]
     observations = user_df['item_id'].to_list()
 
@@ -62,12 +73,12 @@ def setInteraction(env, agent, ep_user, train_df, args, augment= True, ckpt= Fal
     
     for history_size in size_loader:
         if augment:
-            aug_obsevations, aug_actions = stateAugment(observations, history_size, args.n_augment)
+            aug_obsevations, aug_actions = stateAugment(observations, history_size, args.n_augment, freq)
         else:
             if not ckpt:
-                aug_obsevations, aug_actions = stateAugment(observations, history_size, int(args.n_augment / 5))
+                aug_obsevations, aug_actions = stateAugment(observations, history_size, int(args.n_augment / 2), freq)
             else:
-                aug_obsevations, aug_actions = stateAugment(observations, history_size, 1)
+                aug_obsevations, aug_actions = stateAugment(observations, history_size, 1, freq)
 
         for i in range(len(aug_actions)):
             s = np.array(env.reset(aug_obsevations[i]))
@@ -116,7 +127,7 @@ def trainAgent(agent, step_max):
 
 def recommender(agent, train_episodes, ep_user, train_df, test_df, train_dict, item_pop_dict,
                 max_item_id, mask_list, repr_user, item_emb, episode_id, args,
-                min_freq, max_freq):
+                min_freq, max_freq, freq):
     # Newest interaction made by [ep_user]
     last_obs = train_dict[ep_user][-args.obswindow:]
     new_mask_list = copy.copy(mask_list)
@@ -126,7 +137,7 @@ def recommender(agent, train_episodes, ep_user, train_df, test_df, train_dict, i
                           item_pop_dict, new_mask_list, args.sim_mode, repr_user, item_emb, args)
 
     # Generate transitions (s, a, r, s_) and store in agent replay memory
-    interaction_num = setInteraction(env, agent, ep_user, train_df, args)
+    interaction_num = setInteraction(env, agent, ep_user, train_df, args, freq)
     if interaction_num <= args.min_obs:
         return None, None, None, None, None
     else:
@@ -148,7 +159,7 @@ def recommender(agent, train_episodes, ep_user, train_df, test_df, train_dict, i
 def evaluate(agent, ep_users, train_df, test_df, train_dict, item_pop_dict,
             max_item_id, mask_list, repr_user, item_emb, args, 
             ckpt= False, encoder= False, user_emb= None,
-            min_freq= None, max_freq= None):
+            min_freq= None, max_freq= None, freq= None):
 
     global precision, ndcg, novelty, coverage, ils, interdiv, recall, epc
     precision, ndcg, novelty, coverage, ils, interdiv, recall, epc = [], [], [], [], [], [], [], []
@@ -171,7 +182,7 @@ def evaluate(agent, ep_users, train_df, test_df, train_dict, item_pop_dict,
         # Simulate the enviroment, regarding [ep_user] preferences
         env = environment.Env(ep_user, train_dict[ep_user], list(range(max_item_id + 1)),
                           item_pop_dict, ep_mask_list, args.sim_mode, repr_user, item_emb, args)
-        interaction_num = setInteraction(env, agent, ep_user, train_df, args, 
+        interaction_num = setInteraction(env, agent, ep_user, train_df, args, freq,
                                          augment= False, ckpt= ckpt, evalmode= True)
         if interaction_num <= args.min_obs and not ckpt:
             continue
@@ -238,7 +249,7 @@ def evaluate(agent, ep_users, train_df, test_df, train_dict, item_pop_dict,
 def train_dqn(train_df, test_df, item_pop_dict,
               max_item_id, item_list, mask_list, 
               repr_user, item_emb, user_emb, 
-              min_freq, max_freq, args):
+              min_freq, max_freq, freq, args):
     
     global precision, ndcg, novelty, coverage, ils, interdiv, epc
 
@@ -299,13 +310,13 @@ def train_dqn(train_df, test_df, item_pop_dict,
                           item_pop_dict, mask_list, args.sim_mode, repr_user, item_emb, args)
 
         # Generate transitions (s, a, r, s_) and store in agent replay memory
-        _ = setInteraction(env, agent, ep_user, train_df, args, augment= False)
+        _ = setInteraction(env, agent, ep_user, train_df, args, freq, augment= False)
 
         # Check if memory is full
         if agent.check_memory():
             break
 
-    print('Agent memory is completely filled! Training started ...')
+    print('Memory initialization complete! Training started ...')
     
     # agent.align_memory()
     ckpt_precision, ckpt_recall, ckpt_ndcg, ckpt_epc, ckpt_coverage = [], [], [], [], []
@@ -322,7 +333,7 @@ def train_dqn(train_df, test_df, item_pop_dict,
             _prec, _recall, _ndcg, _epc, _coverage = recommender(agent, train_episodes, ep_user, train_df, test_df, 
                                                 train_dict, item_pop_dict,
                                                 max_item_id, mask_list, repr_user, item_emb, episode_id, args,
-                                                min_freq, max_freq)
+                                                min_freq, max_freq, freq)
 
         _prec, _recall, _ndcg, _epc, _coverage = evaluate(agent, train_episodes, train_df, test_df, train_dict, item_pop_dict,
                     max_item_id, mask_list, repr_user, item_emb, args, ckpt= True,
