@@ -17,42 +17,36 @@ precision, ndcg, novelty, coverage, ils, interdiv, recall, epc = [], [], [], [],
 
 def stateAugment(observations, history_size, n_augment_, freq):
     n_obs = len(observations)
-
     np_observations = np.array(observations)
     p = freq[observations] / np.sum(freq[observations])
-
-    g = np.random.default_rng(seed= 101)
-    g.shuffle(np_observations)
-
+    # g = np.random.Generator(np.random.PCG64())
     try:
         assert n_obs >= history_size + 1
     except:
         raise ValueError('Sampling history size exceed known observations size!')
-    
     n_augment = n_augment_
 
     if history_size == n_obs - 1:
         n_augment = min(n_augment, n_obs)
 
-    s_idx = random.sample(list(range(n_obs - history_size)), k= min(n_augment - 1, n_obs - history_size))
     aug_observations, aug_actions = [], []
 
-    # Pure random sampling
-    for i in range(len(s_idx)):
-        s = s_idx[i]
-        history = np_observations[s : s + history_size].tolist()
-        action = int(np_observations[s + history_size])
+    for i in range(n_augment):
+        # Pure random sampling
+        if i % 2 == 0:
+            idx = random.sample(observations, k= history_size + 1)
+            history = idx[:-1]
+            action = idx[-1]
+
+        # Rare-item seeker
+        else:
+            g = np.random.default_rng()
+            idx = g.choice(n_obs, size= history_size + 1, p= p, replace= False)
+            history = np_observations[idx[:-1]].tolist()
+            action = int(np_observations[idx[-1]])
 
         aug_actions.append(action)
         aug_observations.append(history)
-
-    # Rare-item seeker
-    idx = g.choice(n_obs, size= history_size + 1, p= p, replace= False)
-    history = np_observations[idx[:-1]].tolist()
-    action = int(np_observations[idx[-1]])
-
-    aug_actions.append(action)
-    aug_observations.append(history)
 
     return aug_observations, aug_actions
 
