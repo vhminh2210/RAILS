@@ -18,7 +18,10 @@ precision, ndcg, novelty, coverage, ils, interdiv, recall, epc = [], [], [], [],
 def stateAugment(observations, history_size, n_augment_, freq):
     n_obs = len(observations)
     np_observations = np.array(observations)
-    p = freq[observations] / np.sum(freq[observations])
+    p = freq[observations]
+    p = p / np.sum(p)
+    p = 1. - p
+    p = p / np.sum(p)
     # g = np.random.Generator(np.random.PCG64())
     try:
         assert n_obs >= history_size + 1
@@ -323,6 +326,7 @@ def train_dqn(train_df, test_df, item_pop_dict,
 
     for t in range(args.epoch_max):
         episode_id = 0
+        random.shuffle(train_episodes)
         for ep_user in tqdm(train_episodes, desc= f'Epoch {t}'):
             episode_id += 1
             # print(f'Episode {episode_id}: User : {ep_user}')
