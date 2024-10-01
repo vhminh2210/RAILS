@@ -106,7 +106,8 @@ def recommend_encoder(user_emb, item_weight, last_obs, args):
     '''
     user_emb = user_emb.to(args.device)
     # item_weight = item_emb.weight.to(args.device)
-    scores = torch.matmul(user_emb.unsqueeze(0), item_weight.T).squeeze()
+    # scores = torch.matmul(user_emb.unsqueeze(0), item_weight.T).squeeze()
+    scores = torch.einsum('d,id->i', user_emb, item_weight)
     sorted_ids = sorted(range(scores.shape[0]), key= lambda x:-scores[x])
 
     rec_list = []
