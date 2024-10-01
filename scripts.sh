@@ -11,7 +11,7 @@ python main.py --modeltype BC_LOSS \
                 --sim_mode user_embedding \
                 --freeze_epoch 5 \
                 --cuda -1 \
-                --epoch_max 10 \
+                --epoch_max 1 \
                 --episode_max 128\
                 --step_max 16 \
                 --memory 16394 \
@@ -22,7 +22,7 @@ python main.py --modeltype BC_LOSS \
                 --agent_lr 1e-5 \
                 --replace_freq 10000 \
                 --num_hidden 256 \
-                --tau 0.0005 \
+                --tau 0.0001 \
                 --gamma 0.999 \
                 --cql_mode cql_H \
                 --dueling_dqn \
@@ -35,5 +35,4 @@ python main.py --modeltype BC_LOSS \
                 --topk 10 \
                 --eval_freq 50 \
                 --episode_batch 5 \
-                --all_episodes \
                 --eval_graph

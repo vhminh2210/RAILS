@@ -100,13 +100,13 @@ def recommend_offpolicy(env, agent, last_obs):
 
     return agent.choose_action(so, env, mode= 'infer')
 
-def recommend_encoder(user_emb, item_emb, last_obs, args):
+def recommend_encoder(user_emb, item_weight, last_obs, args):
     '''
     Note: user_emb represent a SINGLE user embedding, NOT the complete user embedding matrix
     '''
     user_emb = user_emb.to(args.device)
-    item_weight = item_emb.weight.to(args.device)
-    scores = torch.matmul(user_emb, item_weight.T).squeeze()
+    # item_weight = item_emb.weight.to(args.device)
+    scores = torch.matmul(user_emb.unsqueeze(0), item_weight.T).squeeze()
     sorted_ids = sorted(range(scores.shape[0]), key= lambda x:-scores[x])
 
     rec_list = []
@@ -174,6 +174,9 @@ def evaluate(agent, ep_users, train_df, test_df, train_dict, item_pop_dict,
     if not ckpt:
         user_loader = ep_users
 
+    if encoder:
+        item_weight = item_emb.weight.to(args.device)
+
     for ep_user in user_loader:
         if not ckpt:
             print('Evaluating user', ep_user)
@@ -195,7 +198,7 @@ def evaluate(agent, ep_users, train_df, test_df, train_dict, item_pop_dict,
             rec_list = recommend_offpolicy(env, agent, last_obs)
         else:
             # Generate unseen interaction using pretrained encoder
-            rec_list = recommend_encoder(user_emb(torch.IntTensor([ep_user])), item_emb, last_obs, args)
+            rec_list = recommend_encoder(user_emb(torch.IntTensor([ep_user])), item_weight, last_obs, args)
         # Ground truth unseen interaction
         test_set = test_df.loc[test_df['user_id'] == ep_user, 'item_id'].tolist()
 
@@ -365,7 +368,7 @@ def train_dqn(train_df, test_df, item_pop_dict,
     print('Running evaluations on trained agent ...')
     _, _, _, epc, coverage = evaluate(agent, train_episodes, train_df, test_df, train_dict, item_pop_dict,
                                       max_item_id, mask_list, repr_user, item_emb, args,
-                                      min_freq= min_freq, max_freq= max_freq)
+                                      min_freq= min_freq, max_freq= max_freq, ckpt= True)
 
     print(f"Precision@{args.topk}: ", np.round(np.mean(precision), 4))
     print(f"Recall@{args.topk}: ", np.round(np.mean(recall), 4))
@@ -387,7 +390,7 @@ def train_dqn(train_df, test_df, item_pop_dict,
         print('Running evaluations on trained encoder ...')
         _, _, _, epc, coverage = evaluate(agent, train_episodes, train_df, test_df, train_dict, item_pop_dict,
                                         max_item_id, mask_list, repr_user, item_emb, args, encoder= True,
-                                        min_freq= min_freq, max_freq= max_freq, user_emb= user_emb)
+                                        min_freq= min_freq, max_freq= max_freq, user_emb= user_emb, ckpt= True)
 
         print(f"Precision@{args.topk}: ", np.round(np.mean(precision), 4))
         print(f"Recall@{args.topk}: ", np.round(np.mean(recall), 4))
