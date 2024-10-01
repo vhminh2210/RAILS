@@ -106,8 +106,8 @@ def recommend_encoder(user_emb, item_weight, last_obs, args):
     '''
     user_emb = user_emb.to(args.device).squeeze()
     # item_weight = item_emb.weight.to(args.device)
-    # scores = torch.matmul(user_emb.unsqueeze(0), item_weight.T).squeeze()
-    scores = torch.einsum('d,id->i', user_emb, item_weight)
+    scores = (user_emb @ item_weight.T).squeeze()
+    # scores = torch.einsum('d,id->i', user_emb, item_weight)
     sorted_ids = sorted(range(scores.shape[0]), key= lambda x:-scores[x])
 
     rec_list = []
@@ -176,7 +176,7 @@ def evaluate(agent, ep_users, train_df, test_df, train_dict, item_pop_dict,
         user_loader = ep_users
 
     if encoder:
-        item_weight = item_emb.weight.to(args.device)
+        item_weight = item_emb.weight.detach().to(args.device)
 
     for ep_user in user_loader:
         if not ckpt:
