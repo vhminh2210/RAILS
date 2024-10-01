@@ -104,7 +104,7 @@ def recommend_encoder(user_emb, item_weight, last_obs, args):
     '''
     Note: user_emb represent a SINGLE user embedding, NOT the complete user embedding matrix
     '''
-    user_emb = user_emb.to(args.device)
+    user_emb = user_emb.to(args.device).squeeze()
     # item_weight = item_emb.weight.to(args.device)
     # scores = torch.matmul(user_emb.unsqueeze(0), item_weight.T).squeeze()
     scores = torch.einsum('d,id->i', user_emb, item_weight)
