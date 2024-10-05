@@ -133,8 +133,10 @@ class Data:
 
         self.users = list(set(self.train_user_list.keys()))
         self.items = list(set().union(*temp_lst))
-        self.n_users = len(self.users)
-        self.n_items = len(self.items)
+
+        # Item and users are 0-based integers
+        self.n_users = max([int(x) for x in self.users]) + 1
+        self.n_items = max([int(x) for x in self.items]) + 1
 
         for i in range(self.n_users):
             self.n_observations += len(self.train_user_list[i])
