@@ -262,7 +262,7 @@ def evaluate(agent, ep_users, train_df, test_df, train_dict, item_pop_dict,
         print('####################')
     return float(np.mean(precision)), float(np.mean(recall)), float(np.mean(ndcg)), final_epc, final_coverage
 
-def train_dqn(train_df, test_df, item_pop_dict,
+def train_dqn(train_df, test_df, query_df, item_pop_dict,
               max_item_id, item_list, mask_list, 
               repr_user, item_emb, user_emb, 
               min_freq, max_freq, freq, args):
@@ -276,6 +276,17 @@ def train_dqn(train_df, test_df, item_pop_dict,
     for index, row in tqdm(train_df.iterrows(), desc= f'Loading train_dict, nrows = {len(train_df)}'):
         train_dict.setdefault(int(row['user_id']), list())
         train_dict[int(row['user_id'])].append(int(row['item_id']))
+
+    if args.eval_query:
+        query_dict = {}
+        query_episodes = []
+        for index, row in tqdm(query_df.iterrows(), desc= f'Loading query_dict, nrows = {len(query_df)}'):
+            query_dict.setdefault(int(row['user_id']), list())
+            query_dict[int(row['user_id'])].append(int(row['item_id']))
+            query_episodes.append(int(row['user_id']))
+
+        query_episodes = list(set(query_episodes))
+        print(f'Queried users, len = {len(query_episodes)}:', query_episodes)
 
     # Initialize DQN agent with provided environment
     if args.sim_mode == 'stats':
@@ -352,9 +363,15 @@ def train_dqn(train_df, test_df, item_pop_dict,
                                                 max_item_id, mask_list, repr_user, item_emb, episode_id, args,
                                                 min_freq, max_freq, freq)
 
-        _prec, _recall, _ndcg, _epc, _coverage = evaluate(agent, train_episodes, train_df, test_df, train_dict, item_pop_dict,
-                    max_item_id, mask_list, repr_user, item_emb, args, ckpt= True,
-                    min_freq= min_freq, max_freq= max_freq)
+        if args.eval_query:
+            _prec, _recall, _ndcg, _epc, _coverage = evaluate(agent, query_episodes, query_df, test_df, query_dict, item_pop_dict,
+                        max_item_id, mask_list, repr_user, item_emb, args, ckpt= True,
+                        min_freq= min_freq, max_freq= max_freq)
+            
+        else:
+            _prec, _recall, _ndcg, _epc, _coverage = evaluate(agent, train_episodes, train_df, test_df, train_dict, item_pop_dict,
+                        max_item_id, mask_list, repr_user, item_emb, args, ckpt= True,
+                        min_freq= min_freq, max_freq= max_freq)
         
         if _prec is not None:
             ckpt_precision.append(_prec)
@@ -376,9 +393,15 @@ def train_dqn(train_df, test_df, item_pop_dict,
     print('Train curve finished!')
     print('####################')
     print('Running evaluations on trained agent ...')
-    _, _, _, epc, coverage = evaluate(agent, train_episodes, train_df, test_df, train_dict, item_pop_dict,
-                                      max_item_id, mask_list, repr_user, item_emb, args,
-                                      min_freq= min_freq, max_freq= max_freq, ckpt= True)
+    if args.eval_query:
+        _, _, _, epc, coverage = evaluate(agent, query_episodes, query_df, test_df, query_dict, item_pop_dict,
+                    max_item_id, mask_list, repr_user, item_emb, args, ckpt= True,
+                    min_freq= min_freq, max_freq= max_freq)
+        
+    else:
+        _, _, _, epc, coverage = evaluate(agent, train_episodes, train_df, test_df, train_dict, item_pop_dict,
+                    max_item_id, mask_list, repr_user, item_emb, args, ckpt= True,
+                    min_freq= min_freq, max_freq= max_freq)
 
     print(f"Precision@{args.topk}: ", np.round(np.mean(precision), 4))
     print(f"Recall@{args.topk}: ", np.round(np.mean(recall), 4))

@@ -139,8 +139,11 @@ class Data:
         self.n_items = max([int(x) for x in self.items]) + 1
 
         for i in range(self.n_users):
-            self.n_observations += len(self.train_user_list[i])
-            self.n_interactions += len(self.train_user_list[i])
+            if i in self.train_user_list.keys():
+                self.n_observations += len(self.train_user_list[i])
+                self.n_interactions += len(self.train_user_list[i])
+            else:
+                self.train_user_list[i] = []
             if i in self.valid_user_list.keys():
                 self.n_interactions += len(self.valid_user_list[i])
             if i in self.test_id_user_list.keys():

@@ -169,13 +169,14 @@ if __name__ == "__main__":
                         help= 'Number of episode per evaluation batch / Learn frequency')
     parser.add_argument('--num_hidden', type=int, default=256,
                         help= 'Number of hidden activations for DQN.')
-    # parser.add_argument('--num_gpu', type=int, default= 0,
-    #                     help= 'Specify number of GPU for multi-GPU training')
-    # parser.add_argument('--eval_batch', type=int, default=16,
-    #                     help= 'Number of episode per evaluation batch')
+    parser.add_argument('--eval_query', action='store_true', default=False,
+                        help= 'Enable query evaluation mode')
 
     args = parser.parse_args()
     assert args.epoch >= args.freeze_epoch
+
+    if args.eval_query:
+        assert 'query.txt' in os.listdir(os.path.join(args.root, args.dataset))
 
     if args.cuda < 0:
         device = 'cpu'

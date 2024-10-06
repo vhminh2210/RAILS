@@ -460,7 +460,7 @@ class DQN(object):
         with open(os.path.join(root, 'loss.txt'), 'w') as f:
             f.write(str(self.train_loss))
 
-        save_pth = os.path.join(root, f'{self.args.episode_max}.episodes-{self.args.step_max}.step-{self.args.gamma}.gamma.png')
+        save_pth = os.path.join(root, f'{self.args.dataset}-{self.args.step_max}.step-{self.args.gamma}.gamma.png')
         reduced_loss = [np.mean(self.train_loss[x * 256 : (x+1) * 256]) for x in range(4, int(len(self.train_loss) / 256))]
         plt.plot(reduced_loss)
         plt.title('Training Loss')

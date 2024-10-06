@@ -2,12 +2,12 @@
 # python GraphEnc/setup.py build_ext --inplace 2> /dev/null
 python main.py --modeltype BC_LOSS \
                 --cuda -1 \
-                --epoch 409 \
+                --epoch 9 \
                 --pretrained_graph \
                 --enc_batch_size 2048 \
                 --enc_lr 5e-5 \
-                --root datasets \
-                --dataset d1 \
+                --root datasets/d1-fold \
+                --dataset Round1 \
                 --n_layers 2 \
                 --neg_sample 128 \
                 --freeze_epoch 5 \
@@ -35,6 +35,7 @@ python main.py --modeltype BC_LOSS \
                 --rand_ratio 0.5 \
                 --topk 10 \
                 --eval_freq 50 \
-                --episode_batch 2 \
+                --episode_batch 5 \
                 --eval_graph \
-                # --all_episodes
+                --eval_query \
+                --all_episodes

@@ -12,6 +12,7 @@ from .util.simmatrix_util import sim_matrix_generate
 def getAgent(repr_user, user_emb, item_emb, min_freq, max_freq, freq, args):
     train_df = None
     test_df = None
+    query_df = None
     item_sim_dict = None
     item_quality_dict = None
     item_pop_dict = None
@@ -31,6 +32,7 @@ def getAgent(repr_user, user_emb, item_emb, min_freq, max_freq, freq, args):
         train_path = os.path.join(dat_dir, f'{args.dataset}.train')
         valid_path = os.path.join(dat_dir, f'{args.dataset}.val')
         test_path = os.path.join(dat_dir, f'{args.dataset}.test')
+        query_path = os.path.join(dat_dir, f'{args.dataset}.query')
         if (os.path.exists(train_path)) \
                 & (os.path.exists(valid_path)) \
                 & (os.path.exists(test_path)):
@@ -39,6 +41,9 @@ def getAgent(repr_user, user_emb, item_emb, min_freq, max_freq, freq, args):
             valid_df = pd.read_csv(valid_path, sep=',',
                                    names=['user_id', 'item_id', 'ratings', 'timestamp'])
             test_df = pd.read_csv(test_path, sep=',',
+                                  names=['user_id', 'item_id', 'ratings', 'timestamp'])
+            if os.path.exists(query_path):
+                query_df = pd.read_csv(query_path, sep=',',
                                   names=['user_id', 'item_id', 'ratings', 'timestamp'])
         else:
             data_split(dat_path, train_path, valid_path, test_path)
@@ -73,7 +78,7 @@ def getAgent(repr_user, user_emb, item_emb, min_freq, max_freq, freq, args):
     if args.sim_mode == 'user_embedding':
         assert repr_user is not None
 
-    return train_dqn(train_df, test_df, item_pop_dict,
+    return train_dqn(train_df, test_df, query_df, item_pop_dict,
                     max_item_id, item_list, mask_list, 
                     repr_user, item_emb, user_emb, 
                     min_freq, max_freq, freq, args)

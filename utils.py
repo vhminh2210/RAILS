@@ -67,6 +67,8 @@ def split_data(args, train_ratio= 0.8, val_ratio= 0.1, test_ratio= 0.1, seed= 10
         agent_data('train', args)
         agent_data('val', args)
         agent_data('test', args)
+        if args.eval_query:
+            agent_data('query', args)
         agent_data('dat', args)
         return
 
