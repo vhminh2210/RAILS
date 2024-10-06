@@ -428,9 +428,14 @@ def train_dqn(train_df, test_df, query_df, item_pop_dict,
     if args.eval_graph:
         print('####################')
         print('Running evaluations on trained encoder ...')
-        _, _, _, epc, coverage = evaluate(agent, train_episodes, train_df, test_df, train_dict, item_pop_dict,
-                                        max_item_id, mask_list, repr_user, item_emb, args, encoder= True,
-                                        min_freq= min_freq, max_freq= max_freq, user_emb= user_emb, ckpt= True)
+        if args.eval_query:
+            _, _, _, epc, coverage = evaluate(agent, query_episodes, query_df, test_df, query_dict, item_pop_dict,
+                                            max_item_id, mask_list, repr_user, item_emb, args, encoder= True,
+                                            min_freq= min_freq, max_freq= max_freq, user_emb= user_emb, ckpt= True)
+        else:
+            _, _, _, epc, coverage = evaluate(agent, train_episodes, train_df, test_df, train_dict, item_pop_dict,
+                                            max_item_id, mask_list, repr_user, item_emb, args, encoder= True,
+                                            min_freq= min_freq, max_freq= max_freq, user_emb= user_emb, ckpt= True)
 
         print(f"Precision@{args.topk}: ", np.round(np.mean(precision), 4))
         print(f"Recall@{args.topk}: ", np.round(np.mean(recall), 4))

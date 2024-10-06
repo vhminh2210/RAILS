@@ -697,27 +697,32 @@ def getEncoder(args):
 
             model.train()
         
-    if not flag:
+    if args.eval_query:
         print('Saving GraphEnc checkpoint!!!')
         checkpoint_buffer=save_checkpoint(model, args.epoch - 1, base_path, checkpoint_buffer, args.max2keep)
         
     # Get result
-    print('GCF model training complete!')
-    print('####################')
-    print('Running evaluations on trained encoder ...')
+    if not args.eval_query:
+        print('GCF model training complete!')
+        print('####################')
+        print('Running evaluations on trained encoder ...')
 
-    if args.pretrained_graph:
-        model, start_epoch = restore_checkpoint(model, base_path, device)
+        if args.pretrained_graph:
+            model, start_epoch = restore_checkpoint(model, base_path, device)
+
+        else:
+            model = restore_best_checkpoint(data.best_valid_epoch, model, base_path, device)
+            print_str = "The best epoch is % d" % data.best_valid_epoch
+            with open(base_path +'stats_{}.txt'.format(args.saveID), 'a') as f:
+                f.write(print_str + "\n")
+
+            for i,evaluator in enumerate(evaluators[:]):
+                evaluation(args, data, model, epoch, base_path, evaluator, eval_names[i])
+            with open(base_path +'stats_{}.txt'.format(args.saveID), 'a') as f:
+                f.write(print_str + "\n")
 
     else:
-        model = restore_best_checkpoint(data.best_valid_epoch, model, base_path, device)
-        print_str = "The best epoch is % d" % data.best_valid_epoch
-        with open(base_path +'stats_{}.txt'.format(args.saveID), 'a') as f:
-            f.write(print_str + "\n")
-
-        for i,evaluator in enumerate(evaluators[:]):
-            evaluation(args, data, model, epoch, base_path, evaluator, eval_names[i])
-        with open(base_path +'stats_{}.txt'.format(args.saveID), 'a') as f:
-            f.write(print_str + "\n")
+        print('GCF model training complete!')
+        print('####################')
 
     return model, data
