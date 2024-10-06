@@ -697,6 +697,10 @@ def getEncoder(args):
 
             model.train()
         
+    if not flag:
+        print('Saving GraphEnc checkpoint!!!')
+        checkpoint_buffer=save_checkpoint(model, args.epoch - 1, base_path, checkpoint_buffer, args.max2keep)
+        
     # Get result
     print('GCF model training complete!')
     print('####################')
