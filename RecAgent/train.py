@@ -14,6 +14,7 @@ import os
 
 user_num = 0
 precision, ndcg, novelty, coverage, ils, interdiv, recall, epc = [], [], [], [], [], [], [], []
+logs = ['########### RL AGENT EVALUATIONS LOGS ###########']
 
 def stateAugment(observations, history_size, n_augment_, freq):
     n_obs = len(observations)
@@ -165,7 +166,7 @@ def evaluate(agent, ep_users, train_df, test_df, train_dict, item_pop_dict,
             ckpt= False, encoder= False, user_emb= None,
             min_freq= None, max_freq= None, freq= None):
 
-    global precision, ndcg, novelty, coverage, ils, interdiv, recall, epc
+    global precision, ndcg, novelty, coverage, ils, interdiv, recall, epc, logs
     precision, ndcg, novelty, coverage, ils, interdiv, recall, epc = [], [], [], [], [], [], [], []
 
     if encoder:
@@ -250,6 +251,14 @@ def evaluate(agent, ep_users, train_df, test_df, train_dict, item_pop_dict,
         print(f"NDCG@{args.topk}: ", np.round(np.mean(ndcg), 4), end= '     ')
         print(f"EPC@{args.topk}: ", np.round(final_epc, 4), end= '     ')
         print(f"Coverage@{args.topk}: ", np.round(final_coverage, 4))
+
+        valstr = f"Precision@{args.topk}: {np.round(np.mean(precision), 4)}     "
+        valstr += f"Recall@{args.topk}: {np.round(np.mean(recall), 4)}     "
+        valstr += f"NDCG@{args.topk}: {np.round(np.mean(ndcg), 4)}     "
+        valstr += f"EPC@{args.topk}: {np.round(final_epc, 4)}     "
+        valstr += f"Coverage@{args.topk}: {np.round(final_coverage, 4)}     "
+
+        logs.append(valstr)
         print('####################')
     return float(np.mean(precision)), float(np.mean(recall)), float(np.mean(ndcg)), final_epc, final_coverage
 
@@ -258,7 +267,7 @@ def train_dqn(train_df, test_df, item_pop_dict,
               repr_user, item_emb, user_emb, 
               min_freq, max_freq, freq, args):
     
-    global precision, ndcg, novelty, coverage, ils, interdiv, epc
+    global precision, ndcg, novelty, coverage, ils, interdiv, epc, logs
 
     # {user1 : [item1, item3, item5, ...], user2 : [item1, item2], ...}
     print('RL Agent training starts...')
@@ -384,6 +393,13 @@ def train_dqn(train_df, test_df, item_pop_dict,
         file.write(f"NDCG@{args.topk}: {np.round(np.mean(ndcg), 4)}\n")
         file.write(f"EPC@{args.topk}: {np.round(epc, 4)}\n")
         file.write(f"Coverage@{args.topk}: {np.round(coverage, 4)}\n")
+        file.close()
+
+    print('####################')
+    print('Exporting logs ...')
+    logstr = [log + '\n' for log in logs]
+    with open(os.path.join(exps_log, 'logs.txt'), 'w') as file:
+        file.writelines(logstr)
         file.close()
 
     if args.eval_graph:
