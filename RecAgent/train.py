@@ -67,9 +67,11 @@ def setInteraction(env, agent, ep_user, train_df, args, freq, augment= True, ckp
     if args.n_aug_scale < 1:
         size_loader = range(1, len(observations))
     else:
-        tmp = list(range(1, len(observations) - 1))
-        scale = min(len(tmp) - 1, args.n_aug_scale)
-        size_loader = random.sample(tmp, k = max(scale, 0))
+        # tmp = list(range(1, len(observations) - 1))
+        tmp = len(observations) - 1
+        scale_list = np.arange(max(tmp // 2, 1), tmp).tolist()
+        scale = min(len(scale_list) - 1, args.n_aug_scale)
+        size_loader = random.sample(scale_list, k = max(scale, 0))
         size_loader.append(len(observations) - 1)
 
         if len(observations) <= 1:

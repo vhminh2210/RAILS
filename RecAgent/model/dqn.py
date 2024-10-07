@@ -308,9 +308,13 @@ class DQN(object):
     def sampling(self):
         samples = []
         splits = []
+        rng = np.random.default_rng()
         for mode in range(3):
-            sample_index = random.sample(list(range(len(self.memory[mode]))), 
-                                            k= min(self.pbatch_size[mode], len(self.memory[mode])))
+            # sample_index = random.sample(list(range(len(self.memory[mode]))), 
+            #                                 k= min(self.pbatch_size[mode], len(self.memory[mode])))
+            sample_index = rng.choice(np.arange(len(self.memory[mode])), 
+                                      size= min(self.pbatch_size[mode], len(self.memory[mode])), 
+                                      replace= False)
             # (batch_size, transition_shape)
             batch_memory = self.memory[mode][sample_index, :].reshape((self.pbatch_size[mode], -1))
             samples.append(batch_memory)

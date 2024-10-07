@@ -17,21 +17,21 @@ python main.py --modeltype BC_LOSS \
                 --step_max 8 \
                 --memory 32768 \
                 --nov_beta 0.0 \
-                --agent_batch 2048 \
+                --agent_batch 1024 \
                 --dqn_mode ddqn \
                 --eta 1.0 \
-                --agent_lr 1e-5 \
-                --replace_freq 10000 \
+                --agent_lr 3e-4 \
+                --replace_freq 5000 \
                 --num_hidden 256 \
-                --tau 0.0001 \
+                --tau 0.0005 \
                 --gamma 0.999 \
                 --cql_mode cql_H \
                 --dueling_dqn \
-                --n_augment 15 \
-                --n_aug_scale 14 \
+                --n_augment 10 \
+                --n_aug_scale 4 \
                 --rare_thresh 0.1 \
-                --seq_ratio 0.3 \
-                --rare_ratio 0.2 \
+                --seq_ratio 0.2 \
+                --rare_ratio 0.3 \
                 --rand_ratio 0.5 \
                 --topk 10 \
                 --eval_freq 50 \
