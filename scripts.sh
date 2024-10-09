@@ -27,7 +27,7 @@ python main.py --modeltype BC_LOSS \
                 --cql_mode cql_H \
                 --cql_alpha 2.0 \
                 --dueling_dqn \
-                --n_augment 3 \
+                --n_augment 5 \
                 --n_aug_scale 2 \
                 --rare_thresh 0.1 \
                 --seq_ratio 0.2 \
