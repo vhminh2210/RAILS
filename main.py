@@ -121,7 +121,7 @@ if __name__ == "__main__":
                         help= 'Epsilon greedy factor')
     parser.add_argument('--gamma', type=float, default=0.90,
                         help= 'Discount factor')
-    parser.add_argument('--eta', type=float, default=0.90,
+    parser.add_argument('--eta', type=float, default=1.0,
                         help= 'Forgetting factor')
     parser.add_argument('--tau', type=float, default=0.01,
                         help= 'Fuse eval_net into target_net with temperature tau')

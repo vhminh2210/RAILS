@@ -19,7 +19,6 @@ python main.py --modeltype BC_LOSS \
                 --nov_beta 0.0 \
                 --agent_batch 1024 \
                 --dqn_mode ddqn \
-                --eta 1.0 \
                 --agent_lr 5e-4 \
                 --replace_freq 5000 \
                 --num_hidden 256 \
