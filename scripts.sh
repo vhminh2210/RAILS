@@ -20,15 +20,16 @@ python main.py --modeltype BC_LOSS \
                 --agent_batch 1024 \
                 --dqn_mode ddqn \
                 --eta 1.0 \
-                --agent_lr 3e-4 \
+                --agent_lr 5e-4 \
                 --replace_freq 5000 \
                 --num_hidden 256 \
                 --tau 0.0005 \
                 --gamma 0.999 \
                 --cql_mode cql_H \
+                --cql_alpha 2.0 \
                 --dueling_dqn \
-                --n_augment 10 \
-                --n_aug_scale 4 \
+                --n_augment 3 \
+                --n_aug_scale 2 \
                 --rare_thresh 0.1 \
                 --seq_ratio 0.2 \
                 --rare_ratio 0.3 \

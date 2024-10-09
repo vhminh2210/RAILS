@@ -247,7 +247,7 @@ if __name__ == "__main__":
 
         wild_items = torch.tensor(wild_items).int()
         repr_user = torch.stack(repr_user, axis= 0) # n_item, embedding_dim
-        repr_user[wild_items] = torch.mean(repr_user, dim= 0)
+        # repr_user[wild_items] = torch.mean(repr_user, dim= 0)
         print(f'{wild_items.shape[0]} wild items found!')
         print('Representative user embeddings shape:', repr_user.shape)
         

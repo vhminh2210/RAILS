@@ -164,10 +164,10 @@ class DQN(object):
                                 embd= embd.to(self.device), dueling= self.args.dueling_dqn)
 
         self.optimizer = torch.optim.Adam(self.eval_net.parameters(), lr=self.lr)
-        max_iter = int(self.args.epoch_max * self.args.episode_max * self.args.step_max / self.args.episode_batch)
+        self.max_iter = int(self.args.epoch_max * self.args.episode_max * self.args.step_max / self.args.episode_batch)
         # self.scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(self.optimizer, 
         #                                                                       T_0 = int(self.args.step_max), verbose= True)
-        self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optimizer, T_max = max_iter)
+        self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optimizer, T_max = self.max_iter)
         self.loss_func = nn.MSELoss()
         # self.loss_func = nn.HuberLoss()
         hard_update(self.target_net, self.eval_net) # Transfer weights from eval_q_net to target_q_net
