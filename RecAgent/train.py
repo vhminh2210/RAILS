@@ -234,7 +234,7 @@ def evaluate(agent, ep_users, train_df, test_df, train_dict, item_pop_dict,
             candidate = rec_list[r]
             if candidate in test_set:
                 # As r is 0-based, np.log2(r + 2) meant to ensure positive-ness
-                epc_numer += float((1 - freq[candidate]) / np.log2(r + 2))
+                epc_numer += float((1 - freq[candidate] / max_freq) / np.log2(r + 2))
                 epc_denom += float(1. / np.log2(r + 2))
 
         epc.append((epc_numer, epc_denom))
