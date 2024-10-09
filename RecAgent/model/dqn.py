@@ -196,6 +196,9 @@ class DQN(object):
         if env.args.sim_mode == 'stats':
             obs = torch.unsqueeze(torch.tensor(obs, dtype=torch.float32), 0)
         state = env.build_state(obs)
+        # Absolute cold-start user is undefined
+        if state is None:
+            return []
         state = (state - self.state_mean) / (self.state_std + self.std_smoothing)
         state = state.to(torch.float).to(self.device)
         actions_Q = self.eval_net.forward(state)

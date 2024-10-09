@@ -135,8 +135,7 @@ def trainAgent(agent, step_max):
 def recommender(agent, train_episodes, ep_user, train_df, test_df, train_dict, item_pop_dict,
                 max_item_id, mask_list, repr_user, item_emb, episode_id, args,
                 min_freq, max_freq, freq, wild_items):
-    # Newest interaction made by [ep_user]
-    last_obs = train_dict[ep_user][-args.obswindow:]
+    # Interaction made by [ep_user]
     new_mask_list = copy.copy(mask_list)
     new_mask_list.extend(train_dict[ep_user][:-1])
     # Simulate the enviroment, regarding [ep_user] preferences
@@ -203,6 +202,7 @@ def evaluate(agent, ep_users, train_df, test_df, train_dict, item_pop_dict,
         else:
             # Generate unseen interaction using pretrained encoder
             rec_list = recommend_encoder(user_emb(torch.IntTensor([ep_user])), item_weight, last_obs, args)
+        
         # Ground truth unseen interaction
         test_set = test_df.loc[test_df['user_id'] == ep_user, 'item_id'].tolist()
 
@@ -210,7 +210,8 @@ def evaluate(agent, ep_users, train_df, test_df, train_dict, item_pop_dict,
             # Skip users without test interactions
             print(rec_list, test_set)
 
-        if len(test_set) == 0:
+        # Skip absolute cold-start user or N/A testing interactions
+        if len(test_set) == 0 or len(rec_list) == 0:
             continue
 
         # Evaluation stats

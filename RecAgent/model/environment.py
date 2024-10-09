@@ -41,6 +41,9 @@ class Env():
                     cnt -= 1
                     continue
                 state += (self.args.eta ** (n_obs - i - 1)) * self.item_emb(torch.IntTensor([obs]))
+            # Absolute cold-start user is undefined
+            if cnt == 0:
+                return None
             return state / cnt
 
         elif self.args.sim_mode == 'user_embedding':
@@ -54,6 +57,9 @@ class Env():
                     cnt -= 1
                     continue
                 state += (self.args.eta ** (n_obs - i - 1)) * self.repr_user(torch.IntTensor([obs]))
+            # Absolute cold-start user is undefined
+            if cnt == 0:
+                return None
             return state / cnt
 
         else:
