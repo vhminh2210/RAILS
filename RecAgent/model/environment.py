@@ -5,7 +5,7 @@ import torch
 
 class Env():
     def __init__(self, user, observation_data, I,
-                 item_pop_dict, mask_list, sim_mode, repr_user, item_emb, args):
+                 item_pop_dict, mask_list, sim_mode, repr_user, item_emb, wild_items, args):
         self.observation = np.array(observation_data)
         self.n_observation = len(self.observation)
         self.action_space = I
@@ -21,6 +21,9 @@ class Env():
         self.K = args.topk
         self.eta = args.eta
         self.args = args
+        self.wild_items = wild_items
+        if self.wild_items == None:
+            self.wild_items = []
 
     def build_state(self, last_obs):
         if self.args.sim_mode == 'stats':
@@ -31,21 +34,27 @@ class Env():
             assert self.item_emb is not None
             state = 0
             n_obs = len(last_obs)
+            cnt = len(last_obs)
             for i in range(n_obs):
                 obs = last_obs[i]
+                if obs in self.wild_items: 
+                    cnt -= 1
+                    continue
                 state += (self.args.eta ** (n_obs - i - 1)) * self.item_emb(torch.IntTensor([obs]))
-            # return state / n_obs
-            return state
+            return state / cnt
 
         elif self.args.sim_mode == 'user_embedding':
             assert self.repr_user is not None
             state = 0
             n_obs = len(last_obs)
+            cnt = len(last_obs)
             for i in range(n_obs):
                 obs = last_obs[i]
+                if obs in self.wild_items:
+                    cnt -= 1
+                    continue
                 state += (self.args.eta ** (n_obs - i - 1)) * self.repr_user(torch.IntTensor([obs]))
-            # return state / n_obs
-            return state
+            return state / cnt
 
         else:
             raise NotImplementedError(f'sim_mode {self.args.sim_mode} not found!')

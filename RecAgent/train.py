@@ -166,7 +166,7 @@ def recommender(agent, train_episodes, ep_user, train_df, test_df, train_dict, i
 def evaluate(agent, ep_users, train_df, test_df, train_dict, item_pop_dict,
             max_item_id, mask_list, repr_user, item_emb, args, 
             ckpt= False, encoder= False, user_emb= None,
-            min_freq= None, max_freq= None, freq= None):
+            min_freq= None, max_freq= None, freq= None, wild_items= None):
 
     global precision, ndcg, novelty, coverage, ils, interdiv, recall, epc, logs
     precision, ndcg, novelty, coverage, ils, interdiv, recall, epc = [], [], [], [], [], [], [], []
@@ -191,7 +191,7 @@ def evaluate(agent, ep_users, train_df, test_df, train_dict, item_pop_dict,
 
         # Simulate the enviroment, regarding [ep_user] preferences
         env = environment.Env(ep_user, train_dict[ep_user], list(range(max_item_id + 1)),
-                          item_pop_dict, ep_mask_list, args.sim_mode, repr_user, item_emb, args)
+                          item_pop_dict, ep_mask_list, args.sim_mode, repr_user, item_emb, wild_items, args)
         interaction_num = setInteraction(env, agent, ep_user, train_df, args, freq,
                                          augment= False, ckpt= ckpt, evalmode= True)
         if interaction_num <= args.min_obs and not ckpt:
@@ -233,7 +233,7 @@ def evaluate(agent, ep_users, train_df, test_df, train_dict, item_pop_dict,
             candidate = rec_list[r]
             if candidate in test_set:
                 # As r is 0-based, np.log2(r + 2) meant to ensure positive-ness
-                epc_numer += float((1 - item_pop_dict[str(candidate)] + float(min_freq/max_freq)) / np.log2(r + 2))
+                epc_numer += float((1 - freq[candidate]) / np.log2(r + 2))
                 epc_denom += float(1. / np.log2(r + 2))
 
         epc.append((epc_numer, epc_denom))
@@ -267,7 +267,7 @@ def evaluate(agent, ep_users, train_df, test_df, train_dict, item_pop_dict,
 def train_dqn(train_df, test_df, query_df, item_pop_dict,
               max_item_id, item_list, mask_list, 
               repr_user, item_emb, user_emb, 
-              min_freq, max_freq, freq, args):
+              min_freq, max_freq, freq, wild_items, args):
     
     global precision, ndcg, novelty, coverage, ils, interdiv, epc, logs
 
@@ -336,7 +336,7 @@ def train_dqn(train_df, test_df, query_df, item_pop_dict,
     print('Initializing memory ...')
     for ep_user in tqdm(train_episodes):
         env = environment.Env(ep_user, train_dict[ep_user], list(range(max_item_id + 1)),
-                          item_pop_dict, mask_list, args.sim_mode, repr_user, item_emb, args)
+                          item_pop_dict, mask_list, args.sim_mode, repr_user, item_emb, wild_items, args)
 
         # Generate transitions (s, a, r, s_) and store in agent replay memory
         _ = setInteraction(env, agent, ep_user, train_df, args, freq, augment= False)
@@ -368,12 +368,12 @@ def train_dqn(train_df, test_df, query_df, item_pop_dict,
         if args.eval_query:
             _prec, _recall, _ndcg, _epc, _coverage = evaluate(agent, query_episodes, query_df, test_df, query_dict, item_pop_dict,
                         max_item_id, mask_list, repr_user, item_emb, args, ckpt= True,
-                        min_freq= min_freq, max_freq= max_freq)
+                        min_freq= min_freq, max_freq= max_freq, freq= freq, wild_items= wild_items)
             
         else:
             _prec, _recall, _ndcg, _epc, _coverage = evaluate(agent, train_episodes, train_df, test_df, train_dict, item_pop_dict,
                         max_item_id, mask_list, repr_user, item_emb, args, ckpt= True,
-                        min_freq= min_freq, max_freq= max_freq)
+                        min_freq= min_freq, max_freq= max_freq, freq= freq, wild_items= wild_items)
         
         if _prec is not None:
             ckpt_precision.append(_prec)
@@ -398,12 +398,12 @@ def train_dqn(train_df, test_df, query_df, item_pop_dict,
     if args.eval_query:
         _, _, _, epc, coverage = evaluate(agent, query_episodes, query_df, test_df, query_dict, item_pop_dict,
                     max_item_id, mask_list, repr_user, item_emb, args, ckpt= True,
-                    min_freq= min_freq, max_freq= max_freq)
+                    min_freq= min_freq, max_freq= max_freq, freq= freq, wild_items= wild_items)
         
     else:
         _, _, _, epc, coverage = evaluate(agent, train_episodes, train_df, test_df, train_dict, item_pop_dict,
                     max_item_id, mask_list, repr_user, item_emb, args, ckpt= True,
-                    min_freq= min_freq, max_freq= max_freq)
+                    min_freq= min_freq, max_freq= max_freq, freq= freq, wild_items= wild_items)
 
     print(f"Precision@{args.topk}: ", np.round(np.mean(precision), 4))
     print(f"Recall@{args.topk}: ", np.round(np.mean(recall), 4))
@@ -433,11 +433,13 @@ def train_dqn(train_df, test_df, query_df, item_pop_dict,
         if args.eval_query:
             _, _, _, epc, coverage = evaluate(agent, query_episodes, query_df, test_df, query_dict, item_pop_dict,
                                             max_item_id, mask_list, repr_user, item_emb, args, encoder= True,
-                                            min_freq= min_freq, max_freq= max_freq, user_emb= user_emb, ckpt= True)
+                                            min_freq= min_freq, max_freq= max_freq, freq= freq, 
+                                            user_emb= user_emb, wild_items= wild_items, ckpt= True)
         else:
             _, _, _, epc, coverage = evaluate(agent, train_episodes, train_df, test_df, train_dict, item_pop_dict,
                                             max_item_id, mask_list, repr_user, item_emb, args, encoder= True,
-                                            min_freq= min_freq, max_freq= max_freq, user_emb= user_emb, ckpt= True)
+                                            min_freq= min_freq, max_freq= max_freq, freq= freq, 
+                                            user_emb= user_emb, wild_items= wild_items, ckpt= True)
 
         print(f"Precision@{args.topk}: ", np.round(np.mean(precision), 4))
         print(f"Recall@{args.topk}: ", np.round(np.mean(recall), 4))

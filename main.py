@@ -263,6 +263,6 @@ if __name__ == "__main__":
         raise NotImplementedError('ERROR: `stats` similarity mode is deprecated!')
 
     # Interactive RL Agent
-    agent = getAgent(repr_user, user_emb, item_emb, min_freq, max_freq, freq, args)
+    agent = getAgent(repr_user, user_emb, item_emb, wild_items.tolist(), min_freq, max_freq, freq, args)
     print('####################')
     print('Runtime:', time.time() - start_time, 'seconds')
