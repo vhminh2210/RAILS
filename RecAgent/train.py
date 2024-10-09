@@ -134,14 +134,14 @@ def trainAgent(agent, step_max):
 
 def recommender(agent, train_episodes, ep_user, train_df, test_df, train_dict, item_pop_dict,
                 max_item_id, mask_list, repr_user, item_emb, episode_id, args,
-                min_freq, max_freq, freq):
+                min_freq, max_freq, freq, wild_items):
     # Newest interaction made by [ep_user]
     last_obs = train_dict[ep_user][-args.obswindow:]
     new_mask_list = copy.copy(mask_list)
     new_mask_list.extend(train_dict[ep_user][:-1])
     # Simulate the enviroment, regarding [ep_user] preferences
     env = environment.Env(ep_user, train_dict[ep_user], list(range(max_item_id + 1)),
-                          item_pop_dict, new_mask_list, args.sim_mode, repr_user, item_emb, args)
+                          item_pop_dict, new_mask_list, args.sim_mode, repr_user, item_emb, wild_items, args)
 
     # Generate transitions (s, a, r, s_) and store in agent replay memory
     interaction_num = setInteraction(env, agent, ep_user, train_df, args, freq)
@@ -363,7 +363,7 @@ def train_dqn(train_df, test_df, query_df, item_pop_dict,
             _prec, _recall, _ndcg, _epc, _coverage = recommender(agent, train_episodes, ep_user, train_df, test_df, 
                                                 train_dict, item_pop_dict,
                                                 max_item_id, mask_list, repr_user, item_emb, episode_id, args,
-                                                min_freq, max_freq, freq)
+                                                min_freq, max_freq, freq, wild_items)
 
         if args.eval_query:
             _prec, _recall, _ndcg, _epc, _coverage = evaluate(agent, query_episodes, query_df, test_df, query_dict, item_pop_dict,
