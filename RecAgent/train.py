@@ -205,6 +205,7 @@ def evaluate(agent, ep_users, train_df, test_df, train_dict, item_pop_dict,
         
         # Ground truth unseen interaction
         test_set = test_df.loc[test_df['user_id'] == ep_user, 'item_id'].tolist()
+        test_set = [x for x in test_set if x not in wild_items]
 
         if not ckpt:
             # Skip users without test interactions
