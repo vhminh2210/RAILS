@@ -21,7 +21,7 @@ def stateAugment(observations, history_size, n_augment_, freq):
     np_observations = np.array(observations)
     p = freq[observations]
     p = p / np.sum(p)
-    
+
     inv_p = 1. - p
     inv_p = inv_p / np.sum(inv_p)
     # g = np.random.Generator(np.random.PCG64())
@@ -45,7 +45,7 @@ def stateAugment(observations, history_size, n_augment_, freq):
             action = idx[-1]
 
         # Rare-item seeker
-        elif i % 4 == 1:
+        elif i % 4 == 3:
             idx = g.choice(n_obs, size= history_size + 1, p= inv_p, replace= False)
             history = np_observations[idx[:-1]].tolist()
             action = int(np_observations[idx[-1]])
