@@ -1,7 +1,7 @@
 #/bin/sh
 # python GraphEnc/setup.py build_ext --inplace 2> /dev/null
 python main.py --modeltype BC_LOSS \
-                --cuda -1 \
+                --cuda 1 \
                 --epoch 99 \
                 --pretrained_graph \
                 --enc_batch_size 1024 \
@@ -12,30 +12,30 @@ python main.py --modeltype BC_LOSS \
                 --neg_sample 128 \
                 --freeze_epoch 5 \
                 --sim_mode user_embedding \
-                --epoch_max 10 \
+                --epoch_max 20 \
                 --episode_max 64\
                 --step_max 8 \
-                --memory 32768 \
+                --memory 8192 \
                 --nov_beta 0.0 \
-                --agent_batch 1024 \
+                --agent_batch 128 \
                 --dqn_mode ddqn \
-                --agent_lr 5e-4 \
-                --replace_freq 5000 \
+                --eta 1.0 \
+                --agent_lr 1e-3 \
+                --replace_freq 1080 \
                 --num_hidden 256 \
-                --tau 0.0005 \
+                --tau 0.001 \
                 --gamma 0.999 \
                 --cql_mode cql_H \
-                --cql_alpha 2.0 \
+                --cql_alpha 10. \
                 --dueling_dqn \
-                --n_augment 10 \
-                --n_aug_scale 5 \
-                --rare_thresh 0.1 \
-                --seq_ratio 0.2 \
-                --rare_ratio 0.3 \
-                --rand_ratio 0.5 \
+                --n_augment 4 \
+                --n_aug_scale 2 \
+                --rare_thresh 0.3 \
+                --seq_ratio 0.1 \
+                --rare_ratio 0.5 \
+                --rand_ratio 0.4 \
                 --topk 10 \
                 --eval_freq 50 \
-                --episode_batch 5 \
-                --eval_graph \
+                --episode_batch 8 \
                 --eval_query \
                 --all_episodes

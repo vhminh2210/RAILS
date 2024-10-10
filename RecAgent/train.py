@@ -54,8 +54,8 @@ def stateAugment(observations, history_size, n_augment_, freq):
         else:
             idx = g.choice(n_obs, size= history_size + 1, p= p, replace= False)
             samples = sorted(np_observations[idx].tolist(), key= lambda x: -freq[x])
-            history = np_observations[samples[:-1]].tolist()
-            action = int(np_observations[samples[-1]])
+            history = samples[:-1]
+            action = int(samples[-1])
 
         aug_actions.append(action)
         aug_observations.append(history)
@@ -77,7 +77,8 @@ def setInteraction(env, agent, ep_user, train_df, args, freq, augment= True, ckp
     else:
         # tmp = list(range(1, len(observations) - 1))
         tmp = len(observations) - 1
-        scale_list = np.arange(min(tmp, 3), tmp).tolist()
+        # scale_list = np.arange(min(tmp, 3), tmp).tolist()
+        scale_list = np.arange(int(tmp // 2), tmp).tolist()
         scale = min(len(scale_list) - 1, args.n_aug_scale)
         size_loader = random.sample(scale_list, k = max(scale, 0))
         size_loader.append(len(observations) - 1)
