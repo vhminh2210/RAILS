@@ -53,8 +53,9 @@ def stateAugment(observations, history_size, n_augment_, freq):
         # Popular item seeker
         else:
             idx = g.choice(n_obs, size= history_size + 1, p= p, replace= False)
-            history = np_observations[idx[:-1]].tolist()
-            action = int(np_observations[idx[-1]])
+            samples = sorted(np_observations[idx].tolist(), key= lambda x: -freq[x])
+            history = np_observations[samples[:-1]].tolist()
+            action = int(np_observations[samples[-1]])
 
         aug_actions.append(action)
         aug_observations.append(history)
