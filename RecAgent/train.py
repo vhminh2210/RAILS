@@ -20,8 +20,9 @@ def stateAugment(observations, history_size, n_augment_, freq):
     n_obs = len(observations)
     np_observations = np.array(observations)
     p = freq[observations]
-    inv_p = 1. - p
     p = p / np.sum(p)
+    
+    inv_p = 1. - p
     inv_p = inv_p / np.sum(inv_p)
     # g = np.random.Generator(np.random.PCG64())
     try:
