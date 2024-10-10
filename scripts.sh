@@ -21,7 +21,7 @@ python main.py --modeltype BC_LOSS \
                 --dqn_mode ddqn \
                 --eta 1.0 \
                 --agent_lr 1e-3 \
-                --replace_freq 1080 \
+                --replace_freq -1 \
                 --num_hidden 256 \
                 --tau 0.001 \
                 --gamma 0.999 \

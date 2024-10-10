@@ -297,7 +297,8 @@ class DQN(object):
         self.memory_counter[0] += 1
 
         # Rare-action memory
-        if self.item_pop_dict[str(a)] <= self.rare_thresh or self.item_pop_dict[str(a)] >= 1. - self.rare_thresh:
+        # if self.item_pop_dict[str(a)] <= self.rare_thresh or self.item_pop_dict[str(a)] >= 1. - self.rare_thresh:
+        if self.item_pop_dict[str(a)] >= 1. - self.rare_thresh:
             if len(self.memory[1]) < self.partition[1]:
                 self.memory[1] = np.append(self.memory[1], [transition], axis=0)
             else:
