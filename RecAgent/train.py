@@ -20,9 +20,9 @@ def stateAugment(observations, history_size, n_augment_, freq):
     n_obs = len(observations)
     np_observations = np.array(observations)
     p = freq[observations]
+    inv_p = 1. - p
     p = p / np.sum(p)
-    p = 1. - p
-    p = p / np.sum(p)
+    inv_p = inv_p / np.sum(inv_p)
     # g = np.random.Generator(np.random.PCG64())
     try:
         assert n_obs >= history_size + 1
@@ -34,6 +34,7 @@ def stateAugment(observations, history_size, n_augment_, freq):
         n_augment = min(n_augment, n_obs)
 
     aug_observations, aug_actions = [], []
+    g = np.random.default_rng()
 
     for i in range(n_augment):
         # Pure random sampling
@@ -43,8 +44,13 @@ def stateAugment(observations, history_size, n_augment_, freq):
             action = idx[-1]
 
         # Rare-item seeker
+        elif i % 4 == 1:
+            idx = g.choice(n_obs, size= history_size + 1, p= inv_p, replace= False)
+            history = np_observations[idx[:-1]].tolist()
+            action = int(np_observations[idx[-1]])
+
+        # Popular item seeker
         else:
-            g = np.random.default_rng()
             idx = g.choice(n_obs, size= history_size + 1, p= p, replace= False)
             history = np_observations[idx[:-1]].tolist()
             action = int(np_observations[idx[-1]])

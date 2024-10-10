@@ -297,14 +297,19 @@ class DQN(object):
         self.memory_counter[0] += 1
 
         # Rare-action memory
-        if self.item_pop_dict[str(a)] <= self.rare_thresh:
+        if self.item_pop_dict[str(a)] <= self.rare_thresh or self.item_pop_dict[str(a)] >= 1. - self.rare_thresh:
             if len(self.memory[1]) < self.partition[1]:
                 self.memory[1] = np.append(self.memory[1], [transition], axis=0)
             else:
-                # Replace the most frequent item in the rare-item memory
                 actions = np.copy(self.memory[1][:, self.n_states]).reshape((-1)).tolist() # List of rare actions stored
-                action_ranks = np.array([self.item_pop_dict[str(int(x))] for x in actions])
-                index = np.argmax(action_ranks)
+                
+                # Replace the most frequent item in the rare-item memory
+                # action_ranks = np.array([self.item_pop_dict[str(int(x))] for x in actions])
+                # index = np.argmax(action_ranks) 
+
+                # Round-Robin
+                index = self.memory_counter[1] % self.partition[1]
+                
                 self.memory[1][index, :] = transition
             self.memory_counter[1] += 1
 
