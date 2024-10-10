@@ -366,6 +366,8 @@ def train_dqn(train_df, test_df, query_df, item_pop_dict,
         random.shuffle(train_episodes)
         for ep_user in tqdm(train_episodes, desc= f'Epoch {t}'):
             episode_id += 1
+            if args.replace_freq < 0:
+                agent.net_hard_update()
             # print(f'Episode {episode_id}: User : {ep_user}')
             # future = executor.submit(recommender,
             #                         agent, ep_user, train_df, test_df, train_dict,

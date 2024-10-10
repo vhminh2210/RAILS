@@ -1,7 +1,7 @@
 #/bin/sh
 # python GraphEnc/setup.py build_ext --inplace 2> /dev/null
 python main.py --modeltype BC_LOSS \
-                --cuda 1 \
+                --cuda -1 \
                 --epoch 99 \
                 --pretrained_graph \
                 --enc_batch_size 1024 \

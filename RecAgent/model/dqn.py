@@ -377,11 +377,16 @@ class DQN(object):
         self.buffered_net.eval()
         self.target_net.eval()
 
+    def net_hard_update(self):
+        self.setEval()
+        hard_update(self.target_net, self.eval_net)
+
     def learn(self):
         # Major update: Replace target net by evaluation net
-        if self.learn_step_counter % self.replace_freq == 0:
+        if self.replace_freq > 0 and self.learn_step_counter % self.replace_freq == 0:
             self.setEval()
-            self.target_net.load_state_dict(self.eval_net.state_dict())
+            hard_update(self.target_net, self.eval_net)
+            # self.target_net.load_state_dict(self.eval_net.state_dict())
             
         self.learn_step_counter += 1
 
