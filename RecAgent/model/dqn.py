@@ -297,8 +297,8 @@ class DQN(object):
         self.memory_counter[0] += 1
 
         # Rare-action memory
-        # if self.item_pop_dict[str(a)] <= self.rare_thresh or self.item_pop_dict[str(a)] >= 1. - self.rare_thresh:
-        if self.item_pop_dict[str(a)] >= 1. - self.rare_thresh:
+        if self.item_pop_dict[str(a)] <= self.rare_thresh or self.item_pop_dict[str(a)] >= 1. - self.rare_thresh:
+        # if self.item_pop_dict[str(a)] >= 1. - self.rare_thresh:
             if len(self.memory[1]) < self.partition[1]:
                 self.memory[1] = np.append(self.memory[1], [transition], axis=0)
             else:
@@ -380,14 +380,15 @@ class DQN(object):
 
     def net_hard_update(self):
         self.setEval()
-        hard_update(self.target_net, self.eval_net)
+        # hard_update(self.target_net, self.eval_net)
+        self.target_net.load_state_dict(self.eval_net.state_dict())
 
     def learn(self):
         # Major update: Replace target net by evaluation net
         if self.replace_freq > 0 and self.learn_step_counter % self.replace_freq == 0:
             self.setEval()
-            hard_update(self.target_net, self.eval_net)
-            # self.target_net.load_state_dict(self.eval_net.state_dict())
+            # hard_update(self.target_net, self.eval_net)
+            self.target_net.load_state_dict(self.eval_net.state_dict())
             
         self.learn_step_counter += 1
 

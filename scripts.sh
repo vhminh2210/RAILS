@@ -15,9 +15,9 @@ python main.py --modeltype BC_LOSS \
                 --epoch_max 20 \
                 --episode_max 64\
                 --step_max 8 \
-                --memory 8192 \
+                --memory 16384 \
                 --nov_beta 0.0 \
-                --agent_batch 128 \
+                --agent_batch 1024 \
                 --dqn_mode ddqn \
                 --eta 1.0 \
                 --agent_lr 1e-3 \
@@ -26,16 +26,16 @@ python main.py --modeltype BC_LOSS \
                 --tau 0.001 \
                 --gamma 0.999 \
                 --cql_mode cql_H \
-                --cql_alpha 10. \
+                --cql_alpha 2. \
                 --dueling_dqn \
-                --n_augment 4 \
-                --n_aug_scale 2 \
-                --rare_thresh 0.3 \
-                --seq_ratio 0.1 \
-                --rare_ratio 0.5 \
-                --rand_ratio 0.4 \
+                --n_augment 2 \
+                --n_aug_scale 3 \
+                --rare_thresh 0.1 \
+                --seq_ratio 0.3 \
+                --rare_ratio 0.2 \
+                --rand_ratio 0.5 \
                 --topk 10 \
                 --eval_freq 50 \
-                --episode_batch 8 \
+                --episode_batch 16 \
                 --eval_query \
                 --all_episodes

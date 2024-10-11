@@ -44,15 +44,18 @@ def stateAugment(observations, history_size, n_augment_, freq):
             history = idx[:-1]
             action = idx[-1]
 
-        # # Rare-item seeker
-        # elif i % 4 == 3:
-        #     idx = g.choice(n_obs, size= history_size + 1, p= inv_p, replace= False)
-        #     history = np_observations[idx[:-1]].tolist()
-        #     action = int(np_observations[idx[-1]])
+        # Rare-item seeker
+        elif i % 4 == 3:
+            # idx = g.choice(n_obs, size= history_size + 1, p= p, replace= False)
+            idx = g.choice(n_obs, size= history_size + 1, replace= False)
+            samples = sorted(np_observations[idx].tolist(), key= lambda x: -freq[x])
+            history = samples[:-1]
+            action = int(samples[-1])
 
         # Popular item seeker
         else:
-            idx = g.choice(n_obs, size= history_size + 1, p= p, replace= False)
+            # idx = g.choice(n_obs, size= history_size + 1, p= p, replace= False)
+            idx = g.choice(n_obs, size= history_size + 1, replace= False)
             samples = sorted(np_observations[idx].tolist(), key= lambda x: freq[x])
             history = samples[:-1]
             action = int(samples[-1])
@@ -77,8 +80,8 @@ def setInteraction(env, agent, ep_user, train_df, args, freq, augment= True, ckp
     else:
         # tmp = list(range(1, len(observations) - 1))
         tmp = len(observations) - 1
-        # scale_list = np.arange(min(tmp, 3), tmp).tolist()
-        scale_list = np.arange(int(tmp // 2), tmp).tolist()
+        scale_list = np.arange(min(tmp, 3), tmp).tolist()
+        # scale_list = np.arange(int(tmp // 2), tmp).tolist()
         scale = min(len(scale_list) - 1, args.n_aug_scale)
         size_loader = random.sample(scale_list, k = max(scale, 0))
         size_loader.append(len(observations) - 1)
@@ -99,6 +102,7 @@ def setInteraction(env, agent, ep_user, train_df, args, freq, augment= True, ckp
             s = np.array(env.reset(aug_obsevations[i]))
             a = int(aug_actions[i])
             s_, r, done = env.step(a)
+            # print(aug_obsevations[i], aug_actions[i])
             agent.store_transition(env.build_state(s).reshape((-1)), a, r, s_.reshape((-1)))
         
         interaction_num += 1
@@ -364,10 +368,10 @@ def train_dqn(train_df, test_df, query_df, item_pop_dict,
     for t in range(args.epoch_max):
         episode_id = 0
         random.shuffle(train_episodes)
+        if args.replace_freq < 0 and t % (-args.replace_freq) == 0:
+            agent.net_hard_update()
         for ep_user in tqdm(train_episodes, desc= f'Epoch {t}'):
             episode_id += 1
-            if args.replace_freq < 0 and episode_id % (-args.replace_freq) == 0:
-                agent.net_hard_update()
             # print(f'Episode {episode_id}: User : {ep_user}')
             # future = executor.submit(recommender,
             #                         agent, ep_user, train_df, test_df, train_dict,
