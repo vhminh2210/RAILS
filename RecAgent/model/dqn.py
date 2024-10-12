@@ -135,14 +135,14 @@ class AQLProposalNet(nn.Module):
 
         self.softmax = nn.Softmax(dim= 1)
 
-    def forward(self, s, mode= 'stochastic'):
+    def forward(self, s, mode= 'stochastic', epsi= 1e-5):
         '''
         s: Batch of input states. Shape = (batch_size, embd_dim)
         self.embd: Item embedding matrix. Shape = (n_action, embd_dim)
 
         output: Proposal item index
         '''
-        logits = s @ self.embd.T # (batch_size, n_action)
+        logits = (s @ self.embd.T) + epsi # (batch_size, n_action)
         # probs = logits / torch.sum(logits, 0, keepdim= True)
         probs = self.softmax(logits) # (batch_size, n_actions)
 
