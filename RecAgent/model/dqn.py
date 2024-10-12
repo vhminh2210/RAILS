@@ -116,6 +116,60 @@ class Net(nn.Module):
 
         return q_values
 
+class AQLProposalNet(nn.Module):
+    def __init__(self, item_embd, args):
+        '''
+        Proposal network. Not yet support CQL_Rho !
+        '''
+        super(AQLProposalNet, self).__init__()
+        self.embd = item_embd.weight.detach() # (n_action, embd_dim)
+        self.args = args
+
+        self.n_exploit = int(args.n_proposal * args.epsilon)
+        self.n_explore = int(args.n_proposal - self.n_exploit)
+
+        self.n_action = self.embd.shape[0]
+        self.idlist = np.arange(self.n_action)
+
+        self.rng = np.random.default_rng(seed=42)
+
+        self.softmax = nn.Softmax(dim= 1)
+
+    def forward(self, s, a):
+        '''
+        s: Batch of input states. Shape = (batch_size, embd_dim)
+        self.embd: Item embedding matrix. Shape = (n_action, embd_dim)
+
+        output: Proposal item index
+        '''
+        logits = s @ self.embd.T # (batch_size, n_action)
+        probs = self.softmax(logits) # (batch_size, n_actions)
+
+        numpy_probs = probs.detach().cpu().numpy()
+
+        # print(numpy_probs.shape)
+
+        idx = []
+        
+        for i in range(probs.shape[0]):
+            # Exploitation
+            exploit_id = self.rng.choice(self.idlist, size= self.n_exploit, replace= False, p= numpy_probs[i]).tolist()
+
+            # Exploration
+            explore_id = self.rng.choice(self.idlist, size= self.n_explore, replace= False).tolist()
+
+            # Merge
+            exploit_id.append(int(a[i]))
+            final_id = exploit_id
+            final_id.extend(explore_id)
+            final_id = list(set(final_id))
+
+            mask = torch.zeros((self.n_action))
+            mask[final_id] = 1
+
+            idx.append(mask)
+
+        return torch.stack(idx, dim= 0) # (batch_size, n_action)
 
 class DQN(object):
     def __init__(self, n_states, n_actions,
@@ -185,11 +239,15 @@ class DQN(object):
 
         self.mode = mode
 
+        # Proposal net
+        self.proposal_net = AQLProposalNet(embd, self.args)
+
         # Load components to device
         self.eval_net = self.eval_net.to(self.device)
         self.buffered_net = self.buffered_net.to(self.device)
         self.target_net = self.target_net.to(self.device)
         self.loss_func = self.loss_func.to(self.device)
+        self.proposal_net = self.proposal_net.to(self.device)
 
     def choose_action(self, obs, env, mode= 'training'):
         self.setEval()
@@ -406,9 +464,22 @@ class DQN(object):
         buffered_q_eval = None
         if self.args.cql_mode == 'cql_Rho':
             buffered_q_eval = self.buffered_net(batch_state) # batch_size, n_actions
-        q_eval = raw_q_eval.gather(1, batch_action) # batch_size, 1
+
+        if self.args.action_proposal:
+            masks = self.proposal_net(batch_state_, raw_q_eval.argmax(dim=1)).to(self.device)
+        else:
+            masks = 1.
+
+        if self.args.cql_mode == 'cql_Rho':
+            masks = torch.ones_like(masks) # Disable masks for cql_Rho
+
         # q_next.shape == batch_size, n_actions
         q_next = self.target_net(batch_state_).detach() # detach target_net from gradient updates (?)
+
+        # Apply mask
+        q_next = q_next * masks
+
+        q_eval = raw_q_eval.gather(1, batch_action) # batch_size, 1
 
         # Double DQN
         if self.mode == 'vanilla':
@@ -420,6 +491,7 @@ class DQN(object):
                 q_target = batch_reward + self.gamma * torch.sum(raw_q_next, 1, keepdims= True)
             else:
                 raise NotImplementedError(f'DQN policy mode {self.args.policy} not found!')
+            
         elif self.mode == 'ddqn':
             if self.args.policy == 'max':
                 q_eval_action = raw_q_eval.argmax(dim=1).unsqueeze(1)
@@ -456,7 +528,7 @@ class DQN(object):
         loss.backward()
         torch.nn.utils.clip_grad_value_(self.eval_net.parameters(), 1.)
         self.optimizer.step()
-        # self.scheduler.step()
+        self.scheduler.step()
         
         # Fuse eval_net into target_net with temperature tau
         soft_update(self.target_net, self.eval_net, self.tau)

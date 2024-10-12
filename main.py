@@ -117,8 +117,10 @@ if __name__ == "__main__":
                         help= 'Frequency for updating DQN target network')
     parser.add_argument('--agent_lr', type=float, default=0.01,
                         help= 'Learning rate for agent training')
-    parser.add_argument('--epsilon', type=float, default=0.95,
+    parser.add_argument('--epsilon', type=float, default=0.75,
                         help= 'Epsilon greedy factor')
+    parser.add_argument('--n_proposal', type=int, default=500,
+                        help= 'Number of proposal items')
     parser.add_argument('--gamma', type=float, default=0.90,
                         help= 'Discount factor')
     parser.add_argument('--eta', type=float, default=1.0,
@@ -165,6 +167,8 @@ if __name__ == "__main__":
                         help= 'Enable training on full trainset')
     parser.add_argument('--eval_graph', action='store_true', default=False,
                         help= 'Enable evaluation on trained encoder')
+    parser.add_argument('--action_proposal', action='store_true', default=False,
+                        help= 'Enable action proposal')
     parser.add_argument('--episode_batch', type=int, default=1,
                         help= 'Number of episode per evaluation batch / Learn frequency')
     parser.add_argument('--num_hidden', type=int, default=256,
