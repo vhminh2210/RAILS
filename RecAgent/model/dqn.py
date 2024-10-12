@@ -135,7 +135,7 @@ class AQLProposalNet(nn.Module):
 
         self.softmax = nn.Softmax(dim= 1)
 
-    def forward(self, s, a):
+    def forward(self, s, mode= 'stochastic'):
         '''
         s: Batch of input states. Shape = (batch_size, embd_dim)
         self.embd: Item embedding matrix. Shape = (n_action, embd_dim)
@@ -152,14 +152,18 @@ class AQLProposalNet(nn.Module):
         idx = []
         
         for i in range(probs.shape[0]):
-            # Exploitation
-            exploit_id = self.rng.choice(self.idlist, size= self.n_exploit, replace= False, p= numpy_probs[i]).tolist()
-
-            # Exploration
-            explore_id = self.rng.choice(self.idlist, size= self.n_explore, replace= False).tolist()
+            # Generate masks
+            if mode == 'stochastic':
+                # Exploitation
+                exploit_id = self.rng.choice(self.idlist, size= self.n_exploit, replace= False, p= numpy_probs[i]).tolist()
+                # Exploration
+                explore_id = self.rng.choice(self.idlist, size= self.n_explore, replace= False).tolist()
+            else:
+                # Pure exploitation
+                exploit_id = sorted(self.idlist, key= lambda x: -numpy_probs[i, x])[: (self.n_exploit + self.n_explore)]
+                explore_id = []
 
             # Merge
-            exploit_id.append(int(a[i]))
             final_id = exploit_id
             final_id.extend(explore_id)
             final_id = list(set(final_id))
@@ -254,14 +258,22 @@ class DQN(object):
         if env.args.sim_mode == 'stats':
             obs = torch.unsqueeze(torch.tensor(obs, dtype=torch.float32), 0)
         state = env.build_state(obs)
+
         # Absolute cold-start user is undefined
         if state is None:
             return []
+        
         state = (state - self.state_mean) / (self.state_std + self.std_smoothing)
         state = state.to(torch.float).to(self.device)
         actions_Q = self.eval_net.forward(state)
 
-        actions_Q = actions_Q.cpu().detach().numpy().squeeze() # (n_actions)
+        # Action proposal
+        if self.args.action_proposal:
+            masks = self.proposal_net(state, mode= 'deterministic').to(self.device)
+        else:
+            masks = 1.
+
+        actions_Q = (actions_Q * masks).cpu().detach().numpy().squeeze() # (n_actions)
         sorted_ids = sorted(range(actions_Q.size), key= lambda x:-actions_Q[x])
 
         rec_list = []
@@ -465,8 +477,9 @@ class DQN(object):
         if self.args.cql_mode == 'cql_Rho':
             buffered_q_eval = self.buffered_net(batch_state) # batch_size, n_actions
 
+        # Action proposal
         if self.args.action_proposal:
-            masks = self.proposal_net(batch_state_, raw_q_eval.argmax(dim=1)).to(self.device)
+            masks = self.proposal_net(batch_state_).to(self.device)
         else:
             masks = 1.
 
@@ -476,10 +489,11 @@ class DQN(object):
         # q_next.shape == batch_size, n_actions
         q_next = self.target_net(batch_state_).detach() # detach target_net from gradient updates (?)
 
+        q_eval = raw_q_eval.gather(1, batch_action) # batch_size, 1
+
         # Apply mask
         q_next = q_next * masks
-
-        q_eval = raw_q_eval.gather(1, batch_action) # batch_size, 1
+        raw_q_eval = raw_q_eval * masks # CAUTIONS: Apply AFTER getting q_eval. Take effects for ddqn.
 
         # Double DQN
         if self.mode == 'vanilla':
