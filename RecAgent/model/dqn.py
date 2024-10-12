@@ -135,7 +135,7 @@ class AQLProposalNet(nn.Module):
 
         self.softmax = nn.Softmax(dim= 1)
 
-    def forward(self, s, mode= 'stochastic', epsi= 1e-5):
+    def forward(self, s, mode= 'stochastic', epsi= 1.):
         '''
         s: Batch of input states. Shape = (batch_size, embd_dim)
         self.embd: Item embedding matrix. Shape = (n_action, embd_dim)
