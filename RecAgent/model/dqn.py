@@ -472,6 +472,11 @@ class DQN(object):
         self.setTrain()
 
         raw_q_eval = self.eval_net(batch_state) # batch_size, n_actions
+
+        raw_q_eval_next = None
+        if self.mode == 'ddqn':
+            raw_q_eval_next = self.eval_net(batch_state_) # batch_size, n_action
+
         buffered_q_eval = None
         if self.args.cql_mode == 'cql_Rho':
             buffered_q_eval = self.buffered_net(batch_state) # batch_size, n_actions
@@ -491,8 +496,10 @@ class DQN(object):
         q_eval = raw_q_eval.gather(1, batch_action) # batch_size, 1
 
         # Apply mask
-        q_next = q_next * masks
-        raw_q_eval = raw_q_eval * masks # CAUTIONS: Apply AFTER getting q_eval. Take effects for ddqn.
+        if self.mode == 'vanilla':
+            q_next = q_next * masks
+        elif self.mode == 'ddqn':
+            raw_q_eval_next = raw_q_eval_next * masks
 
         # Double DQN
         if self.mode == 'vanilla':
@@ -507,11 +514,11 @@ class DQN(object):
             
         elif self.mode == 'ddqn':
             if self.args.policy == 'max':
-                q_eval_action = raw_q_eval.argmax(dim=1).unsqueeze(1)
+                q_eval_action = raw_q_eval_next.argmax(dim=1).unsqueeze(1)
                 q_target = batch_reward + self.gamma * q_next.gather(1, q_eval_action)
             elif self.args.policy == 'stochastic':
-                margin_q = torch.sum(raw_q_eval, 1, keepdim= True).detach()
-                raw_q_next = q_next * (raw_q_eval.clone().detach() / margin_q)
+                margin_q = torch.sum(raw_q_eval_next, 1, keepdim= True).detach()
+                raw_q_next = q_next * (raw_q_eval_next.clone().detach() / margin_q)
                 q_target = batch_reward + self.gamma * torch.sum(raw_q_next, 1, keepdims= True)
             else:
                 raise NotImplementedError(f'DQN policy mode {self.args.policy} not found!')
