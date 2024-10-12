@@ -17,28 +17,26 @@ python main.py --modeltype BC_LOSS \
                 --step_max 16 \
                 --memory 8192 \
                 --nov_beta 0.0 \
-                --agent_batch 256 \
+                --agent_batch 128 \
                 --dqn_mode ddqn \
-                --eta 1.0 \
                 --agent_lr 1e-3 \
                 --replace_freq -1 \
-                --num_hidden 128 \
+                --num_hidden 256 \
                 --tau 0.001 \
                 --gamma 0.999 \
                 --cql_mode cql_H \
-                --cql_alpha 8. \
+                --cql_alpha 5. \
                 --dueling_dqn \
                 --n_augment 5 \
                 --n_aug_scale 4 \
                 --rare_thresh 0.3 \
-                --seq_ratio 0.3 \
-                --rare_ratio 0.2 \
-                --rand_ratio 0.5 \
+                --seq_ratio 0.1 \
+                --rare_ratio 0.5 \
+                --rand_ratio 0.4 \
                 --topk 10 \
                 --eval_freq 50 \
-                --episode_batch 64 \
+                --episode_batch 32 \
                 --eval_query \
                 --all_episodes \
                 --epsilon 0.75 \
-                --n_proposal 100 \
                 --action_proposal
