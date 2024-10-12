@@ -143,9 +143,11 @@ class AQLProposalNet(nn.Module):
         output: Proposal item index
         '''
         logits = s @ self.embd.T # (batch_size, n_action)
+        # probs = logits / torch.sum(logits, 0, keepdim= True)
         probs = self.softmax(logits) # (batch_size, n_actions)
 
         numpy_probs = probs.detach().cpu().numpy()
+        print(numpy_probs)
 
         # print(numpy_probs.shape)
 
@@ -542,7 +544,7 @@ class DQN(object):
         loss.backward()
         torch.nn.utils.clip_grad_value_(self.eval_net.parameters(), 1.)
         self.optimizer.step()
-        self.scheduler.step()
+        # self.scheduler.step()
         
         # Fuse eval_net into target_net with temperature tau
         soft_update(self.target_net, self.eval_net, self.tau)

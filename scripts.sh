@@ -17,7 +17,7 @@ python main.py --modeltype BC_LOSS \
                 --step_max 16 \
                 --memory 8192 \
                 --nov_beta 0.0 \
-                --agent_batch 128 \
+                --agent_batch 256 \
                 --dqn_mode ddqn \
                 --eta 1.0 \
                 --agent_lr 1e-3 \
