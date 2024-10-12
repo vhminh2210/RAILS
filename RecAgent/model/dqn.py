@@ -147,9 +147,6 @@ class AQLProposalNet(nn.Module):
         probs = self.softmax(logits) # (batch_size, n_actions)
 
         numpy_probs = probs.detach().cpu().numpy()
-        print(numpy_probs)
-
-        # print(numpy_probs.shape)
 
         idx = []
         

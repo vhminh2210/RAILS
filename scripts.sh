@@ -21,8 +21,8 @@ python main.py --modeltype BC_LOSS \
                 --dqn_mode ddqn \
                 --eta 1.0 \
                 --agent_lr 1e-3 \
-                --replace_freq -4 \
-                --num_hidden 256 \
+                --replace_freq -1 \
+                --num_hidden 128 \
                 --tau 0.001 \
                 --gamma 0.999 \
                 --cql_mode cql_H \
@@ -31,8 +31,8 @@ python main.py --modeltype BC_LOSS \
                 --n_augment 5 \
                 --n_aug_scale 4 \
                 --rare_thresh 0.3 \
-                --seq_ratio 0.2 \
-                --rare_ratio 0.3 \
+                --seq_ratio 0.3 \
+                --rare_ratio 0.2 \
                 --rand_ratio 0.5 \
                 --topk 10 \
                 --eval_freq 50 \
@@ -40,4 +40,5 @@ python main.py --modeltype BC_LOSS \
                 --eval_query \
                 --all_episodes \
                 --epsilon 0.75 \
+                --n_proposal 100 \
                 --action_proposal
