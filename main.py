@@ -24,6 +24,8 @@ if __name__ == "__main__":
                         help= 'Datasets root directory')
     parser.add_argument('--sim_mode', type=str, default='stats',
                         help= 'Similarity mode for relevance score')
+    parser.add_argument('--user_lam', type=float, default=1.,
+                        help= 'User weights for representatives')
     parser.add_argument('--pretrained_graph', action='store_true', default=False,
                         help= 'Use pretrained graph')
     
@@ -178,6 +180,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     assert args.epoch >= args.freeze_epoch
+    assert args.user_lam <= 1.
 
     if args.eval_query:
         assert 'query.txt' in os.listdir(os.path.join(args.root, args.dataset))
@@ -255,6 +258,8 @@ if __name__ == "__main__":
         item_emb[wild_items] = torch.zeros_like(item_emb[0])
         print(f'{wild_items.shape[0]} wild items found!')
         print('Representative user embeddings shape:', repr_user.shape)
+
+        repr_user = args.user_lam * repr_user + (1. - args.user_lam) * item_emb
         
         repr_user = nn.Embedding.from_pretrained(repr_user)
         item_emb = nn.Embedding.from_pretrained(item_emb)

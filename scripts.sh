@@ -14,10 +14,10 @@ python main.py --modeltype BC_LOSS \
                 --sim_mode user_embedding \
                 --epoch_max 20 \
                 --episode_max 64\
-                --step_max 4 \
+                --step_max 16 \
                 --memory 8192 \
                 --nov_beta 0.0 \
-                --agent_batch 128 \
+                --agent_batch 256 \
                 --dqn_mode ddqn \
                 --eta 1.0 \
                 --agent_lr 1e-3 \
@@ -26,10 +26,11 @@ python main.py --modeltype BC_LOSS \
                 --tau 0.001 \
                 --gamma 0.999 \
                 --cql_mode cql_H \
-                --cql_alpha 8. \
+                --cql_alpha 15. \
+                --user_lam 0.8 \
                 --dueling_dqn \
-                --n_augment 3 \
-                --n_aug_scale 2 \
+                --n_augment 5 \
+                --n_aug_scale 4 \
                 --rare_thresh 0.3 \
                 --seq_ratio 0.1 \
                 --rare_ratio 0.5 \
@@ -39,6 +40,6 @@ python main.py --modeltype BC_LOSS \
                 --episode_batch 32 \
                 --eval_query \
                 --all_episodes \
-                # --epsilon 0.9 \
-                # --n_proposal 500 \
-                # --action_proposal
+#                 --epsilon 0.75 \
+#                 --n_proposal 500 \
+#                 --action_proposal
