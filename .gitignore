@@ -5,6 +5,7 @@
 *.o
 *.cpp
 *.mat
+*.sh
 # *.tar
 # *.png
 exps

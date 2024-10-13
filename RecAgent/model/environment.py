@@ -56,7 +56,12 @@ class Env():
                 if obs in self.wild_items:
                     cnt -= 1
                     continue
-                state += (self.args.eta ** (n_obs - i - 1)) * self.repr_user(torch.IntTensor([obs]))
+                try:
+                    state += (self.args.eta ** (n_obs - i - 1)) * self.repr_user(torch.IntTensor([obs]))
+                except:
+                    # Out-of-range obsservation
+                    cnt -= 1
+                    continue
             # Absolute cold-start user is undefined
             if cnt == 0:
                 return None
