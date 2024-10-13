@@ -374,7 +374,7 @@ def train_dqn(train_df, test_df, query_df, item_pop_dict,
     for t in range(args.epoch_max):
         episode_id = 0
         random.shuffle(train_episodes)
-        if args.replace_freq < 0 and t % (-args.replace_freq) == 0:
+        if args.replace_freq < 0 and (t + 1) % (-args.replace_freq) == 0:
             agent.net_hard_update()
         for ep_user in tqdm(train_episodes, desc= f'Epoch {t}'):
             episode_id += 1
