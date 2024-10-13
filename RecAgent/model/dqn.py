@@ -407,7 +407,7 @@ class DQN(object):
 
         return batch_state, batch_action, batch_reward, batch_state_, torch.tensor(splits)
 
-    def CQLLoss(self, q_values, current_action, buffered_action = None):
+    def CQLLoss(self, max_obs, q_values, current_action, buffered_action = None):
         '''
         Consult: https://github.com/BY571/CQL/blob/main/CQL-DQN/agent.py#L45
         Notations follow https://arxiv.org/pdf/2006.04779 
@@ -433,7 +433,7 @@ class DQN(object):
             maximizer = q_values.gather(1, current_action)
             # Minimize Q-values
             minimizer = q_values.gather(1, buffered_action) # batch_size, 1
-            return (minimizer - maximizer).mean()
+            return (minimizer - maximizer / max_obs).mean()
         else:
             raise NotImplementedError(f'CQL mode {self.args.cql_mode} not defined!')
         
@@ -538,7 +538,7 @@ class DQN(object):
         buffered_action = None
         if self.args.cql_mode == 'cql_Rho':
             buffered_action = torch.argmax(buffered_q_eval, dim= 1).unsqueeze(dim= 1)
-        cql_loss = self.CQLLoss(raw_q_eval, batch_action, buffered_action)
+        cql_loss = self.CQLLoss((self.args.max_obs + 1.) / 2., raw_q_eval, batch_action, buffered_action)
 
         loss = self.args.cql_alpha * cql_loss + 0.5 * bellman_loss
         self.train_loss.append(loss.item())

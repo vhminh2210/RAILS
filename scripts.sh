@@ -14,14 +14,14 @@ python main.py --modeltype BC_LOSS \
                 --sim_mode user_embedding \
                 --epoch_max 20 \
                 --episode_max 64\
-                --step_max 8 \
+                --step_max 4 \
                 --memory 8192 \
                 --nov_beta 0.0 \
                 --agent_batch 128 \
                 --dqn_mode ddqn \
                 --eta 1.0 \
                 --agent_lr 1e-3 \
-                --replace_freq -4 \
+                --replace_freq -1 \
                 --num_hidden 256 \
                 --tau 0.001 \
                 --gamma 0.999 \
@@ -39,6 +39,6 @@ python main.py --modeltype BC_LOSS \
                 --episode_batch 32 \
                 --eval_query \
                 --all_episodes \
-                --epsilon 0.9 \
-                --n_proposal 500 \
-                --action_proposal
+                # --epsilon 0.9 \
+                # --n_proposal 500 \
+                # --action_proposal

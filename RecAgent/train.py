@@ -294,6 +294,12 @@ def train_dqn(train_df, test_df, query_df, item_pop_dict,
         train_dict.setdefault(int(row['user_id']), list())
         train_dict[int(row['user_id'])].append(int(row['item_id']))
 
+    # Get max n_obs
+    max_obs = 1
+    for key, value in train_dict.items():
+        max_obs = max(max_obs, len(value))
+    args.max_obs = max_obs
+
     if args.eval_query:
         query_dict = {}
         query_episodes = []
