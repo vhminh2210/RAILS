@@ -138,3 +138,6 @@ Epoch 98 [24.3s]: train==[2.60526=1.14717 + 1.45744 + 0.00066]
 Epoch 99 [24.3s]: train==[2.60814=1.14672 + 1.46077 + 0.00066]
 valid:{'recall': nan, 'hit_ratio': 0.9, 'precision': 0.37229824, 'ndcg': nan, 'mrr': 0.80352247, 'map': 0.6167775}
 test_id:{'recall': nan, 'hit_ratio': 0.9, 'precision': 0.37229824, 'ndcg': nan, 'mrr': 0.80352247, 'map': 0.6167775}
+Epoch 99 [103.6s]: train==[2.61001=1.14689 + 1.46247 + 0.00066]
+valid:{'recall': nan, 'hit_ratio': 0.9, 'precision': 0.3882115, 'ndcg': nan, 'mrr': 0.80714935, 'map': 0.6265567}
+test_id:{'recall': nan, 'hit_ratio': 0.9, 'precision': 0.3882115, 'ndcg': nan, 'mrr': 0.80714935, 'map': 0.6265567}
