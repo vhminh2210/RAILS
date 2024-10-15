@@ -6,7 +6,7 @@ python main.py --modeltype BC_LOSS \
                 --enc_batch_size 1024 \
                 --enc_lr 1e-4 \
                 --root datasets/d2-fold \
-                --dataset Round2 \
+                --dataset Round5 \
                 --n_layers 2 \
                 --neg_sample 128 \
                 --freeze_epoch 5 \
