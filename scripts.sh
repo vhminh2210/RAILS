@@ -2,12 +2,11 @@
 # python GraphEnc/setup.py build_ext --inplace 2> /dev/null
 python main.py --modeltype BC_LOSS \
                 --cuda -1 \
-                --epoch 99 \
-                --pretrained_graph \
+                --epoch 100 \
                 --enc_batch_size 1024 \
                 --enc_lr 1e-4 \
-                --root datasets/d2-fold \
-                --dataset Round5 \
+                --root datasets/d1-fold \
+                --dataset Round7 \
                 --n_layers 2 \
                 --neg_sample 128 \
                 --freeze_epoch 5 \
