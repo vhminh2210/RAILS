@@ -2,15 +2,16 @@
 # python GraphEnc/setup.py build_ext --inplace 2> /dev/null
 python main.py --modeltype BC_LOSS \
                 --cuda -1 \
-                --epoch 100 \
+                --epoch 99 \
+                --pretrained_graph \
                 --enc_batch_size 1024 \
                 --enc_lr 1e-4 \
                 --root datasets/d2-fold \
-                --dataset Round9 \
+                --dataset Round5 \
                 --n_layers 2 \
                 --neg_sample 128 \
                 --freeze_epoch 5 \
-                --sim_mode user_embedding \
+                --sim_mode item_embedding \
                 --epoch_max 10 \
                 --episode_max 64\
                 --step_max 8 \
