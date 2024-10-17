@@ -1,17 +1,14 @@
 #/bin/sh
 # python GraphEnc/setup.py build_ext --inplace 2> /dev/null
 python main.py --modeltype BC_LOSS \
+                --pretrained_graph \
+                --ckpt_dir weights/d1/BC_LOSS-LGN \
+                --ckpt n_layers=2tau1=0.07tau2=0.1w=0.5 \
                 --cuda -1 \
-                --epoch 100 \
-                --enc_batch_size 1024 \
-                --enc_lr 1e-4 \
-                --root datasets/d1-fold \
-                --dataset Round7 \
-                --n_layers 2 \
-                --neg_sample 128 \
-                --freeze_epoch 5 \
-                --sim_mode item_embedding \
-                --epoch_max 10 \
+                --root datasets \
+                --dataset d1 \
+                --sim_mode user_embedding \
+                --epoch_max 1 \
                 --episode_max 64\
                 --step_max 8 \
                 --memory 16384 \
@@ -37,8 +34,5 @@ python main.py --modeltype BC_LOSS \
                 --topk 10 \
                 --eval_freq 50 \
                 --episode_batch 64 \
-                --eval_query \
                 --all_episodes \
-                # --epsilon 0.75 \
-                # --n_proposal 500 \
-                # --action_proposal
+                # --eval_query \

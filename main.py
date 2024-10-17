@@ -28,6 +28,10 @@ if __name__ == "__main__":
                         help= 'User weights for representatives')
     parser.add_argument('--pretrained_graph', action='store_true', default=False,
                         help= 'Use pretrained graph')
+    parser.add_argument('--ckpt_dir', type=str, default='weights',
+                        help= 'Checkpoint directory')
+    parser.add_argument('--ckpt', type=str, default='',
+                        help= 'Checkpoint name')
     
     # Graph encoder params
     parser.add_argument('--vis', nargs='?', default=-1,

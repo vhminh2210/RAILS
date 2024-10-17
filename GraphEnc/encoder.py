@@ -569,6 +569,10 @@ def getEncoder(args):
     
     model.to(device)
 
+    if args.pretrained_graph:
+        model, start_epoch = restore_checkpoint(model, os.path.join(args.ckpt_dir, args.ckpt), device)
+        return model, data
+
     model, start_epoch = restore_checkpoint(model, base_path, device)
 
     if args.test_only:

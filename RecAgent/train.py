@@ -178,10 +178,12 @@ def recommender(agent, train_episodes, ep_user, train_df, test_df, train_dict, i
 def evaluate(agent, ep_users, train_df, test_df, train_dict, item_pop_dict,
             max_item_id, mask_list, repr_user, item_emb, args, 
             ckpt= False, encoder= False, user_emb= None,
-            min_freq= None, max_freq= None, freq= None, wild_items= None):
+            min_freq= None, max_freq= None, freq= None, wild_items= None, export_list= False):
 
     global precision, ndcg, novelty, coverage, ils, interdiv, recall, epc, logs
     precision, ndcg, novelty, coverage, ils, interdiv, recall, epc = [], [], [], [], [], [], [], []
+
+    all_reclist, all_testlist, all_testers = [], [], []
 
     if encoder:
         assert user_emb is not None
@@ -227,6 +229,10 @@ def evaluate(agent, ep_users, train_df, test_df, train_dict, item_pop_dict,
         # Skip absolute cold-start user or N/A testing interactions
         if len(test_set) == 0 or len(rec_list) == 0:
             continue
+
+        all_reclist.append(rec_list)
+        all_testlist.append(test_set)
+        all_testers.append(ep_user)
 
         # Evaluation stats
         match_ = len(set(rec_list) & set(test_set))
@@ -277,7 +283,13 @@ def evaluate(agent, ep_users, train_df, test_df, train_dict, item_pop_dict,
 
         logs.append(valstr)
         print('####################')
-    return float(np.mean(precision)), float(np.mean(recall)), float(np.mean(ndcg)), final_epc, final_coverage
+    
+    if export_list:
+        return (float(np.mean(precision)), float(np.mean(recall)), float(np.mean(ndcg)), 
+                final_epc, final_coverage, all_reclist, all_testlist, all_testers)
+    else:
+        return (float(np.mean(precision)), float(np.mean(recall)), float(np.mean(ndcg)), 
+                final_epc, final_coverage)
 
 def train_dqn(train_df, test_df, query_df, item_pop_dict,
               max_item_id, item_list, mask_list, 
@@ -412,21 +424,18 @@ def train_dqn(train_df, test_df, query_df, item_pop_dict,
         # wait(futures)
 
     print('RL agent training complete!')
-    print('####################')
-    print('Plotting train curve ...')
-    exps_log = agent.stats_plot(args, ckpt_precision, ckpt_recall, ckpt_ndcg, ckpt_epc, ckpt_coverage)
-    print('Train curve finished!')
+
     print('####################')
     print('Running evaluations on trained agent ...')
     if args.eval_query:
-        _, _, _, epc, coverage = evaluate(agent, query_episodes, query_df, test_df, query_dict, item_pop_dict,
+        _, _, _, epc, coverage, reclist, testlist, testers = evaluate(agent, query_episodes, query_df, test_df, query_dict, item_pop_dict,
                     max_item_id, mask_list, repr_user, item_emb, args, ckpt= True,
-                    min_freq= min_freq, max_freq= max_freq, freq= freq, wild_items= wild_items)
+                    min_freq= min_freq, max_freq= max_freq, freq= freq, wild_items= wild_items, export_list= True)
         
     else:
-        _, _, _, epc, coverage = evaluate(agent, train_episodes, train_df, test_df, train_dict, item_pop_dict,
+        _, _, _, epc, coverage, reclist, testlist, testers = evaluate(agent, train_episodes, train_df, test_df, train_dict, item_pop_dict,
                     max_item_id, mask_list, repr_user, item_emb, args, ckpt= True,
-                    min_freq= min_freq, max_freq= max_freq, freq= freq, wild_items= wild_items)
+                    min_freq= min_freq, max_freq= max_freq, freq= freq, wild_items= wild_items, export_list= True)
 
     print(f"Precision@{args.topk}: ", np.round(np.mean(precision), 4))
     print(f"Recall@{args.topk}: ", np.round(np.mean(recall), 4))
@@ -434,6 +443,23 @@ def train_dqn(train_df, test_df, query_df, item_pop_dict,
     print(f"EPC@{args.topk}: ", np.round(epc, 4))
     print(f"Coverage@{args.topk}: ", np.round(coverage, 4))
 
+    print('####################')
+    print('Plotting train curve ...')
+    resdict = {
+        'freq' : freq,
+        'precision' : ckpt_precision, 
+        'recall' : ckpt_recall,
+        'ndcg' : ckpt_ndcg, 
+        'epc' : ckpt_epc,
+        'coverage' : ckpt_coverage,
+        'reclist' : reclist,
+        'testlist' : testlist,
+        'testers' : testers
+    }
+    exps_log = agent.stats_plot(args, resdict)
+    print('Train curve finished!')
+
+    print('####################')
     with open(os.path.join(exps_log, 'agent.txt'), 'w') as file:
         file.write('########### RL AGENT EVALUATIONS ###########\n')
         file.write(f"Precision@{args.topk}: {np.round(np.mean(precision), 4)}\n")
@@ -443,7 +469,6 @@ def train_dqn(train_df, test_df, query_df, item_pop_dict,
         file.write(f"Coverage@{args.topk}: {np.round(coverage, 4)}\n")
         file.close()
 
-    print('####################')
     print('Exporting logs ...')
     logstr = [log + '\n' for log in logs]
     with open(os.path.join(exps_log, 'logs.txt'), 'w') as file:

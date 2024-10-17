@@ -557,7 +557,7 @@ class DQN(object):
         if self.args.cql_mode == 'cql_Rho':
             hard_update(self.buffered_net, self.eval_net)
 
-    def stats_plot(self, args, precision= None, recall= None, ndcg= None, epc= None, coverage= None):
+    def stats_plot(self, args, resdict):
         if not os.path.exists('exps'):
             os.mkdir('exps')
         now = datetime.now()
@@ -565,11 +565,10 @@ class DQN(object):
         root = os.path.join('exps', dt_string)
         os.makedirs(root)
 
-        with open(os.path.join(root, 'args.txt'), 'w') as f:
-            json.dump(args.__dict__, f, indent=2)
-
-        with open(os.path.join(root, 'loss.txt'), 'w') as f:
-            f.write(str(self.train_loss))
+        precision, recall, ndcg = resdict['precision'], resdict['recall'], resdict['ndcg']
+        epc, coverage = resdict['epc'], resdict['coverage']
+        freq = resdict['freq']
+        reclist, testlist, testers = resdict['reclist'], resdict['testlist'], resdict['testers']
 
         save_pth = os.path.join(root, f'{self.args.dataset}-{self.args.step_max}.step-{self.args.gamma}.gamma.png')
         reduced_loss = [np.mean(self.train_loss[x * 256 : (x+1) * 256]) for x in range(4, int(len(self.train_loss) / 256))]
@@ -577,6 +576,44 @@ class DQN(object):
         plt.title('Training Loss')
         plt.savefig(save_pth)
         plt.clf()
+
+        # Export args
+        with open(os.path.join(root, 'args.txt'), 'w') as f:
+            json.dump(args.__dict__, f, indent=2)
+            f.close()
+
+        # Export loss
+        train_loss = np.array(self.train_loss)
+        np.savetxt(os.path.join(root, 'loss.txt'), train_loss)
+
+        # Export item frequency
+        freq = np.array(freq)
+        np.savetxt(os.path.join(root, 'freq.txt'), freq)
+
+        # Export recommendation list and test list
+        n_users = len(testers)
+        if len(reclist) != n_users or len(testlist) != n_users:
+            print('WARNING: Different number of testers and recommendation/test list!')
+
+        with open(os.path.join(root, 'reclist.txt'), 'w') as file:
+            Lines = []
+            for i in range(n_users):
+                line = [testers[i]]
+                line.extend(reclist[i])
+                line = ' '.join([str(x) for x in line]) + '\n'
+                Lines.append(line)
+            file.writelines(Lines)
+            file.close()
+
+        with open(os.path.join(root, 'testlist.txt'), 'w') as file:
+            Lines = []
+            for i in range(n_users):
+                line = [testers[i]]
+                line.extend(testlist[i])
+                line = ' '.join([str(x) for x in line]) + '\n'
+                Lines.append(line)
+            file.writelines(Lines)
+            file.close()
 
         if precision is not None:
             save_pth = os.path.join(root, f'precision.png')
