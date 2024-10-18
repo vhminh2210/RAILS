@@ -615,6 +615,7 @@ class DQN(object):
             file.writelines(Lines)
             file.close()
 
+        # Plots
         if precision is not None:
             save_pth = os.path.join(root, f'precision.png')
             plt.plot(precision)
