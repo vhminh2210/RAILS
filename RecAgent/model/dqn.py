@@ -534,6 +534,12 @@ class DQN(object):
 
         bellman_loss = weights[0] * seq_loss + weights[1] * rare_loss + weights[2] * rand_loss
 
+        # BETA: MOO-Based Bellman loss
+        # mean_loss = (seq_loss + rare_loss + rand_loss) / 3.
+        mean_loss = bellman_loss.detach()
+        moo_loss = self.loss_func(seq_loss, mean_loss) +  self.loss_func(rand_loss, mean_loss) + self.loss_func(rare_loss, mean_loss)
+        # moo_loss = torch.sqrt(moo_loss / 3.)
+
         # Conservative Q learning
         buffered_action = None
         if self.args.cql_mode == 'cql_Rho':

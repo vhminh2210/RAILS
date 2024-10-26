@@ -2,11 +2,11 @@
 # python GraphEnc/setup.py build_ext --inplace 2> /dev/null
 python main.py --modeltype BC_LOSS \
                 --pretrained_graph \
-                --ckpt_dir weights/d2-fold/Round2/BC_LOSS-LGN \
+                --ckpt_dir weights/d3/BC_LOSS-LGN \
                 --ckpt n_layers=2tau1=0.07tau2=0.1w=0.5 \
                 --cuda -1 \
-                --root datasets/d2-fold \
-                --dataset Round2 \
+                --root datasets \
+                --dataset d3 \
                 --sim_mode user_embedding \
                 --epoch_max 5 \
                 --episode_max 64\
@@ -19,7 +19,7 @@ python main.py --modeltype BC_LOSS \
                 --agent_lr 1e-3 \
                 --replace_freq -2 \
                 --num_hidden 256 \
-                --tau 8e-4 \
+                --tau 1e-3 \
                 --gamma 0.999 \
                 --cql_mode cql_H \
                 --cql_alpha 5. \
@@ -35,4 +35,4 @@ python main.py --modeltype BC_LOSS \
                 --eval_freq 50 \
                 --episode_batch 64 \
                 --all_episodes \
-                --eval_query \
+                # --eval_query \
