@@ -143,6 +143,8 @@ if __name__ == "__main__":
                         help= 'DQN update mode: vanilla/ddqn')
     parser.add_argument('--dueling_dqn', action='store_true', default=False,
                         help= 'Enable Dueling DQN')
+    parser.add_argument('--noisy_net', action='store_true', default=False,
+                        help= 'Enable NoisyNet for DQN')
     parser.add_argument('--j', type=int, default=8,
                         help= 'ThreadPoolExecutor max_workers')
     parser.add_argument('--cql_mode', type=str, default='none',

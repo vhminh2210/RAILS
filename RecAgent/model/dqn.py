@@ -8,6 +8,7 @@ import os
 from datetime import datetime
 import json
 import random
+import math
 random.seed(101)
 # import seaborn as sns
 
@@ -19,23 +20,108 @@ def hard_update(target, source):
     for target_param, param in zip(target.parameters(), source.parameters()):
         target_param.data.copy_(param.data)
 
-class Net(nn.Module):
-    def __init__(self, num_inputs, num_outputs, hidden_size, embd= None, dueling= False):
-        super(Net, self).__init__()
-        # self.linear0 = nn.Linear(num_inputs, hidden_size)
-        # self.ln0 = nn.LayerNorm(hidden_size)
+class NoisyLinear(nn.Module):
+    """Noisy linear module for NoisyNet.
 
-        self.linear1 = nn.Linear(num_inputs, hidden_size)
-        self.ln1 = nn.LayerNorm(hidden_size)
+    Source: https://github.com/Curt-Park/rainbow-is-all-you-need/blob/master/05.noisy_net.ipynb
+    
+    Attributes:
+        in_features (int): input size of linear module
+        out_features (int): output size of linear module
+        std_init (float): initial std value
+        weight_mu (nn.Parameter): mean value weight parameter
+        weight_sigma (nn.Parameter): std value weight parameter
+        bias_mu (nn.Parameter): mean value bias parameter
+        bias_sigma (nn.Parameter): std value bias parameter
+        
+    """
+
+    def __init__(self, in_features: int, out_features: int, std_init: float = 0.5):
+        """Initialization."""
+        super(NoisyLinear, self).__init__()
+        
+        self.in_features = in_features
+        self.out_features = out_features
+        self.std_init = std_init
+
+        self.weight_mu = nn.Parameter(torch.Tensor(out_features, in_features))
+        self.weight_sigma = nn.Parameter(
+            torch.Tensor(out_features, in_features)
+        )
+        self.register_buffer(
+            "weight_epsilon", torch.Tensor(out_features, in_features)
+        )
+
+        self.bias_mu = nn.Parameter(torch.Tensor(out_features))
+        self.bias_sigma = nn.Parameter(torch.Tensor(out_features))
+        self.register_buffer("bias_epsilon", torch.Tensor(out_features))
+
+        self.reset_parameters()
+        self.reset_noise()
+
+    def reset_parameters(self):
+        """Reset trainable network parameters (factorized gaussian noise)."""
+        mu_range = 1 / math.sqrt(self.in_features)
+        self.weight_mu.data.uniform_(-mu_range, mu_range)
+        self.weight_sigma.data.fill_(
+            self.std_init / math.sqrt(self.in_features)
+        )
+        self.bias_mu.data.uniform_(-mu_range, mu_range)
+        self.bias_sigma.data.fill_(
+            self.std_init / math.sqrt(self.out_features)
+        )
+
+    def reset_noise(self):
+        """Make new noise."""
+        epsilon_in = self.scale_noise(self.in_features)
+        epsilon_out = self.scale_noise(self.out_features)
+
+        # outer product
+        self.weight_epsilon.copy_(epsilon_out.ger(epsilon_in))
+        self.bias_epsilon.copy_(epsilon_out)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Forward method implementation.
+        
+        We don't use separate statements on train / eval mode.
+        It doesn't show remarkable difference of performance.
+        """
+        return F.linear(
+            x,
+            self.weight_mu + self.weight_sigma * self.weight_epsilon,
+            self.bias_mu + self.bias_sigma * self.bias_epsilon,
+        )
+    
+    @staticmethod
+    def scale_noise(size: int) -> torch.Tensor:
+        """Set scale to make noise (factorized gaussian noise)."""
+        x = torch.randn(size)
+
+        return x.sign().mul(x.abs().sqrt())
+
+class Net(nn.Module):
+    def __init__(self, num_inputs, num_outputs, hidden_size, embd= None, 
+                 dueling= False, noisy_net= False):
+        super(Net, self).__init__()
 
         self.dueling = dueling
+        self.noisy_net = noisy_net
+
+        self.linear1 = nn.Linear(num_inputs, hidden_size)
+        if self.noisy_net:
+            self.linear1 = NoisyLinear(num_inputs, hidden_size)
+        self.ln1 = nn.LayerNorm(hidden_size)
 
         if not self.dueling:
             # Non-dueling DQN
             self.linear2 = nn.Linear(hidden_size, hidden_size)
+            if self.noisy_net:
+                self.linear2 = nn.Linear(hidden_size, hidden_size)
             self.ln2 = nn.LayerNorm(hidden_size)
 
             self.mu = nn.Linear(hidden_size, num_outputs)
+            if self.noisy_net:
+                self.mu = NoisyLinear(hidden_size, num_outputs)
 
         else:
             # Dueling DQN
@@ -48,18 +134,28 @@ class Net(nn.Module):
             
             # Value branch
             self.linear2_V = nn.Linear(hidden_size, half_size)
+            if self.noisy_net:
+                self.linear2_V = NoisyLinear(hidden_size, half_size)
             self.ln2_V = nn.LayerNorm(half_size)
 
             self.linear3_V = nn.Linear(half_size, 1)
+            if self.noisy_net:
+                self.linear3_V = NoisyLinear(half_size, 1)
 
             # Advantage branch
             self.linear2_A = nn.Linear(hidden_size, half_size)
+            if self.noisy_net:
+                self.linear2_A = NoisyLinear(hidden_size, half_size)
             self.ln2_A = nn.LayerNorm(half_size)
 
             self.mu = nn.Linear(half_size, num_outputs)
+            if self.noisy_net:
+                self.mu = NoisyLinear(half_size, num_outputs)
 
-        self.mu.weight.data.mul_(0.1)
-        self.mu.bias.data.mul_(0.1)
+        # Default init for non-noisy nets
+        if not self.noisy_net:
+            self.mu.weight.data.mul_(0.1)
+            self.mu.bias.data.mul_(0.1)
 
         # self.softmax = nn.Softmax(dim= 1)
 
@@ -74,6 +170,22 @@ class Net(nn.Module):
 
         # Consult https://wandb.ai/wandb_fc/tips/reports/How-to-Initialize-Weights-in-PyTorch--VmlldzoxNjcwOTg1
         self.apply(self._init_weights) 
+
+    def _reset_noise(self, module):
+        """
+        Reset all noisy layers.
+        Source: https://github.com/Curt-Park/rainbow-is-all-you-need/blob/master/05.noisy_net.ipynb
+        """
+        if not self.noisy_net:
+            return
+        if isinstance(module, NoisyLinear):
+            module.reset_noise()
+            module.reset_noise()
+
+    def reset_noise(self):
+        if not self.noisy_net:
+            return
+        self.apply(self._reset_noise)
 
     def _init_weights(self, module):
         if isinstance(module, nn.Linear):
@@ -209,16 +321,22 @@ class DQN(object):
         self.num_hidden = self.args.num_hidden
 
         if embd is None:
-            self.eval_net = Net(self.n_states, self.n_actions, self.num_hidden, dueling= self.args.dueling_dqn)
-            self.buffered_net = Net(self.n_states, self.n_actions, self.num_hidden, dueling= self.args.dueling_dqn)
-            self.target_net = Net(self.n_states, self.n_actions, self.num_hidden, dueling= self.args.dueling_dqn)
+            self.eval_net = Net(self.n_states, self.n_actions, self.num_hidden, 
+                                dueling= self.args.dueling_dqn, noisy_net= self.args.noisy_net)
+            self.buffered_net = Net(self.n_states, self.n_actions, self.num_hidden, 
+                                    dueling= self.args.dueling_dqn, noisy_net= self.args.noisy_net)
+            self.target_net = Net(self.n_states, self.n_actions, self.num_hidden, 
+                                  dueling= self.args.dueling_dqn, noisy_net= self.args.noisy_net)
         else:
             self.eval_net = Net(self.n_states, embd.weight.shape[-1], self.num_hidden, 
-                                embd= embd.to(self.device), dueling= self.args.dueling_dqn)
+                                embd= embd.to(self.device), 
+                                dueling= self.args.dueling_dqn, noisy_net= self.args.noisy_net)
             self.buffered_net = Net(self.n_states, embd.weight.shape[-1], self.num_hidden, 
-                                embd= embd.to(self.device), dueling= self.args.dueling_dqn)
+                                embd= embd.to(self.device), 
+                                dueling= self.args.dueling_dqn, noisy_net= self.args.noisy_net)
             self.target_net = Net(self.n_states, embd.weight.shape[-1], self.num_hidden, 
-                                embd= embd.to(self.device), dueling= self.args.dueling_dqn)
+                                embd= embd.to(self.device), 
+                                dueling= self.args.dueling_dqn, noisy_net= self.args.noisy_net)
 
         self.optimizer = torch.optim.Adam(self.eval_net.parameters(), lr=self.lr)
         self.max_iter = int(self.args.epoch_max * self.args.episode_max * self.args.step_max / self.args.episode_batch)
@@ -554,12 +672,16 @@ class DQN(object):
         loss.backward()
         torch.nn.utils.clip_grad_value_(self.eval_net.parameters(), 1.)
         self.optimizer.step()
-        # self.scheduler.step()
+        self.scheduler.step()
+
+        # NoisyNet: reset noise
+        self.target_net.reset_noise()
+        self.eval_net.reset_noise()
         
         # Fuse eval_net into target_net with temperature tau
         soft_update(self.target_net, self.eval_net, self.tau)
 
-        # Update buffered 
+        # Update buffer
         if self.args.cql_mode == 'cql_Rho':
             hard_update(self.buffered_net, self.eval_net)
 
