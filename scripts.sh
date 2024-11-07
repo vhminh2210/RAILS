@@ -35,4 +35,5 @@ python main.py --modeltype BC_LOSS \
                 --eval_freq 50 \
                 --episode_batch 64 \
                 --all_episodes \
-                # --eval_query \
+                --eval_coldstart \
+                # --eval_query

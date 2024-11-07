@@ -181,6 +181,8 @@ if __name__ == "__main__":
                         help= 'Number of hidden activations for DQN.')
     parser.add_argument('--eval_query', action='store_true', default=False,
                         help= 'Enable query evaluation mode')
+    parser.add_argument('--eval_coldstart', action='store_true', default=False,
+                        help= 'Enable cold start user evaluation mode')
 
     args = parser.parse_args()
     assert args.epoch >= args.freeze_epoch

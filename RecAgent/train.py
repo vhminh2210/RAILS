@@ -200,11 +200,22 @@ def evaluate(agent, ep_users, train_df, test_df, train_dict, item_pop_dict,
             print('Evaluating user', ep_user)
 
         last_obs = train_dict[ep_user] # Use all (train) observed history for evaluation
+        
+        n_obs = len(last_obs)
+        cold_obs = last_obs[ : int(n_obs * 0.3)] # Cold observation
+        additional_test = last_obs[int(n_obs * 0.3) : ] # The rest observations are added to test set
+
         ep_mask_list = copy.copy(mask_list)
-        ep_mask_list.extend(train_dict[ep_user][:-1])
+        
+        if args.eval_coldstart:
+            query_obs = copy.copy(cold_obs)
+        else:
+            query_obs = copy.copy(last_obs) # Standard evaluation
+
+        ep_mask_list.extend(query_obs) # Standard evaluation
 
         # Simulate the enviroment, regarding [ep_user] preferences
-        env = environment.Env(ep_user, train_dict[ep_user], list(range(max_item_id + 1)),
+        env = environment.Env(ep_user, query_obs, list(range(max_item_id + 1)),
                           item_pop_dict, ep_mask_list, args.sim_mode, repr_user, item_emb, wild_items, args)
         interaction_num = setInteraction(env, agent, ep_user, train_df, args, freq,
                                          augment= False, ckpt= ckpt, evalmode= True)
@@ -213,14 +224,17 @@ def evaluate(agent, ep_users, train_df, test_df, train_dict, item_pop_dict,
         
         if not encoder:
             # Generate unseen interaction using learned policy
-            rec_list = recommend_offpolicy(env, agent, last_obs)
+            rec_list = recommend_offpolicy(env, agent, query_obs)
         else:
             # Generate unseen interaction using pretrained encoder
-            rec_list = recommend_encoder(user_emb(torch.IntTensor([ep_user])), item_weight, last_obs, args)
+            rec_list = recommend_encoder(user_emb(torch.IntTensor([ep_user])), item_weight, query_obs, args)
         
         # Ground truth unseen interaction
         test_set = test_df.loc[test_df['user_id'] == ep_user, 'item_id'].tolist()
         test_set = [x for x in test_set if x not in wild_items]
+
+        if args.eval_coldstart:
+            test_set.extend(additional_test)
 
         if not ckpt:
             # Skip users without test interactions
