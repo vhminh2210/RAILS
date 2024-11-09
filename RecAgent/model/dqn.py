@@ -9,6 +9,7 @@ from datetime import datetime
 import json
 import random
 import math
+import copy
 random.seed(101)
 # import seaborn as sns
 
@@ -345,8 +346,8 @@ class DQN(object):
         # self.scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(self.optimizer, 
         #                                                                       T_0 = int(self.args.step_max), verbose= True)
         self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optimizer, T_max = self.max_iter)
-        self.loss_func = nn.MSELoss()
-        # self.loss_func = nn.HuberLoss()
+        # self.loss_func = nn.MSELoss()
+        self.loss_func = nn.HuberLoss()
         hard_update(self.target_net, self.eval_net) # Transfer weights from eval_q_net to target_q_net
 
         self.learn_step_counter = 0
@@ -354,7 +355,7 @@ class DQN(object):
 
         # 0-th dimension for memory parition: 0-sequential, 1-rare, 2-random
         self.memory = [np.zeros((0, self.n_states * 2 + 2))] * 3
-        self.mask = [[] for x in range(self.n_states * 2 + 2)] * 3
+        self.mask = [[] for _ in range(3)]
 
         self.memory_counter = np.array([0, 0, 0])
         self.memory_capacity = memory_capacity
@@ -459,32 +460,40 @@ class DQN(object):
         print('mean_norm:', np.linalg.norm(new_mean), 'std_norm:', np.linalg.norm(new_std))
         print('####################')
 
-    def store_transition(self, s, a, r, s_):
+    def store_transition(self, s, a, r, s_, mask):
         normalized_r = (r - self.reward_mean) / (self.reward_std + self.std_smoothing)
         normalized_s = (s - self.state_mean) / (self.state_std + self.std_smoothing)
         normalized_s_ = (s_ - self.state_mean) / (self.state_std + self.std_smoothing)
         transition = np.hstack((normalized_s, np.array([a, float(normalized_r)]), normalized_s_))
+
+        mask = copy.copy(mask)
 
         # Always store transition into random memory
         # Shuffle memory. Preventing forgetting of interactions from early episodes
         random_index = np.arange(len(self.memory[2]))
         np.random.shuffle(random_index)
         self.memory[2] = self.memory[2][random_index, :]
+        if len(self.memory[2]) > 0:
+            self.mask[2] = [self.mask[2][x] for x in random_index.tolist()]
 
         if len(self.memory[2]) < self.partition[2]:
             self.memory[2] = np.append(self.memory[2], [transition], axis=0)
+            self.mask[2].append(mask)
         else:
             index = self.memory_counter[2] % self.partition[2]
             self.memory[2][index, :] = transition
+            self.mask[2][index] = mask
         self.memory_counter[2] += 1
 
         # Always store transition into sequential memory
         # Round-Robin
         if len(self.memory[0]) < self.partition[0]:
             self.memory[0] = np.append(self.memory[0], [transition], axis=0)
+            self.mask[0].append(mask)
         else:
             index = self.memory_counter[0] % self.partition[0]
             self.memory[0][index, :] = transition
+            self.mask[0][index] = mask
         self.memory_counter[0] += 1
 
         # Rare-action memory
@@ -492,6 +501,7 @@ class DQN(object):
         # if self.item_pop_dict[str(a)] >= 1. - self.rare_thresh:
             if len(self.memory[1]) < self.partition[1]:
                 self.memory[1] = np.append(self.memory[1], [transition], axis=0)
+                self.mask[1].append(mask)
             else:
                 actions = np.copy(self.memory[1][:, self.n_states]).reshape((-1)).tolist() # List of rare actions stored
                 
@@ -503,11 +513,13 @@ class DQN(object):
                 index = self.memory_counter[1] % self.partition[1]
                 
                 self.memory[1][index, :] = transition
+                self.mask[1][index] = mask
             self.memory_counter[1] += 1
 
     def sampling(self):
         samples = []
         splits = []
+        _batch_masks = []
         rng = np.random.default_rng()
         for mode in range(3):
             # sample_index = random.sample(list(range(len(self.memory[mode]))), 
@@ -517,17 +529,26 @@ class DQN(object):
                                       replace= False)
             # (batch_size, transition_shape)
             batch_memory = self.memory[mode][sample_index, :].reshape((self.pbatch_size[mode], -1))
+            batch_mask = [self.mask[mode][x] for x in sample_index.tolist()]
             samples.append(batch_memory)
+            _batch_masks.append(batch_mask)
             splits.append(min(self.pbatch_size[mode], len(self.memory[mode])))
         
         batch_memory = np.concatenate(samples, axis= 0)
+
+        batch_masks = torch.ones((batch_memory.shape[0], self.n_actions))
+        cnt = 0
+        for _masks in _batch_masks:
+            for _mask in _masks:
+                batch_masks[cnt, _mask] = 0.
+                cnt += 1
         
         batch_state = torch.tensor(batch_memory[:, :self.n_states], dtype=torch.float32)
         batch_action = torch.tensor(batch_memory[:, self.n_states:self.n_states + 1].astype(int), dtype=torch.long)
         batch_reward = torch.tensor(batch_memory[:, self.n_states + 1:self.n_states + 2], dtype=torch.float32)
         batch_state_ = torch.tensor(batch_memory[:, -self.n_states:], dtype=torch.float32)
 
-        return batch_state, batch_action, batch_reward, batch_state_, torch.tensor(splits)
+        return batch_masks, batch_state, batch_action, batch_reward, batch_state_, torch.tensor(splits)
 
     def CQLLoss(self, max_obs, q_values, current_action, buffered_action = None):
         '''
@@ -583,12 +604,14 @@ class DQN(object):
             
         self.learn_step_counter += 1
 
-        batch_state, batch_action, batch_reward, batch_state_, splits = self.sampling()
+        # Shape of batch_mask: (batch_size, n_actions)
+        batch_mask, batch_state, batch_action, batch_reward, batch_state_, splits = self.sampling()
 
         batch_state = batch_state.to(self.device)
         batch_action = batch_action.to(self.device)
         batch_reward = batch_reward.to(self.device)
         batch_state_ = batch_state_.to(self.device)
+        batch_mask = batch_mask.to(self.device)
         splits = splits.to(self.device)
 
         self.setTrain()
@@ -607,7 +630,7 @@ class DQN(object):
         if self.args.action_proposal:
             masks = self.proposal_net(batch_state_).to(self.device)
         else:
-            masks = 1.
+            masks = batch_mask # batch_size, n_actions
 
         if self.args.cql_mode == 'cql_Rho':
             masks = torch.ones_like(masks) # Disable masks for cql_Rho
@@ -703,7 +726,7 @@ class DQN(object):
         reclist, testlist, testers = resdict['reclist'], resdict['testlist'], resdict['testers']
 
         save_pth = os.path.join(root, f'{self.args.dataset}-{self.args.step_max}.step-{self.args.gamma}.gamma.png')
-        reduced_loss = [np.mean(self.train_loss[x * 256 : (x+1) * 256]) for x in range(4, int(len(self.train_loss) / 256))]
+        reduced_loss = [np.mean(self.train_loss[(x-1) * 64 : x * 64]) for x in range(4, int(len(self.train_loss) / 64))]
         plt.plot(reduced_loss)
         plt.title('Training Loss')
         plt.savefig(save_pth)

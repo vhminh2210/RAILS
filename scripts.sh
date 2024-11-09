@@ -17,12 +17,12 @@ python main.py --modeltype BC_LOSS \
                 --dqn_mode ddqn \
                 --eta 1.0 \
                 --agent_lr 5e-3 \
-                --replace_freq -2 \
+                --replace_freq -1 \
                 --num_hidden 256 \
                 --tau 1e-3 \
                 --gamma 0.999 \
                 --cql_mode cql_H \
-                --cql_alpha 3.5 \
+                --cql_alpha 5. \
                 --user_lam 0.5 \
                 --dueling_dqn \
                 --noisy_net \

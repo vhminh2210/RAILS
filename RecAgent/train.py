@@ -80,8 +80,9 @@ def setInteraction(env, agent, ep_user, train_df, args, freq, augment= True, ckp
     else:
         # tmp = list(range(1, len(observations) - 1))
         tmp = len(observations) - 1
-        scale_list = np.arange(min(tmp, 3), tmp).tolist()
-        # scale_list = np.arange(int(tmp // 2), tmp).tolist()
+        # scale_list = np.arange(min(tmp, 3), tmp).tolist()
+        # scale_list = np.arange(int(tmp // 1.5), tmp).tolist()
+        scale_list = np.arange(max(1, tmp - args.n_aug_scale), tmp).tolist()
         scale = min(len(scale_list) - 1, args.n_aug_scale)
         size_loader = random.sample(scale_list, k = max(scale, 0))
         size_loader.append(len(observations) - 1)
@@ -103,7 +104,7 @@ def setInteraction(env, agent, ep_user, train_df, args, freq, augment= True, ckp
             a = int(aug_actions[i])
             s_, r, done = env.step(a)
             # print(aug_obsevations[i], aug_actions[i])
-            agent.store_transition(env.build_state(s).reshape((-1)), a, r, s_.reshape((-1)))
+            agent.store_transition(env.build_state(s).reshape((-1)), a, r, s_.reshape((-1)), aug_obsevations[i])
         
         interaction_num += 1
     
