@@ -101,11 +101,15 @@ class NoisyLinear(nn.Module):
 
 class Net(nn.Module):
     def __init__(self, num_inputs, num_outputs, hidden_size, embd= None, 
-                 dueling= False, noisy_net= False):
+                 dueling= False, noisy_net= False, dropout= 0.0):
         super(Net, self).__init__()
 
         self.dueling = dueling
         self.noisy_net = noisy_net
+        self.dropout = nn.Dropout(p= dropout)
+
+        # self.softmax = nn.Softmax(dim= 1)
+        self.relu = nn.ReLU()
 
         self.linear1 = nn.Linear(num_inputs, hidden_size)
         if self.noisy_net:
@@ -157,8 +161,6 @@ class Net(nn.Module):
             self.mu.weight.data.mul_(0.1)
             self.mu.bias.data.mul_(0.1)
 
-        # self.softmax = nn.Softmax(dim= 1)
-
         if embd is not None:
             self.embd = embd.weight.detach()
             try:
@@ -198,14 +200,14 @@ class Net(nn.Module):
             # Dueling DQN
             x = inputs
             # x = F.relu(self.ln0(self.linear0(x)))
-            x = F.relu(self.ln1(self.linear1(x)))
+            x = self.relu(self.ln1(self.dropout(self.linear1(x))))
 
             # Value branch
-            val = F.relu(self.ln2_V(self.linear2_V(x)))
+            val = self.relu(self.ln2_V(self.dropout(self.linear2_V(x))))
             val = self.linear3_V(val) # (batch_size, 1)
 
             # Advantage branch
-            adv = F.relu(self.ln2_A(self.linear2_A(x)))
+            adv = self.relu(self.ln2_A(self.dropout(self.linear2_A(x))))
             if self.embd is not None:
                 adv = (self.mu(adv) @ self.embd.T) # (batch_size, n_action)
             else:
@@ -218,8 +220,8 @@ class Net(nn.Module):
         else:
             x = inputs
             # x = F.relu(self.ln0(self.linear0(x)))
-            x = F.relu(self.ln1(self.linear1(x)))
-            x = F.relu(self.ln2(self.linear2(x)))
+            x = self.relu(self.ln1(self.dropout(self.linear1(x))))
+            x = self.relu(self.ln2(self.dropout(self.linear2(x))))
 
             if self.embd is not None:
                 q_values = (self.mu(x) @ self.embd.T)
@@ -322,21 +324,21 @@ class DQN(object):
 
         if embd is None:
             self.eval_net = Net(self.n_states, self.n_actions, self.num_hidden, 
-                                dueling= self.args.dueling_dqn, noisy_net= self.args.noisy_net)
+                                dueling= self.args.dueling_dqn, noisy_net= self.args.noisy_net, dropout= self.args.dropout)
             self.buffered_net = Net(self.n_states, self.n_actions, self.num_hidden, 
-                                    dueling= self.args.dueling_dqn, noisy_net= self.args.noisy_net)
+                                    dueling= self.args.dueling_dqn, noisy_net= self.args.noisy_net, dropout= self.args.dropout)
             self.target_net = Net(self.n_states, self.n_actions, self.num_hidden, 
-                                  dueling= self.args.dueling_dqn, noisy_net= self.args.noisy_net)
+                                  dueling= self.args.dueling_dqn, noisy_net= self.args.noisy_net, dropout= self.args.dropout)
         else:
             self.eval_net = Net(self.n_states, embd.weight.shape[-1], self.num_hidden, 
                                 embd= embd.to(self.device), 
-                                dueling= self.args.dueling_dqn, noisy_net= self.args.noisy_net)
+                                dueling= self.args.dueling_dqn, noisy_net= self.args.noisy_net, dropout= self.args.dropout)
             self.buffered_net = Net(self.n_states, embd.weight.shape[-1], self.num_hidden, 
                                 embd= embd.to(self.device), 
-                                dueling= self.args.dueling_dqn, noisy_net= self.args.noisy_net)
+                                dueling= self.args.dueling_dqn, noisy_net= self.args.noisy_net, dropout= self.args.dropout)
             self.target_net = Net(self.n_states, embd.weight.shape[-1], self.num_hidden, 
                                 embd= embd.to(self.device), 
-                                dueling= self.args.dueling_dqn, noisy_net= self.args.noisy_net)
+                                dueling= self.args.dueling_dqn, noisy_net= self.args.noisy_net, dropout= self.args.dropout)
 
         self.optimizer = torch.optim.Adam(self.eval_net.parameters(), lr=self.lr)
         self.max_iter = int(self.args.epoch_max * self.args.episode_max * self.args.step_max / self.args.episode_batch)
@@ -352,6 +354,8 @@ class DQN(object):
 
         # 0-th dimension for memory parition: 0-sequential, 1-rare, 2-random
         self.memory = [np.zeros((0, self.n_states * 2 + 2))] * 3
+        self.mask = [[] for x in range(self.n_states * 2 + 2)] * 3
+
         self.memory_counter = np.array([0, 0, 0])
         self.memory_capacity = memory_capacity
         self.partition = np.array([self.args.seq_ratio, self.args.rare_ratio, self.args.rand_ratio])

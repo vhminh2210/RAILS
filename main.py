@@ -145,6 +145,8 @@ if __name__ == "__main__":
                         help= 'Enable Dueling DQN')
     parser.add_argument('--noisy_net', action='store_true', default=False,
                         help= 'Enable NoisyNet for DQN')
+    parser.add_argument('--dropout', type=float, default=0.0,
+                        help= 'Dropout rate')
     parser.add_argument('--j', type=int, default=8,
                         help= 'ThreadPoolExecutor max_workers')
     parser.add_argument('--cql_mode', type=str, default='none',
@@ -251,9 +253,13 @@ if __name__ == "__main__":
             ru_item = torch.zeros_like(user_emb[0]) # Representative user for item
 
             if item in data.train_item_list.keys():
+                attn_sum = 0
                 for user in data.train_item_list[item]:
-                    ru_item = ru_item + user_emb[user] / torch.linalg.norm(user_emb[user])
-                ru_item = ru_item / len(data.train_item_list[item]) # Normalized by item popularity
+                    attn = torch.dot(user_emb[user], item_emb[item])
+                    attn_sum += attn
+                    ru_item = ru_item + attn * user_emb[user]
+                # ru_item = ru_item / len(data.train_item_list[item]) # Normalized by item popularity
+                ru_item = ru_item / attn_sum
             else:
                 # Wild item found!
                 wild_items.append(item)
@@ -276,6 +282,8 @@ if __name__ == "__main__":
         print(torch.linalg.norm(repr_user.weight.detach()[1]))
         print(torch.linalg.norm(item_emb.weight.detach()[1]))
         print(torch.linalg.norm(user_emb.weight.detach()[1]))
+
+        args.n_users = user_emb.weight.shape[0]
 
     else:
         raise NotImplementedError('ERROR: `stats` similarity mode is deprecated!')
