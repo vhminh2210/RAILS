@@ -8,7 +8,7 @@ python main.py --modeltype BC_LOSS \
                 --root datasets/d1-fold \
                 --dataset Round1 \
                 --sim_mode user_embedding \
-                --epoch_max 6 \
+                --epoch_max 5 \
                 --episode_max 64\
                 --step_max 8 \
                 --memory 16384 \
@@ -22,7 +22,8 @@ python main.py --modeltype BC_LOSS \
                 --tau 1e-3 \
                 --gamma 0.999 \
                 --cql_mode cql_H \
-                --cql_alpha 5. \
+                --cql_alpha 3. \
+                --epsilon 0.2 \
                 --user_lam 0.5 \
                 --dueling_dqn \
                 --noisy_net \
@@ -35,7 +36,7 @@ python main.py --modeltype BC_LOSS \
                 --rand_ratio 0.5 \
                 --topk 10 \
                 --eval_freq 50 \
-                --episode_batch 64 \
+                --episode_batch 8 \
                 --all_episodes \
                 --eval_query \
                 # --eval_coldstart

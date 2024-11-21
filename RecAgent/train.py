@@ -16,7 +16,7 @@ user_num = 0
 precision, ndcg, novelty, coverage, ils, interdiv, recall, epc = [], [], [], [], [], [], [], []
 logs = ['########### RL AGENT EVALUATIONS LOGS ###########']
 
-def stateAugment(observations, history_size, n_augment_, freq):
+def stateAugment(observations, history_size, n_augment_, freq, args):
     n_obs = len(observations)
     np_observations = np.array(observations)
     p = freq[observations]
@@ -42,7 +42,16 @@ def stateAugment(observations, history_size, n_augment_, freq):
         if i % 2 == 0:
             idx = random.sample(observations, k= history_size + 1)
             history = idx[:-1]
-            action = idx[-1]
+
+            # Epsilon greedy
+            if random.random() < args.epsilon:
+                # Exploration
+                while True:
+                    action = random.randint(0, args.n_users - 1)
+                    if action not in args.wild_items and action not in history:
+                        break
+            else:
+                action = idx[-1] # Exploitation
 
         # Rare-item seeker
         elif i % 4 == 3:
@@ -50,7 +59,16 @@ def stateAugment(observations, history_size, n_augment_, freq):
             idx = g.choice(n_obs, size= history_size + 1, replace= False)
             samples = sorted(np_observations[idx].tolist(), key= lambda x: -freq[x])
             history = samples[:-1]
-            action = int(samples[-1])
+
+            # Epsilon greedy
+            if random.random() < args.epsilon:
+                # Exploration
+                while True:
+                    action = random.randint(0, args.n_users - 1)
+                    if action not in args.wild_items and action not in history:
+                        break
+            else:
+                action = samples[-1] # Exploitation
 
         # Popular item seeker
         else:
@@ -58,7 +76,16 @@ def stateAugment(observations, history_size, n_augment_, freq):
             idx = g.choice(n_obs, size= history_size + 1, replace= False)
             samples = sorted(np_observations[idx].tolist(), key= lambda x: freq[x])
             history = samples[:-1]
-            action = int(samples[-1])
+
+            # Epsilon greedy
+            if random.random() < args.epsilon:
+                # Exploration
+                while True:
+                    action = random.randint(0, args.n_users - 1)
+                    if action not in args.wild_items and action not in history:
+                        break
+            else:
+                action = samples[-1] # Exploitation
 
         aug_actions.append(action)
         aug_observations.append(history)
@@ -81,8 +108,8 @@ def setInteraction(env, agent, ep_user, train_df, args, freq, augment= True, ckp
         # tmp = list(range(1, len(observations) - 1))
         tmp = len(observations) - 1
         # scale_list = np.arange(min(tmp, 3), tmp).tolist()
-        # scale_list = np.arange(int(tmp // 1.5), tmp).tolist()
-        scale_list = np.arange(max(1, tmp - args.n_aug_scale), tmp).tolist()
+        scale_list = np.arange(int(tmp // 1.5), tmp).tolist()
+        # scale_list = np.arange(max(1, tmp - args.n_aug_scale), tmp).tolist()
         scale = min(len(scale_list) - 1, args.n_aug_scale)
         size_loader = random.sample(scale_list, k = max(scale, 0))
         size_loader.append(len(observations) - 1)
@@ -92,12 +119,12 @@ def setInteraction(env, agent, ep_user, train_df, args, freq, augment= True, ckp
     
     for history_size in size_loader:
         if augment:
-            aug_obsevations, aug_actions = stateAugment(observations, history_size, args.n_augment, freq)
+            aug_obsevations, aug_actions = stateAugment(observations, history_size, args.n_augment, freq, args)
         else:
             if not ckpt:
-                aug_obsevations, aug_actions = stateAugment(observations, history_size, int(args.n_augment), freq)
+                aug_obsevations, aug_actions = stateAugment(observations, history_size, int(args.n_augment), freq, args)
             else:
-                aug_obsevations, aug_actions = stateAugment(observations, history_size, 1, freq)
+                aug_obsevations, aug_actions = stateAugment(observations, history_size, 1, freq, args)
 
         for i in range(len(aug_actions)):
             s = np.array(env.reset(aug_obsevations[i]))

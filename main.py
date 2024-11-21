@@ -123,8 +123,8 @@ if __name__ == "__main__":
                         help= 'Frequency for updating DQN target network')
     parser.add_argument('--agent_lr', type=float, default=0.01,
                         help= 'Learning rate for agent training')
-    parser.add_argument('--epsilon', type=float, default=0.9,
-                        help= 'Epsilon greedy factor')
+    parser.add_argument('--epsilon', type=float, default=0.7,
+                        help= 'Epsilon exploration factor')
     parser.add_argument('--n_proposal', type=int, default=500,
                         help= 'Number of proposal items')
     parser.add_argument('--gamma', type=float, default=0.90,
@@ -284,6 +284,9 @@ if __name__ == "__main__":
         print(torch.linalg.norm(user_emb.weight.detach()[1]))
 
         args.n_users = user_emb.weight.shape[0]
+        args.wild_items = wild_items.tolist()
+
+        print('Wild items:', sorted(args.wild_items))
 
     else:
         raise NotImplementedError('ERROR: `stats` similarity mode is deprecated!')

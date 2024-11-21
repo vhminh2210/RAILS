@@ -346,8 +346,8 @@ class DQN(object):
         # self.scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(self.optimizer, 
         #                                                                       T_0 = int(self.args.step_max), verbose= True)
         self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optimizer, T_max = self.max_iter)
-        # self.loss_func = nn.MSELoss()
-        self.loss_func = nn.HuberLoss()
+        self.loss_func = nn.MSELoss()
+        # self.loss_func = nn.HuberLoss()
         hard_update(self.target_net, self.eval_net) # Transfer weights from eval_q_net to target_q_net
 
         self.learn_step_counter = 0
