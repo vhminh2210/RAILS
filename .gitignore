@@ -6,9 +6,11 @@
 *.cpp
 *.mat
 *.sh
+*.zip
 # *.tar
 # *.png
 exps
 msr
 msr_cold
+msr_cold_2
 figs
