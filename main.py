@@ -284,8 +284,10 @@ if __name__ == "__main__":
         print(torch.linalg.norm(user_emb.weight.detach()[1]))
 
         args.n_users = user_emb.weight.shape[0]
+        args.n_items = item_emb.weight.shape[0]
         args.wild_items = wild_items.tolist()
 
+        print('nUsers:', args.n_users, 'nItems:', args.n_items)
         print('Wild items:', sorted(args.wild_items))
 
     else:

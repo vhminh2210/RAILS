@@ -726,7 +726,7 @@ class DQN(object):
         reclist, testlist, testers = resdict['reclist'], resdict['testlist'], resdict['testers']
 
         save_pth = os.path.join(root, f'{self.args.dataset}-{self.args.step_max}.step-{self.args.gamma}.gamma.png')
-        reduced_loss = [np.mean(self.train_loss[(x-1) * 64 : x * 64]) for x in range(4, int(len(self.train_loss) / 64))]
+        reduced_loss = [min(100, np.mean(self.train_loss[(x-1) * 4 : x * 4])) for x in range(10, int(len(self.train_loss) / 4))]
         plt.plot(reduced_loss)
         plt.title('Training Loss')
         plt.savefig(save_pth)

@@ -58,6 +58,7 @@ class Env():
                     continue
                 try:
                     state += (self.args.eta ** (n_obs - i - 1)) * self.repr_user(torch.IntTensor([obs]))
+                    # state += self.item_emb(torch.IntTensor([obs]))
                 except:
                     # Out-of-range obsservation
                     cnt -= 1
@@ -66,6 +67,7 @@ class Env():
             if cnt == 0:
                 return None
             return state / cnt
+            # return state / torch.linalg.norm(state)
 
         else:
             raise NotImplementedError(f'sim_mode {self.args.sim_mode} not found!')
@@ -75,7 +77,7 @@ class Env():
         self.n_observation = len(self.observation)
         return self.observation
 
-    def step(self, action):
+    def step(self, action, action_type : int = None):
         '''
         The function returns (new_state, returned_reward, status) after action [action]
         '''
@@ -88,12 +90,24 @@ class Env():
             r = -1
             return s, r, done
         else:
+            # Soft reward
             act_tensor = torch.IntTensor([action])
             va = self.item_emb(act_tensor).reshape((-1)) # Action item embedding
 
             s, va = s.squeeze().to(self.args.device), va.to(self.args.device)
 
-            r =  torch.dot(s, va) # Cold-start user and candidate reward
+            # r =  torch.dot(s, va) # Cold-start user and candidate reward
+            tmp_arr = []
+            for i in range(len(self.observation)):
+                tmp_arr.append(torch.dot(self.build_state([self.observation[i]]).squeeze().to(self.args.device), va))
+
+            tmp_arr = torch.Tensor(tmp_arr)
+            tmp_arr = torch.topk(tmp_arr, k= min(1, tmp_arr.shape[0])).values
+            r = torch.mean(tmp_arr)
+
+            # Hard reward
+            if action_type is not None: 
+                r += action_type
             
         s_temp_ = np.append(so, action) # Append [action] to [observations]
         observation_ = np.delete(s_temp_, 0, axis=0) # Remove the oldest [observation]

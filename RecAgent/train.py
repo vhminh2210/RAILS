@@ -34,7 +34,7 @@ def stateAugment(observations, history_size, n_augment_, freq, args):
     if history_size == n_obs - 1:
         n_augment = min(n_augment, n_obs)
 
-    aug_observations, aug_actions = [], []
+    aug_observations, aug_actions, aug_type = [], [], []
     g = np.random.default_rng()
 
     for i in range(n_augment):
@@ -47,11 +47,13 @@ def stateAugment(observations, history_size, n_augment_, freq, args):
             if random.random() < args.epsilon:
                 # Exploration
                 while True:
-                    action = random.randint(0, args.n_users - 1)
+                    action = random.randint(0, args.n_items - 1)
                     if action not in args.wild_items and action not in history:
+                        aug_type.append(-1) # Negative
                         break
             else:
                 action = idx[-1] # Exploitation
+                aug_type.append(1) # Positive
 
         # Rare-item seeker
         elif i % 4 == 3:
@@ -64,11 +66,13 @@ def stateAugment(observations, history_size, n_augment_, freq, args):
             if random.random() < args.epsilon:
                 # Exploration
                 while True:
-                    action = random.randint(0, args.n_users - 1)
+                    action = random.randint(0, args.n_items - 1)
                     if action not in args.wild_items and action not in history:
+                        aug_type.append(-1) # Negative
                         break
             else:
                 action = samples[-1] # Exploitation
+                aug_type.append(1) # Positive
 
         # Popular item seeker
         else:
@@ -81,16 +85,18 @@ def stateAugment(observations, history_size, n_augment_, freq, args):
             if random.random() < args.epsilon:
                 # Exploration
                 while True:
-                    action = random.randint(0, args.n_users - 1)
+                    action = random.randint(0, args.n_items - 1)
                     if action not in args.wild_items and action not in history:
+                        aug_type.append(-1) # Negative
                         break
             else:
                 action = samples[-1] # Exploitation
+                aug_type.append(1) # Positive
 
         aug_actions.append(action)
         aug_observations.append(history)
 
-    return aug_observations, aug_actions
+    return aug_observations, aug_actions, aug_type
 
 def setInteraction(env, agent, ep_user, train_df, args, freq, augment= True, ckpt= False, evalmode= False):
     user_df = train_df[train_df['user_id'] == ep_user]
@@ -119,17 +125,18 @@ def setInteraction(env, agent, ep_user, train_df, args, freq, augment= True, ckp
     
     for history_size in size_loader:
         if augment:
-            aug_obsevations, aug_actions = stateAugment(observations, history_size, args.n_augment, freq, args)
+            aug_obsevations, aug_actions, aug_types = stateAugment(observations, history_size, args.n_augment, freq, args)
         else:
             if not ckpt:
-                aug_obsevations, aug_actions = stateAugment(observations, history_size, int(args.n_augment), freq, args)
+                aug_obsevations, aug_actions, aug_types = stateAugment(observations, history_size, int(args.n_augment), freq, args)
             else:
-                aug_obsevations, aug_actions = stateAugment(observations, history_size, 1, freq, args)
+                aug_obsevations, aug_actions, aug_types = stateAugment(observations, history_size, 1, freq, args)
 
         for i in range(len(aug_actions)):
             s = np.array(env.reset(aug_obsevations[i]))
             a = int(aug_actions[i])
-            s_, r, done = env.step(a)
+            action_type = aug_types[i]
+            s_, r, done = env.step(a, action_type)
             # print(aug_obsevations[i], aug_actions[i])
             agent.store_transition(env.build_state(s).reshape((-1)), a, r, s_.reshape((-1)), aug_obsevations[i])
         
@@ -398,6 +405,8 @@ def train_dqn(train_df, test_df, query_df, item_pop_dict,
     else:
         raise NotImplementedError(f"Similarity mode {args.sim_mode} not found!")
 
+    best_agent = copy.deepcopy(agent)
+
     # futures = []
     # executor = ThreadPoolExecutor(max_workers=args.j)
     if not args.all_episodes:
@@ -454,6 +463,9 @@ def train_dqn(train_df, test_df, query_df, item_pop_dict,
         
         if _prec is not None:
             ckpt_precision.append(_prec)
+            if _prec == max(ckpt_precision):
+                print('Checkpoint saved!!!')
+                best_agent = copy.deepcopy(agent)
         if _recall is not None:
             ckpt_recall.append(_recall)
         if _ndcg is not None:
@@ -470,12 +482,12 @@ def train_dqn(train_df, test_df, query_df, item_pop_dict,
     print('####################')
     print('Running evaluations on trained agent ...')
     if args.eval_query:
-        _, _, _, epc, coverage, reclist, testlist, testers = evaluate(agent, query_episodes, query_df, test_df, query_dict, item_pop_dict,
+        _, _, _, epc, coverage, reclist, testlist, testers = evaluate(best_agent, query_episodes, query_df, test_df, query_dict, item_pop_dict,
                     max_item_id, mask_list, repr_user, item_emb, args, ckpt= True,
                     min_freq= min_freq, max_freq= max_freq, freq= freq, wild_items= wild_items, export_list= True)
         
     else:
-        _, _, _, epc, coverage, reclist, testlist, testers = evaluate(agent, train_episodes, train_df, test_df, train_dict, item_pop_dict,
+        _, _, _, epc, coverage, reclist, testlist, testers = evaluate(best_agent, train_episodes, train_df, test_df, train_dict, item_pop_dict,
                     max_item_id, mask_list, repr_user, item_emb, args, ckpt= True,
                     min_freq= min_freq, max_freq= max_freq, freq= freq, wild_items= wild_items, export_list= True)
 
