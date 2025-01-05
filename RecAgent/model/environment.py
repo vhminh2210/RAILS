@@ -96,14 +96,15 @@ class Env():
 
             s, va = s.squeeze().to(self.args.device), va.to(self.args.device)
 
-            # r =  torch.dot(s, va) # Cold-start user and candidate reward
-            tmp_arr = []
-            for i in range(len(self.observation)):
-                tmp_arr.append(torch.dot(self.build_state([self.observation[i]]).squeeze().to(self.args.device), va))
+            r =  torch.dot(s, va) # Cold-start user and candidate reward
+            # tmp_arr = []
 
-            tmp_arr = torch.Tensor(tmp_arr)
-            tmp_arr = torch.topk(tmp_arr, k= min(1, tmp_arr.shape[0])).values
-            r = torch.mean(tmp_arr)
+            # for i in range(len(self.observation)):
+            #     tmp_arr.append(torch.dot(self.build_state([self.observation[i]]).squeeze().to(self.args.device), va))
+                
+            # tmp_arr = torch.Tensor(tmp_arr)
+            # tmp_arr = torch.topk(tmp_arr, k= min(10, tmp_arr.shape[0])).values
+            # r = torch.mean(tmp_arr)
 
             # Hard reward
             if action_type is not None: 

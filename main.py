@@ -292,6 +292,9 @@ if __name__ == "__main__":
 
     else:
         raise NotImplementedError('ERROR: `stats` similarity mode is deprecated!')
+    
+    if args.all_episodes:
+        args.episode_max = args.n_users
 
     # Interactive RL Agent
     agent = getAgent(repr_user, user_emb, item_emb, wild_items.tolist(), min_freq, max_freq, freq, args)
