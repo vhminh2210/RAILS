@@ -2,11 +2,11 @@
 # python GraphEnc/setup.py build_ext --inplace 2> /dev/null
 python main.py --modeltype BC_LOSS \
                 --pretrained_graph \
-                --ckpt_dir weights/d2-fold/Round1/BC_LOSS-LGN \
+                --ckpt_dir weights/d2-fold/Round6/BC_LOSS-LGN \
                 --ckpt n_layers=2tau1=0.07tau2=0.1w=0.5 \
                 --cuda -1 \
                 --root datasets/d2-fold \
-                --dataset Round1 \
+                --dataset Round6 \
                 --sim_mode user_embedding \
                 --epoch_max 20 \
                 --step_max 4 \

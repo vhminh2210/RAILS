@@ -78,7 +78,7 @@ class LGN(MF):
         negEmb0 = self.embed_item(neg_items)
 
         pos_scores = torch.sum(torch.mul(users_emb, pos_emb), dim=1)  # users, pos_items, neg_items have the same shape
-        neg_scores = torch.sum(torch.mul(users_emb, neg_emb), dim=1)
+        neg_scores = torch.sum(torch.mul(users_emb, neg_emb.squeeze()), dim=1)
 
         regularizer = 0.5 * torch.norm(userEmb0) ** 2 + 0.5 * torch.norm(posEmb0) ** 2 + 0.5 * torch.norm(negEmb0) ** 2
         regularizer = regularizer / self.batch_size
