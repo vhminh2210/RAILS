@@ -10,6 +10,8 @@
 # *.tar
 # *.png
 exps
+old_exps
+old_weights
 msr
 msr_cold
 msr_cold_2
