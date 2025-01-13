@@ -522,8 +522,8 @@ def getEncoder(args):
             pop_dict[item]+=1
     
     sort_pop=sorted(pop_dict.items(), key=lambda item: item[1],reverse=True)
-    # Top 20 most popular item
-    pop_mask=[item[0] for item in sort_pop[:20]]
+    # Top 10 most popular item
+    pop_mask=[item[0] for item in sort_pop[:10]]
     print(pop_mask)
 
     if not args.eval_query:
