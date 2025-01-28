@@ -1,15 +1,12 @@
 #/bin/sh
-python GraphEnc/setup.py build_ext --inplace 2> /dev/null
+# python GraphEnc/setup.py build_ext --inplace 2> /dev/null
 python main.py --modeltype BC_LOSS \
+                --pretrained_graph \
+                --ckpt_dir weights/d3-fold/Round4/BC_LOSS-LGN \
+                --ckpt n_layers=2tau1=0.07tau2=0.1w=0.5 \
                 --cuda -1 \
                 --root datasets/d3-fold \
-                --dataset Round1 \
-                --epoch 100 \
-                --enc_batch_size 1024 \
-                --enc_lr 1e-4 \
-                --n_layers 2 \
-                --neg_sample 128 \
-                --freeze_epoch 5 \
+                --dataset Round4 \
                 --sim_mode user_embedding \
                 --epoch_max 20 \
                 --step_max 4 \
