@@ -234,7 +234,7 @@ def evaluate(agent, ep_users, train_df, test_df, train_dict, item_pop_dict,
         if not ckpt:
             print('Evaluating user', ep_user)
 
-        last_obs = train_dict[ep_user] # Use all (train) observed history for evaluation
+        last_obs = train_dict[ep_user] # Use all (train/query) observed history for evaluation
         
         n_obs = len(last_obs)
         cold_obs = last_obs[ : int(n_obs * 0.3)] # Cold observation
