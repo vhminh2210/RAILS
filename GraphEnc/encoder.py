@@ -456,10 +456,13 @@ def visulization(items,users,data,p_item,p_user,name):
     plt.savefig(name+"low_pop_"+str(pops[2])+".png",bbox_inches='tight')
     plt.close()
 
-def getEncoder(args):
+def getEncoder(args, data_only= False):
 
     data = Data(args)
     data.load_data()
+    if data_only:
+        return data
+    
     if args.cuda >= 0:
         device="cuda:"+str(args.cuda)
     else:

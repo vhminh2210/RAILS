@@ -2,17 +2,17 @@
 # python GraphEnc/setup.py build_ext --inplace 2> /dev/null
 python main.py --modeltype BC_LOSS \
                 --pretrained_graph \
-                --ckpt_dir weights/d3-fold/Round7/BC_LOSS-LGN \
+                --ckpt_dir weights/d1-fold/Round1/BC_LOSS-LGN \
                 --ckpt n_layers=2tau1=0.07tau2=0.1w=0.5 \
                 --cuda -1 \
-                --root datasets/d3-fold \
-                --dataset Round7 \
-                --sim_mode user_embedding \
+                --root datasets/d1-fold \
+                --dataset Round1 \
+                --sim_mode crossrec \
                 --epoch_max 20 \
                 --step_max 4 \
-                --memory 16384 \
+                --memory 256 \
                 --nov_beta 0.0 \
-                --agent_batch 1024 \
+                --agent_batch 2048 \
                 --eta 1.0 \
                 --agent_lr 1e-3 \
                 --replace_freq -1 \
@@ -20,14 +20,14 @@ python main.py --modeltype BC_LOSS \
                 --tau 1e-4 \
                 --gamma 0.999 \
                 --cql_mode cql_H \
-                --cql_alpha 5. \
+                --cql_alpha 5.0 \
                 --epsilon 0.0 \
                 --user_lam 0.5 \
                 --dqn_mode ddqn \
                 --dueling_dqn \
                 --dropout 0.0 \
                 --n_augment 3 \
-                --n_aug_scale 5 \
+                --n_aug_scale 2 \
                 --rare_thresh 0.1 \
                 --seq_ratio 0.3 \
                 --rare_ratio 0.2 \
@@ -36,5 +36,4 @@ python main.py --modeltype BC_LOSS \
                 --eval_freq 50 \
                 --episode_batch 128 \
                 --all_episodes \
-                --eval_query \
-                --eval_coldstart
+                --eval_query

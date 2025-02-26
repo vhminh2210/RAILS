@@ -13,7 +13,7 @@ import os
 
 from GraphEnc.encoder import getEncoder
 from RecAgent.agent import getAgent
-from utils import split_data, get_minmax_freq
+from utils import split_data, get_minmax_freq, crossrec_prep
 
 if __name__ == "__main__":
 
@@ -178,7 +178,7 @@ if __name__ == "__main__":
     parser.add_argument('--eval_graph', action='store_true', default=False,
                         help= 'Enable evaluation on trained encoder')
     parser.add_argument('--action_proposal', action='store_true', default=False,
-                        help= 'Enable action proposal')
+                        help= 'Enable action proposal. Deprecated for CrossRec')
     parser.add_argument('--episode_batch', type=int, default=1,
                         help= 'Number of episode per evaluation batch / Learn frequency')
     parser.add_argument('--num_hidden', type=int, default=256,
@@ -187,6 +187,8 @@ if __name__ == "__main__":
                         help= 'Enable query evaluation mode')
     parser.add_argument('--eval_coldstart', action='store_true', default=False,
                         help= 'Enable cold start user evaluation mode')
+    parser.add_argument('--crossrec_topsim', type=int, default=10,
+                        help= 'Number of CrossRec neighbors user. Default to k=10')
 
     args = parser.parse_args()
     assert args.epoch >= args.freeze_epoch
@@ -220,9 +222,10 @@ if __name__ == "__main__":
     print('####################')
 
     user_emb, item_emb, repr_user = None, None, None
+    crossrec_bundle = None
 
     # Enable GCN embeddings
-    if args.sim_mode != 'stats':
+    if args.sim_mode in ['user_embedding', 'item_embedding']:
 
         # Graph encoder
         print('GCF training starts...')
@@ -290,6 +293,30 @@ if __name__ == "__main__":
         print('nUsers:', args.n_users, 'nItems:', args.n_items)
         print('Wild items:', sorted(args.wild_items))
 
+    elif args.sim_mode == 'crossrec':
+        data = getEncoder(args, data_only= True)
+        freq, min_freq, max_freq = get_minmax_freq(os.path.join(args.root, args.dataset, 'train.txt'), data.n_items)
+
+        # Handling wild items
+        wild_items = []
+        for item in range(data.n_items):
+            if item not in data.train_item_list.keys():
+                wild_items.append(item)
+        
+        # Prepare crossrec bundle
+        tfidf_item, tfidf_user, r_bar = crossrec_prep(data)
+        crossrec_bundle = {
+            'tfidf_item' : tfidf_item,
+            'tfidf_user' : tfidf_user,
+            'mean_rating' : r_bar
+        }
+
+        args.crossrec_bundle = crossrec_bundle
+
+        args.n_users = data.n_users
+        args.n_items = data.n_items
+        args.wild_items = wild_items
+
     else:
         raise NotImplementedError('ERROR: `stats` similarity mode is deprecated!')
     
@@ -297,6 +324,6 @@ if __name__ == "__main__":
         args.episode_max = args.n_users
 
     # Interactive RL Agent
-    agent = getAgent(repr_user, user_emb, item_emb, wild_items.tolist(), min_freq, max_freq, freq, args)
+    agent = getAgent(repr_user, user_emb, item_emb, args.wild_items, min_freq, max_freq, freq, args)
     print('####################')
     print('Runtime:', time.time() - start_time, 'seconds')

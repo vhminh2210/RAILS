@@ -56,7 +56,9 @@ def getAgent(repr_user, user_emb, item_emb, wild_items, min_freq, max_freq, freq
             
         max_item_id = train_df['item_id'].max()
         if args.sim_mode != 'stats':
-            max_item_id = item_emb.weight.shape[0] - 1 # When the training sets doesnt contain all possible item
+            max_item_id = args.n_items - 1
+            if item_emb is not None:
+                max_item_id = item_emb.weight.shape[0] - 1 # When the training sets doesnt contain all possible item
         item_list = train_df['item_id'].tolist()
         mask_list = list(set(list(range(max_item_id + 1))) - set(item_list))
             

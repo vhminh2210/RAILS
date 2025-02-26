@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import os
 import csv
+import torch
 
 from tqdm import tqdm
 
@@ -153,3 +154,23 @@ def get_minmax_freq(train_txt, n_items):
             freq[int(item)] += 1
 
     return freq, np.min([x for x in freq if x != 0]), np.max(freq)
+
+def crossrec_prep(data):
+    tfidf_item = torch.zeros(data.n_items)
+    P = len(data.train_user_list.keys())
+    for item in range(data.n_items):
+        if item not in data.train_item_list.keys(): continue # wild items
+        
+        freq = len(data.train_item_list[item])
+        tfidf_item[item] = np.log(float(P / freq))
+
+    tfidf_user = torch.zeros((data.n_users, data.n_items))
+    r_bar = torch.zeros(data.n_users)
+    for user in data.train_user_list.keys():
+        items = data.train_user_list[user]
+        for item in items:
+            tfidf_user[user, item] = tfidf_item[item]
+
+        r_bar[user] = float(len(items) / data.n_items)
+
+    return tfidf_item, tfidf_user, r_bar

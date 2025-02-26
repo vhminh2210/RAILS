@@ -402,6 +402,17 @@ def train_dqn(train_df, test_df, query_df, item_pop_dict,
                 embd= copy.deepcopy(repr_user), mode= args.dqn_mode,
                 args= args,
                 item_pop_dict= item_pop_dict) 
+    elif args.sim_mode == 'crossrec':
+        try:
+            assert args.crossrec_bundle is not None
+        except:
+            print('CrossRec bundle must not be None!')
+        agent = dqn.DQN(args.n_items, max_item_id + 1,
+                args.memory, args.agent_lr, args.epsilon,
+                args.replace_freq, args.agent_batch, args.gamma, args.tau, args.topk, 
+                embd= None, mode= args.dqn_mode,
+                args= args,
+                item_pop_dict= item_pop_dict) 
     else:
         raise NotImplementedError(f"Similarity mode {args.sim_mode} not found!")
 

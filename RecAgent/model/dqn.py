@@ -102,15 +102,25 @@ class NoisyLinear(nn.Module):
 
 class Net(nn.Module):
     def __init__(self, num_inputs, num_outputs, hidden_size, embd= None, 
-                 dueling= False, noisy_net= False, dropout= 0.0):
+                 dueling= False, noisy_net= False, dropout= 0.0,
+                 one_hot= False, num_raw_inputs= 1200):
+        '''
+        Note: num_inputs (i.e., input state embeddings dimension) is different than n_items (i.e., num_raw_inputs)!
+        Normally, num_inputs < hidden_size
+        '''
         super(Net, self).__init__()
 
         self.dueling = dueling
         self.noisy_net = noisy_net
+        self.one_hot = one_hot
         self.dropout = nn.Dropout(p= dropout)
 
-        # self.softmax = nn.Softmax(dim= 1)
+        self.softmax = nn.Softmax(dim= 1)
         self.relu = nn.ReLU()
+
+        if self.one_hot:
+            self.prelinear = nn.Linear(num_raw_inputs, num_inputs) # Onehot downscaler
+            self.postlinear = nn.Linear(num_outputs, num_raw_inputs) # Upscale to onehot
 
         self.linear1 = nn.Linear(num_inputs, hidden_size)
         if self.noisy_net:
@@ -153,6 +163,7 @@ class Net(nn.Module):
                 self.linear2_A = NoisyLinear(hidden_size, half_size)
             self.ln2_A = nn.LayerNorm(half_size)
 
+            self.postlinear = nn.Linear(half_size, num_inputs) # Downscaler
             self.mu = nn.Linear(half_size, num_outputs)
             if self.noisy_net:
                 self.mu = NoisyLinear(half_size, num_outputs)
@@ -168,6 +179,11 @@ class Net(nn.Module):
                 assert self.embd.shape[-1] == num_outputs
             except:
                 print('Output size must equal embedding size for dot product')
+
+            try:
+                assert not self.one_hot
+            except:
+                print('Embedding must be None for one-hot encodings!')
         else:
             self.embd = None
 
@@ -197,6 +213,10 @@ class Net(nn.Module):
                 module.bias.data.zero_()
 
     def forward(self, inputs):
+        if self.one_hot:
+            # Downscaler
+            inputs = self.prelinear(inputs)
+
         if self.dueling:
             # Dueling DQN
             x = inputs
@@ -211,6 +231,8 @@ class Net(nn.Module):
             adv = self.relu(self.ln2_A(self.dropout(self.linear2_A(x))))
             if self.embd is not None:
                 adv = (self.mu(adv) @ self.embd.T) # (batch_size, n_action)
+            elif self.one_hot:
+                adv = self.mu(self.postlinear(adv))
             else:
                 adv = torch.tanh(self.mu(adv)) # (batch_size, num_outputs = n_action)
 
@@ -226,6 +248,8 @@ class Net(nn.Module):
 
             if self.embd is not None:
                 q_values = (self.mu(x) @ self.embd.T)
+            elif self.one_hot:
+                q_values = self.softmax(self.mu(self.postlinear(x)))
             else:
                 q_values = torch.tanh(self.mu(x))
 
@@ -306,6 +330,12 @@ class DQN(object):
         self.train_loss = []
         self.args = args
 
+        self.onehot = False
+        self.num_raw_inputs = -1
+        if self.args.sim_mode == 'crossrec':
+            self.one_hot = True
+            self.num_raw_inputs = self.args.n_items
+
         if self.args.cuda < 0:
             self.device = 'cpu'
         else:
@@ -325,21 +355,27 @@ class DQN(object):
 
         if embd is None:
             self.eval_net = Net(self.n_states, self.n_actions, self.num_hidden, 
-                                dueling= self.args.dueling_dqn, noisy_net= self.args.noisy_net, dropout= self.args.dropout)
+                                dueling= self.args.dueling_dqn, noisy_net= self.args.noisy_net, dropout= self.args.dropout,
+                                one_hot= self.one_hot, num_raw_inputs= self.num_raw_inputs)
             self.buffered_net = Net(self.n_states, self.n_actions, self.num_hidden, 
-                                    dueling= self.args.dueling_dqn, noisy_net= self.args.noisy_net, dropout= self.args.dropout)
+                                    dueling= self.args.dueling_dqn, noisy_net= self.args.noisy_net, dropout= self.args.dropout,
+                                    one_hot= self.one_hot, num_raw_inputs= self.num_raw_inputs)
             self.target_net = Net(self.n_states, self.n_actions, self.num_hidden, 
-                                  dueling= self.args.dueling_dqn, noisy_net= self.args.noisy_net, dropout= self.args.dropout)
+                                  dueling= self.args.dueling_dqn, noisy_net= self.args.noisy_net, dropout= self.args.dropout,
+                                  one_hot= self.one_hot, num_raw_inputs= self.num_raw_inputs)
         else:
             self.eval_net = Net(self.n_states, embd.weight.shape[-1], self.num_hidden, 
                                 embd= embd.to(self.device), 
-                                dueling= self.args.dueling_dqn, noisy_net= self.args.noisy_net, dropout= self.args.dropout)
+                                dueling= self.args.dueling_dqn, noisy_net= self.args.noisy_net, dropout= self.args.dropout,
+                                one_hot= self.one_hot, num_raw_inputs= self.num_raw_inputs)
             self.buffered_net = Net(self.n_states, embd.weight.shape[-1], self.num_hidden, 
                                 embd= embd.to(self.device), 
-                                dueling= self.args.dueling_dqn, noisy_net= self.args.noisy_net, dropout= self.args.dropout)
+                                dueling= self.args.dueling_dqn, noisy_net= self.args.noisy_net, dropout= self.args.dropout,
+                                one_hot= self.one_hot, num_raw_inputs= self.num_raw_inputs)
             self.target_net = Net(self.n_states, embd.weight.shape[-1], self.num_hidden, 
                                 embd= embd.to(self.device), 
-                                dueling= self.args.dueling_dqn, noisy_net= self.args.noisy_net, dropout= self.args.dropout)
+                                dueling= self.args.dueling_dqn, noisy_net= self.args.noisy_net, dropout= self.args.dropout,
+                                one_hot= self.one_hot, num_raw_inputs= self.num_raw_inputs)
 
         self.optimizer = torch.optim.Adam(self.eval_net.parameters(), lr=self.lr)
         self.max_iter = int(self.args.epoch_max * self.args.episode_max * self.args.step_max / self.args.episode_batch)
@@ -366,14 +402,17 @@ class DQN(object):
         self.mode = mode
 
         # Proposal net
-        self.proposal_net = AQLProposalNet(embd, self.args)
+        if embd is not None:
+            self.proposal_net = AQLProposalNet(embd, self.args)
 
         # Load components to device
         self.eval_net = self.eval_net.to(self.device)
         self.buffered_net = self.buffered_net.to(self.device)
         self.target_net = self.target_net.to(self.device)
         self.loss_func = self.loss_func.to(self.device)
-        self.proposal_net = self.proposal_net.to(self.device)
+
+        if embd is not None:
+            self.proposal_net = self.proposal_net.to(self.device)
 
     def choose_action(self, obs, env, mode= 'training'):
         self.setEval()
@@ -385,7 +424,7 @@ class DQN(object):
         if state is None:
             return []
         
-        state = (state - self.state_mean) / (self.state_std + self.std_smoothing)
+        # state = (state - self.state_mean) / (self.state_std + self.std_smoothing)
         state = state.to(torch.float).to(self.device)
         actions_Q = self.eval_net.forward(state)
 
@@ -461,10 +500,10 @@ class DQN(object):
         print('####################')
 
     def store_transition(self, s, a, r, s_, mask):
-        normalized_r = (r - self.reward_mean) / (self.reward_std + self.std_smoothing)
-        normalized_s = (s - self.state_mean) / (self.state_std + self.std_smoothing)
-        normalized_s_ = (s_ - self.state_mean) / (self.state_std + self.std_smoothing)
-        transition = np.hstack((normalized_s, np.array([a, float(normalized_r)]), normalized_s_))
+        # normalized_r = (r - self.reward_mean) / (self.reward_std + self.std_smoothing)
+        # normalized_s = (s - self.state_mean) / (self.state_std + self.std_smoothing)
+        # normalized_s_ = (s_ - self.state_mean) / (self.state_std + self.std_smoothing)
+        transition = np.hstack((s, np.array([a, float(r)]), s_))
 
         mask = copy.copy(mask)
 
