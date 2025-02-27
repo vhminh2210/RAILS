@@ -120,7 +120,6 @@ class Net(nn.Module):
 
         if self.one_hot:
             self.prelinear = nn.Linear(num_raw_inputs, num_inputs) # Onehot downscaler
-            self.postlinear = nn.Linear(num_outputs, num_raw_inputs) # Upscale to onehot
 
         self.linear1 = nn.Linear(num_inputs, hidden_size)
         if self.noisy_net:
@@ -163,7 +162,6 @@ class Net(nn.Module):
                 self.linear2_A = NoisyLinear(hidden_size, half_size)
             self.ln2_A = nn.LayerNorm(half_size)
 
-            self.postlinear = nn.Linear(half_size, num_inputs) # Downscaler
             self.mu = nn.Linear(half_size, num_outputs)
             if self.noisy_net:
                 self.mu = NoisyLinear(half_size, num_outputs)
@@ -231,8 +229,6 @@ class Net(nn.Module):
             adv = self.relu(self.ln2_A(self.dropout(self.linear2_A(x))))
             if self.embd is not None:
                 adv = (self.mu(adv) @ self.embd.T) # (batch_size, n_action)
-            elif self.one_hot:
-                adv = self.mu(self.postlinear(adv))
             else:
                 adv = torch.tanh(self.mu(adv)) # (batch_size, num_outputs = n_action)
 
@@ -248,8 +244,6 @@ class Net(nn.Module):
 
             if self.embd is not None:
                 q_values = (self.mu(x) @ self.embd.T)
-            elif self.one_hot:
-                q_values = self.softmax(self.mu(self.postlinear(x)))
             else:
                 q_values = torch.tanh(self.mu(x))
 
@@ -330,7 +324,7 @@ class DQN(object):
         self.train_loss = []
         self.args = args
 
-        self.onehot = False
+        self.one_hot = False
         self.num_raw_inputs = -1
         if self.args.sim_mode == 'crossrec':
             self.one_hot = True
@@ -699,6 +693,7 @@ class DQN(object):
         elif self.mode == 'ddqn':
             if self.args.policy == 'max':
                 q_eval_action = raw_q_eval_next.argmax(dim=1).unsqueeze(1)
+                # print(batch_reward, q_eval_action, q_next)
                 q_target = batch_reward + self.gamma * q_next.gather(1, q_eval_action)
             elif self.args.policy == 'stochastic':
                 margin_q = torch.sum(raw_q_eval_next, 1, keepdim= True).detach()
@@ -712,16 +707,20 @@ class DQN(object):
         # Partition-weighted Bellman loss
         weights = splits / torch.sum(splits)
 
+        # print(q_eval, q_target)
+
         seq_loss = self.loss_func(q_eval[ : splits[0]], q_target[ : splits[0]].detach())
         rare_loss = self.loss_func(q_eval[splits[0] : splits[0] + splits[1]], q_target[splits[0] : splits[0] + splits[1]].detach())
         rand_loss = self.loss_func(q_eval[splits[0] + splits[1] : ], q_target[splits[0] + splits[1] : ].detach())
 
         bellman_loss = weights[0] * seq_loss + weights[1] * rare_loss + weights[2] * rand_loss
 
+        # print('bellman:', seq_loss, rare_loss, rand_loss)
+
         # BETA: MOO-Based Bellman loss
         # mean_loss = (seq_loss + rare_loss + rand_loss) / 3.
         mean_loss = bellman_loss.detach()
-        moo_loss = self.loss_func(seq_loss, mean_loss) +  self.loss_func(rand_loss, mean_loss) + self.loss_func(rare_loss, mean_loss)
+        # moo_loss = self.loss_func(seq_loss, mean_loss) +  self.loss_func(rand_loss, mean_loss) + self.loss_func(rare_loss, mean_loss)
         # moo_loss = torch.sqrt(moo_loss / 3.)
 
         # Conservative Q learning
@@ -729,6 +728,8 @@ class DQN(object):
         if self.args.cql_mode == 'cql_Rho':
             buffered_action = torch.argmax(buffered_q_eval, dim= 1).unsqueeze(dim= 1)
         cql_loss = self.CQLLoss((self.args.max_obs + 1.) / 2., raw_q_eval, batch_action, buffered_action)
+
+        # print('cql:', cql_loss)
 
         loss = self.args.cql_alpha * cql_loss + 0.5 * bellman_loss
         self.train_loss.append(loss.item())
@@ -773,6 +774,8 @@ class DQN(object):
 
         # Export args
         with open(os.path.join(root, 'args.txt'), 'w') as f:
+            # Release crossrec-bundle
+            args.crossrec_bundle = "removed"
             json.dump(args.__dict__, f, indent=2)
             f.close()
 

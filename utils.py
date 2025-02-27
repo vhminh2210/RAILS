@@ -139,7 +139,7 @@ def split_data(args, train_ratio= 0.8, val_ratio= 0.1, test_ratio= 0.1, seed= 10
     agent_data('test', args)
 
 def get_minmax_freq(train_txt, n_items):
-    freq = np.zeros(n_items)
+    freq = np.zeros(n_items + 5)
     with open(train_txt, 'r') as file:
         Lines = file.readlines()
         file.close()
@@ -156,7 +156,7 @@ def get_minmax_freq(train_txt, n_items):
     return freq, np.min([x for x in freq if x != 0]), np.max(freq)
 
 def crossrec_prep(data):
-    tfidf_item = torch.zeros(data.n_items)
+    tfidf_item = torch.zeros(data.n_items + 5)
     P = len(data.train_user_list.keys())
     for item in range(data.n_items):
         if item not in data.train_item_list.keys(): continue # wild items

@@ -8,19 +8,19 @@ python main.py --modeltype BC_LOSS \
                 --root datasets/d1-fold \
                 --dataset Round1 \
                 --sim_mode crossrec \
-                --epoch_max 20 \
-                --step_max 4 \
-                --memory 256 \
+                --epoch_max 5 \
+                --step_max 8 \
+                --memory 1024 \
                 --nov_beta 0.0 \
-                --agent_batch 2048 \
+                --agent_batch 8 \
                 --eta 1.0 \
-                --agent_lr 1e-3 \
+                --agent_lr 8e-4 \
                 --replace_freq -1 \
                 --num_hidden 256 \
                 --tau 1e-4 \
                 --gamma 0.999 \
                 --cql_mode cql_H \
-                --cql_alpha 5.0 \
+                --cql_alpha 7.0 \
                 --epsilon 0.0 \
                 --user_lam 0.5 \
                 --dqn_mode ddqn \
@@ -34,6 +34,6 @@ python main.py --modeltype BC_LOSS \
                 --rand_ratio 0.5 \
                 --topk 10 \
                 --eval_freq 50 \
-                --episode_batch 128 \
+                --episode_batch 8 \
                 --all_episodes \
                 --eval_query

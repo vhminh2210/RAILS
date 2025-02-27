@@ -80,7 +80,18 @@ def getAgent(repr_user, user_emb, item_emb, wild_items, min_freq, max_freq, freq
     if args.sim_mode == 'user_embedding':
         assert repr_user is not None
 
-    return train_dqn(train_df, test_df, query_df, item_pop_dict,
-                    max_item_id, item_list, mask_list, 
-                    repr_user, item_emb, user_emb, 
-                    min_freq, max_freq, freq, wild_items, args)
+    # Default training scheme with seperate train-query-test
+    if args.sim_mode != 'crossrec':
+        return train_dqn(train_df, test_df, query_df, item_pop_dict,
+                        max_item_id, item_list, mask_list, 
+                        repr_user, item_emb, user_emb, 
+                        min_freq, max_freq, freq, wild_items, args)
+    
+    # CrossRec training scheme. Train model with queryset, testing on testset
+    else:
+        assert args.eval_query # CrossRec must accompany with eval_query
+        print('CrossRec')
+        return train_dqn(query_df, test_df, query_df, item_pop_dict,
+                        max_item_id, item_list, mask_list, 
+                        repr_user, item_emb, user_emb, 
+                        min_freq, max_freq, freq, wild_items, args)

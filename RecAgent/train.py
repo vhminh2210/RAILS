@@ -102,6 +102,13 @@ def setInteraction(env, agent, ep_user, train_df, args, freq, augment= True, ckp
     user_df = train_df[train_df['user_id'] == ep_user]
     observations = user_df['item_id'].to_list()
 
+    if args.sim_mode == 'crossrec':
+        new_obs = []
+        for obs in observations:
+            if obs in args.wild_items: continue
+            new_obs.append(obs)
+        observations = copy.deepcopy(new_obs)
+
     interaction_num = 0
     args = agent.args
 
@@ -135,8 +142,13 @@ def setInteraction(env, agent, ep_user, train_df, args, freq, augment= True, ckp
         for i in range(len(aug_actions)):
             s = np.array(env.reset(aug_obsevations[i]))
             a = int(aug_actions[i])
+            
+            # Do not add rare item to Memory buffer or empty initial state
+            if a in args.wild_items or len(aug_obsevations[i]) == 0: continue 
+            
             action_type = aug_types[i]
             s_, r, done = env.step(a, action_type)
+            if not done: continue # Discard deprecated transitions
             # print(aug_obsevations[i], aug_actions[i])
             agent.store_transition(env.build_state(s).reshape((-1)), a, r, s_.reshape((-1)), aug_obsevations[i])
         
@@ -314,7 +326,7 @@ def evaluate(agent, ep_users, train_df, test_df, train_dict, item_pop_dict,
         # interdiv.append(rec_list)
 
     final_epc = float(sum([x[0] for x in epc]) / (sum([x[1] for x in epc]) + 1e-5))
-    final_coverage = float(len(set(coverage)) / item_emb.weight.shape[0])
+    final_coverage = float(len(set(coverage)) / args.n_items)
     if ckpt:
         print('Evaluation complete!')
         print('####################')
@@ -544,15 +556,25 @@ def train_dqn(train_df, test_df, query_df, item_pop_dict,
         print('####################')
         print('Running evaluations on trained encoder ...')
         if args.eval_query:
-            _, _, _, epc, coverage = evaluate(agent, query_episodes, query_df, test_df, query_dict, item_pop_dict,
+            _, _, _, epc, coverage, reclist, testlist, testers = evaluate(agent, query_episodes, query_df, test_df, query_dict, item_pop_dict,
                                             max_item_id, mask_list, repr_user, item_emb, args, encoder= True,
                                             min_freq= min_freq, max_freq= max_freq, freq= freq, 
-                                            user_emb= user_emb, wild_items= wild_items, ckpt= True)
+                                            user_emb= user_emb, wild_items= wild_items, ckpt= True, export_list= True)
         else:
-            _, _, _, epc, coverage = evaluate(agent, train_episodes, train_df, test_df, train_dict, item_pop_dict,
+            _, _, _, epc, coverage, reclist, testlist, testers = evaluate(agent, train_episodes, train_df, test_df, train_dict, item_pop_dict,
                                             max_item_id, mask_list, repr_user, item_emb, args, encoder= True,
                                             min_freq= min_freq, max_freq= max_freq, freq= freq, 
-                                            user_emb= user_emb, wild_items= wild_items, ckpt= True)
+                                            user_emb= user_emb, wild_items= wild_items, ckpt= True, export_list= True)
+            
+        with open(os.path.join(exps_log, 'graph-reclist.txt'), 'w') as file:
+            Lines = []
+            for i in range(len(testers)):
+                line = [testers[i]]
+                line.extend(reclist[i])
+                line = ' '.join([str(x) for x in line]) + '\n'
+                Lines.append(line)
+            file.writelines(Lines)
+            file.close()
 
         print(f"Precision@{args.topk}: ", np.round(np.mean(precision), 4))
         print(f"Recall@{args.topk}: ", np.round(np.mean(recall), 4))

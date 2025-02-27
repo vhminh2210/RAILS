@@ -47,13 +47,28 @@ class Env():
 
         return torch.dot(masked_p, masked_q)
     
+    def crossrec_similarity_matrix(self, user_p):
+        '''
+        user_p: (1, I)
+        tfidf_user: (U, I)
+        '''
+        mask = torch.eq(self.tfidf_user, user_p).int()
+        masked_p = user_p * mask # (1, I)
+        masked_q = self.tfidf_user * mask # (U, I)
+
+        # print(masked_p.shape, masked_q.shape)
+
+        return (masked_p@masked_q.T).squeeze() # (1, U) --> (U,)
+    
     def crossrec_topsim(self, user_p):
         simlist = []
+        # pq_list = self.crossrec_similarity_matrix(user_p)[self.user]
         for q in range(self.n_users):
             user_q = self.tfidf_user[q]
             if not (user_q != 0).any():
                 continue # Skip non-training users
             simlist.append((q, user_q, self.r_bar[q], self.crossrec_similarity(user_p, user_q)))
+            # simlist.append((q, user_q, self.r_bar[q], pq_list[q]))
         
         simlist = sorted(simlist, key= lambda x : -x[2]) # Sorted decreasing by values
         return simlist[ : min(self.args.crossrec_topsim, len(simlist))]
@@ -132,6 +147,11 @@ class Env():
         The function returns (new_state, returned_reward, status) after action [action]
         '''
         done = False
+
+        # If prj contains only rare observations
+        if len(self.observation) == 0:
+            return None, None, False
+
         so = np.array(self.observation)
         s = self.build_state(self.observation)
 
@@ -149,6 +169,8 @@ class Env():
                 topsim = self.crossrec_topsim(s) 
 
                 numer, denom = 0.0, 0.0
+                if len(topsim) == 0:
+                    return None, None, False
                 for candidate in topsim:
                     q, user_q, rq_bar, sim_pq = candidate
 
@@ -160,7 +182,8 @@ class Env():
 
                     numer += (sim_pq * (r_qa - rq_bar))
                     denom += sim_pq
-                
+                if denom == 0:
+                    return None, None, False
                 r = rp_bar + float(numer / denom)
             else:
                 act_tensor = torch.IntTensor([action])
