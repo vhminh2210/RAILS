@@ -2,11 +2,49 @@
 # python GraphEnc/setup.py build_ext --inplace 2> /dev/null
 python main.py --modeltype BC_LOSS \
                 --pretrained_graph \
-                --ckpt_dir weights/d1-fold/Round1/BC_LOSS-LGN \
+                --ckpt_dir weights/d2-fold/Round1/BC_LOSS-LGN \
                 --ckpt n_layers=2tau1=0.07tau2=0.1w=0.5 \
                 --cuda -1 \
-                --root datasets/d1-fold \
+                --root datasets/d2-fold \
                 --dataset Round1 \
+                --sim_mode crossrec \
+                --epoch_max 5 \
+                --step_max 8 \
+                --memory 1024 \
+                --nov_beta 0.0 \
+                --agent_batch 8 \
+                --eta 1.0 \
+                --agent_lr 8e-4 \
+                --replace_freq -1 \
+                --num_hidden 256 \
+                --tau 1e-4 \
+                --gamma 0.999 \
+                --cql_mode cql_H \
+                --cql_alpha 7.0 \
+                --epsilon 0.0 \
+                --user_lam 0.5 \
+                --dqn_mode ddqn \
+                --dueling_dqn \
+                --dropout 0.0 \
+                --n_augment 3 \
+                --n_aug_scale 2 \
+                --rare_thresh 0.1 \
+                --seq_ratio 0.3 \
+                --rare_ratio 0.2 \
+                --rand_ratio 0.5 \
+                --topk 10 \
+                --eval_freq 50 \
+                --episode_batch 8 \
+                --all_episodes \
+                --eval_query
+
+python main.py --modeltype BC_LOSS \
+                --pretrained_graph \
+                --ckpt_dir weights/d2-fold/Round2/BC_LOSS-LGN \
+                --ckpt n_layers=2tau1=0.07tau2=0.1w=0.5 \
+                --cuda -1 \
+                --root datasets/d2-fold \
+                --dataset Round2 \
                 --sim_mode crossrec \
                 --epoch_max 5 \
                 --step_max 8 \
