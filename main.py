@@ -308,7 +308,8 @@ if __name__ == "__main__":
         crossrec_bundle = {
             'tfidf_item' : tfidf_item,
             'tfidf_user' : tfidf_user,
-            'mean_rating' : r_bar
+            'mean_rating' : r_bar,
+            'item2user' : data.train_item_list
         }
 
         args.crossrec_bundle = crossrec_bundle

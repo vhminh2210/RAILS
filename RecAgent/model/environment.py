@@ -39,6 +39,7 @@ class Env():
             self.r_bar = args.crossrec_bundle['mean_rating']
             self.tfidf_item = args.crossrec_bundle['tfidf_item']
             self.tfidf_user = args.crossrec_bundle['tfidf_user']
+            self.item2user = args.crossrec_bundle['item2user']
     
     def crossrec_similarity(self, user_p, user_q):
         mask = torch.eq(user_p.squeeze(), user_q.squeeze()).int()
@@ -60,10 +61,18 @@ class Env():
 
         return (masked_p@masked_q.T).squeeze() # (1, U) --> (U,)
     
+    def crossrec_neighbours_candidate(self):
+        candlist = []
+        for item in self.observation:
+            candlist.extend(self.item2user[item])
+        candlist = list(set(candlist))
+        return candlist
+    
     def crossrec_topsim(self, user_p):
         simlist = []
+        candlist = self.crossrec_neighbours_candidate()
         # pq_list = self.crossrec_similarity_matrix(user_p)[self.user]
-        for q in range(self.n_users):
+        for q in candlist:
             user_q = self.tfidf_user[q]
             if not (user_q != 0).any():
                 continue # Skip non-training users

@@ -103,7 +103,7 @@ class NoisyLinear(nn.Module):
 class Net(nn.Module):
     def __init__(self, num_inputs, num_outputs, hidden_size, embd= None, 
                  dueling= False, noisy_net= False, dropout= 0.0,
-                 one_hot= False, num_raw_inputs= 1200):
+                 one_hot= False, num_raw_inputs= 1200, bottleneck= 32):
         '''
         Note: num_inputs (i.e., input state embeddings dimension) is different than n_items (i.e., num_raw_inputs)!
         Normally, num_inputs < hidden_size
@@ -119,6 +119,7 @@ class Net(nn.Module):
         self.relu = nn.ReLU()
 
         if self.one_hot:
+            num_inputs = bottleneck
             self.prelinear = nn.Linear(num_raw_inputs, num_inputs) # Onehot downscaler
 
         self.linear1 = nn.Linear(num_inputs, hidden_size)
@@ -136,6 +137,11 @@ class Net(nn.Module):
             self.mu = nn.Linear(hidden_size, num_outputs)
             if self.noisy_net:
                 self.mu = NoisyLinear(hidden_size, num_outputs)
+
+            if self.one_hot:
+                assert not self.noisy_net # Not yet support noisy net + crossrec
+                self.postlinear = nn.Linear(hidden_size, bottleneck)
+                self.mu = nn.Linear(bottleneck, num_outputs)
 
         else:
             # Dueling DQN
@@ -165,6 +171,11 @@ class Net(nn.Module):
             self.mu = nn.Linear(half_size, num_outputs)
             if self.noisy_net:
                 self.mu = NoisyLinear(half_size, num_outputs)
+
+            if self.one_hot:
+                assert not self.noisy_net # Not yet support noisy net + crossrec
+                self.postlinear = nn.Linear(half_size, bottleneck)
+                self.mu = nn.Linear(bottleneck, num_outputs)
 
         # Default init for non-noisy nets
         if not self.noisy_net:
@@ -230,6 +241,8 @@ class Net(nn.Module):
             if self.embd is not None:
                 adv = (self.mu(adv) @ self.embd.T) # (batch_size, n_action)
             else:
+                if self.one_hot:
+                    adv = self.postlinear(adv)
                 adv = torch.tanh(self.mu(adv)) # (batch_size, num_outputs = n_action)
 
             # Q-value fusion
@@ -245,6 +258,8 @@ class Net(nn.Module):
             if self.embd is not None:
                 q_values = (self.mu(x) @ self.embd.T)
             else:
+                if self.one_hot:
+                    adv = self.postlinear(adv)
                 q_values = torch.tanh(self.mu(x))
 
         return q_values
