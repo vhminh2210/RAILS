@@ -299,7 +299,8 @@ if __name__ == "__main__":
 
         # Handling wild items
         wild_items = []
-        for item in range(data.n_items):
+        # Plus 20 for handling edge cases where item with max-id are in wild-list
+        for item in range(data.n_items + 20):
             if item not in data.train_item_list.keys():
                 wild_items.append(item)
         

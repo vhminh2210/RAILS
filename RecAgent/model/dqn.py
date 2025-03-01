@@ -103,7 +103,7 @@ class NoisyLinear(nn.Module):
 class Net(nn.Module):
     def __init__(self, num_inputs, num_outputs, hidden_size, embd= None, 
                  dueling= False, noisy_net= False, dropout= 0.0,
-                 one_hot= False, num_raw_inputs= 1200, bottleneck= 32):
+                 one_hot= False, num_raw_inputs= 1200, bottleneck= 64):
         '''
         Note: num_inputs (i.e., input state embeddings dimension) is different than n_items (i.e., num_raw_inputs)!
         Normally, num_inputs < hidden_size

@@ -2,15 +2,15 @@
 # python GraphEnc/setup.py build_ext --inplace 2> /dev/null
 python main.py --modeltype BC_LOSS \
                 --pretrained_graph \
-                --ckpt_dir weights/d1-fold/Round1/BC_LOSS-LGN \
+                --ckpt_dir weights/d2-fold/Round3/BC_LOSS-LGN \
                 --ckpt n_layers=2tau1=0.07tau2=0.1w=0.5 \
                 --cuda -1 \
-                --root datasets/d1-fold \
-                --dataset Round1 \
+                --root datasets/d2-fold \
+                --dataset Round3 \
                 --sim_mode crossrec \
                 --epoch_max 5 \
-                --step_max 8 \
-                --memory 1024 \
+                --step_max 4 \
+                --memory 128 \
                 --nov_beta 0.0 \
                 --agent_batch 8 \
                 --eta 1.0 \
@@ -20,7 +20,7 @@ python main.py --modeltype BC_LOSS \
                 --tau 1e-4 \
                 --gamma 0.999 \
                 --cql_mode cql_H \
-                --cql_alpha 7.0 \
+                --cql_alpha 8.0 \
                 --epsilon 0.0 \
                 --user_lam 0.5 \
                 --dqn_mode ddqn \
@@ -34,6 +34,272 @@ python main.py --modeltype BC_LOSS \
                 --rand_ratio 0.5 \
                 --topk 10 \
                 --eval_freq 50 \
-                --episode_batch 8 \
+                --episode_batch 32 \
                 --all_episodes \
                 --eval_query
+
+python main.py --modeltype BC_LOSS \
+                --pretrained_graph \
+                --ckpt_dir weights/d2-fold/Round4/BC_LOSS-LGN \
+                --ckpt n_layers=2tau1=0.07tau2=0.1w=0.5 \
+                --cuda -1 \
+                --root datasets/d2-fold \
+                --dataset Round4 \
+                --sim_mode crossrec \
+                --epoch_max 5 \
+                --step_max 4 \
+                --memory 128 \
+                --nov_beta 0.0 \
+                --agent_batch 8 \
+                --eta 1.0 \
+                --agent_lr 8e-4 \
+                --replace_freq -1 \
+                --num_hidden 256 \
+                --tau 1e-4 \
+                --gamma 0.999 \
+                --cql_mode cql_H \
+                --cql_alpha 8.0 \
+                --epsilon 0.0 \
+                --user_lam 0.5 \
+                --dqn_mode ddqn \
+                --dueling_dqn \
+                --dropout 0.0 \
+                --n_augment 3 \
+                --n_aug_scale 2 \
+                --rare_thresh 0.1 \
+                --seq_ratio 0.3 \
+                --rare_ratio 0.2 \
+                --rand_ratio 0.5 \
+                --topk 10 \
+                --eval_freq 50 \
+                --episode_batch 32 \
+                --all_episodes \
+                --eval_query
+
+python main.py --modeltype BC_LOSS \
+                --pretrained_graph \
+                --ckpt_dir weights/d2-fold/Round5/BC_LOSS-LGN \
+                --ckpt n_layers=2tau1=0.07tau2=0.1w=0.5 \
+                --cuda -1 \
+                --root datasets/d2-fold \
+                --dataset Round5 \
+                --sim_mode crossrec \
+                --epoch_max 5 \
+                --step_max 4 \
+                --memory 128 \
+                --nov_beta 0.0 \
+                --agent_batch 8 \
+                --eta 1.0 \
+                --agent_lr 8e-4 \
+                --replace_freq -1 \
+                --num_hidden 256 \
+                --tau 1e-4 \
+                --gamma 0.999 \
+                --cql_mode cql_H \
+                --cql_alpha 8.0 \
+                --epsilon 0.0 \
+                --user_lam 0.5 \
+                --dqn_mode ddqn \
+                --dueling_dqn \
+                --dropout 0.0 \
+                --n_augment 3 \
+                --n_aug_scale 2 \
+                --rare_thresh 0.1 \
+                --seq_ratio 0.3 \
+                --rare_ratio 0.2 \
+                --rand_ratio 0.5 \
+                --topk 10 \
+                --eval_freq 50 \
+                --episode_batch 32 \
+                --all_episodes \
+                --eval_query
+
+python main.py --modeltype BC_LOSS \
+                --pretrained_graph \
+                --ckpt_dir weights/d2-fold/Round6/BC_LOSS-LGN \
+                --ckpt n_layers=2tau1=0.07tau2=0.1w=0.5 \
+                --cuda -1 \
+                --root datasets/d2-fold \
+                --dataset Round6 \
+                --sim_mode crossrec \
+                --epoch_max 5 \
+                --step_max 4 \
+                --memory 128 \
+                --nov_beta 0.0 \
+                --agent_batch 8 \
+                --eta 1.0 \
+                --agent_lr 8e-4 \
+                --replace_freq -1 \
+                --num_hidden 256 \
+                --tau 1e-4 \
+                --gamma 0.999 \
+                --cql_mode cql_H \
+                --cql_alpha 8.0 \
+                --epsilon 0.0 \
+                --user_lam 0.5 \
+                --dqn_mode ddqn \
+                --dueling_dqn \
+                --dropout 0.0 \
+                --n_augment 3 \
+                --n_aug_scale 2 \
+                --rare_thresh 0.1 \
+                --seq_ratio 0.3 \
+                --rare_ratio 0.2 \
+                --rand_ratio 0.5 \
+                --topk 10 \
+                --eval_freq 50 \
+                --episode_batch 32 \
+                --all_episodes \
+                --eval_query
+
+python main.py --modeltype BC_LOSS \
+                --pretrained_graph \
+                --ckpt_dir weights/d2-fold/Round7/BC_LOSS-LGN \
+                --ckpt n_layers=2tau1=0.07tau2=0.1w=0.5 \
+                --cuda -1 \
+                --root datasets/d2-fold \
+                --dataset Round7 \
+                --sim_mode crossrec \
+                --epoch_max 5 \
+                --step_max 4 \
+                --memory 128 \
+                --nov_beta 0.0 \
+                --agent_batch 8 \
+                --eta 1.0 \
+                --agent_lr 8e-4 \
+                --replace_freq -1 \
+                --num_hidden 256 \
+                --tau 1e-4 \
+                --gamma 0.999 \
+                --cql_mode cql_H \
+                --cql_alpha 8.0 \
+                --epsilon 0.0 \
+                --user_lam 0.5 \
+                --dqn_mode ddqn \
+                --dueling_dqn \
+                --dropout 0.0 \
+                --n_augment 3 \
+                --n_aug_scale 2 \
+                --rare_thresh 0.1 \
+                --seq_ratio 0.3 \
+                --rare_ratio 0.2 \
+                --rand_ratio 0.5 \
+                --topk 10 \
+                --eval_freq 50 \
+                --episode_batch 32 \
+                --all_episodes \
+                --eval_query
+
+python main.py --modeltype BC_LOSS \
+                --pretrained_graph \
+                --ckpt_dir weights/d2-fold/Round8/BC_LOSS-LGN \
+                --ckpt n_layers=2tau1=0.07tau2=0.1w=0.5 \
+                --cuda -1 \
+                --root datasets/d2-fold \
+                --dataset Round8 \
+                --sim_mode crossrec \
+                --epoch_max 5 \
+                --step_max 4 \
+                --memory 128 \
+                --nov_beta 0.0 \
+                --agent_batch 8 \
+                --eta 1.0 \
+                --agent_lr 8e-4 \
+                --replace_freq -1 \
+                --num_hidden 256 \
+                --tau 1e-4 \
+                --gamma 0.999 \
+                --cql_mode cql_H \
+                --cql_alpha 8.0 \
+                --epsilon 0.0 \
+                --user_lam 0.5 \
+                --dqn_mode ddqn \
+                --dueling_dqn \
+                --dropout 0.0 \
+                --n_augment 3 \
+                --n_aug_scale 2 \
+                --rare_thresh 0.1 \
+                --seq_ratio 0.3 \
+                --rare_ratio 0.2 \
+                --rand_ratio 0.5 \
+                --topk 10 \
+                --eval_freq 50 \
+                --episode_batch 32 \
+                --all_episodes \
+                --eval_query
+
+python main.py --modeltype BC_LOSS \
+                --pretrained_graph \
+                --ckpt_dir weights/d2-fold/Round9/BC_LOSS-LGN \
+                --ckpt n_layers=2tau1=0.07tau2=0.1w=0.5 \
+                --cuda -1 \
+                --root datasets/d2-fold \
+                --dataset Round9 \
+                --sim_mode crossrec \
+                --epoch_max 5 \
+                --step_max 4 \
+                --memory 128 \
+                --nov_beta 0.0 \
+                --agent_batch 8 \
+                --eta 1.0 \
+                --agent_lr 8e-4 \
+                --replace_freq -1 \
+                --num_hidden 256 \
+                --tau 1e-4 \
+                --gamma 0.999 \
+                --cql_mode cql_H \
+                --cql_alpha 8.0 \
+                --epsilon 0.0 \
+                --user_lam 0.5 \
+                --dqn_mode ddqn \
+                --dueling_dqn \
+                --dropout 0.0 \
+                --n_augment 3 \
+                --n_aug_scale 2 \
+                --rare_thresh 0.1 \
+                --seq_ratio 0.3 \
+                --rare_ratio 0.2 \
+                --rand_ratio 0.5 \
+                --topk 10 \
+                --eval_freq 50 \
+                --episode_batch 32 \
+                --all_episodes \
+                --eval_query
+
+python main.py --modeltype BC_LOSS \
+            --pretrained_graph \
+            --ckpt_dir weights/d2-fold/Round10/BC_LOSS-LGN \
+            --ckpt n_layers=2tau1=0.07tau2=0.1w=0.5 \
+            --cuda -1 \
+            --root datasets/d2-fold \
+            --dataset Round10 \
+            --sim_mode crossrec \
+            --epoch_max 5 \
+            --step_max 4 \
+            --memory 128 \
+            --nov_beta 0.0 \
+            --agent_batch 8 \
+            --eta 1.0 \
+            --agent_lr 8e-4 \
+            --replace_freq -1 \
+            --num_hidden 256 \
+            --tau 1e-4 \
+            --gamma 0.999 \
+            --cql_mode cql_H \
+            --cql_alpha 8.0 \
+            --epsilon 0.0 \
+            --user_lam 0.5 \
+            --dqn_mode ddqn \
+            --dueling_dqn \
+            --dropout 0.0 \
+            --n_augment 3 \
+            --n_aug_scale 2 \
+            --rare_thresh 0.1 \
+            --seq_ratio 0.3 \
+            --rare_ratio 0.2 \
+            --rand_ratio 0.5 \
+            --topk 10 \
+            --eval_freq 50 \
+            --episode_batch 32 \
+            --all_episodes \
+            --eval_query
