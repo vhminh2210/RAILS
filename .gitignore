@@ -12,6 +12,7 @@
 exps
 old_exps
 old_weights
+weights
 msr
 msr_cold
 msr_cold_2
