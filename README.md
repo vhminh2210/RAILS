@@ -1,5 +1,5 @@
-# GraphICS
-Code repository for the paper **Defusing Popularity Bias in Third-Party Library Recommendations: A Reinforcement Learning Approach**
+# RAILS
+Code repository for the paper **Bake Two Cakes with One Oven: RL for Defusing Popularity Bias and Cold-start in Third-Party Library Recommendations**
 
 <p align="center">
     <img src="https://github.com/vhminh2210/GraphICS/blob/main/graphics.png" height="50%">
