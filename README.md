@@ -1,5 +1,5 @@
 # RAILS
-Code repository for the paper **Bake Two Cakes with One Oven: RL for Defusing Popularity Bias and Cold-start in Third-Party Library Recommendations**
+Code repository for the paper **[Bake Two Cakes with One Oven: RL for Defusing Popularity Bias and Cold-start in Third-Party Library Recommendations](https://arxiv.org/abs/2504.13772)**
 
 <p align="center">
     <img src="https://github.com/vhminh2210/GraphICS/blob/main/graphics.png" height="50%">
