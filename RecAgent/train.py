@@ -662,7 +662,7 @@ def train_dqn(train_df, test_df, query_df, item_pop_dict,
                                             min_freq= min_freq, max_freq= max_freq, freq= freq, 
                                             user_emb= user_emb, wild_items= wild_items, ckpt= True, export_list= True)
         else:
-            _, _, _, epc, coverage, reclist, testlist, testers = evaluate(best_agent, train_episodes, full_train_df, test_df, full_train_dict, item_pop_dict,
+            _, _, _, epc, coverage, reclist, testlist, testers = evaluate(best_agent, train_episodes, train_df, test_df, train_dict, item_pop_dict,
                                             max_item_id, mask_list, repr_user, item_emb, args, encoder= True,
                                             min_freq= min_freq, max_freq= max_freq, freq= freq, 
                                             user_emb= user_emb, wild_items= wild_items, ckpt= True, export_list= True)

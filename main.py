@@ -32,7 +32,7 @@ if __name__ == "__main__":
                         help= 'Checkpoint directory')
     parser.add_argument('--ckpt', type=str, default='',
                         help= 'Checkpoint name')
-    parser.add_argument('--val_ratio', type=float, default=0.1,
+    parser.add_argument('--val_ratio', type=float, default=0.2,
                         help= 'Custom proportion of training users used for RL agent validation.')
     
     # Graph encoder params
@@ -58,7 +58,7 @@ if __name__ == "__main__":
                         help='Interval of evaluation.')
     parser.add_argument('--saveID', type=str, default="",
                         help='Specify model save path.')
-    parser.add_argument('--patience', type=int, default=20,
+    parser.add_argument('--patience', type=int, default=5,
                         help='Early stopping point.')
     parser.add_argument('--checkpoint', type=str, default='./',
                         help='Specify model save path.')
