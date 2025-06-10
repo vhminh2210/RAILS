@@ -32,6 +32,8 @@ if __name__ == "__main__":
                         help= 'Checkpoint directory')
     parser.add_argument('--ckpt', type=str, default='',
                         help= 'Checkpoint name')
+    parser.add_argument('--val_ratio', type=float, default=0.1,
+                        help= 'Custom proportion of training users used for RL agent validation.')
     
     # Graph encoder params
     parser.add_argument('--vis', nargs='?', default=-1,

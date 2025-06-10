@@ -2,6 +2,8 @@ import random
 random.seed(101)
 
 import numpy as np
+import pandas as pd
+
 from concurrent.futures import ThreadPoolExecutor, wait
 from .model import environment, dqn
 from .util.metrics_util import ndcg_metric, novelty_metric, ils_metric, interdiv_metric
@@ -436,7 +438,103 @@ def train_dqn(train_df, test_df, query_df, item_pop_dict,
         train_episodes = random.sample(list(train_dict.keys()), args.episode_max)
     else:
         train_episodes = list(train_dict.keys())
-    # train_episodes = [125]
+
+    full_train_episodes = copy.deepcopy(train_episodes)
+    full_train_dict = copy.deepcopy(train_dict)
+    full_train_df = copy.deepcopy(train_df)
+        
+    ### Train-val splits
+    assert args.val_ratio > 0
+    random.seed(101)
+    
+    ## Query-based splits
+    if args.eval_query:
+        val_episodes = random.sample(train_episodes, int(len(train_episodes) * args.val_ratio))
+        train_episodes = [x for x in train_episodes if x not in val_episodes]
+
+        # Splits train-val dict
+        val_dict = {}
+        for val_ep in val_episodes:
+            val_dict[val_ep] = copy.deepcopy(train_dict.pop(val_ep))
+        
+        # Splits train-val df
+        val_df = train_df[train_df['user_id'].isin(val_episodes)]
+        train_df = train_df[train_df['user_id'].isin(train_episodes)]
+
+        # Further divide val into val_query and val_test
+        val_query_dict = {}
+        val_test_dict = {}
+
+        val_query_data = []
+        val_test_data = []
+
+        for val_ep in val_episodes:
+            item_list = copy.deepcopy(val_dict[val_ep])
+            query_size = int(0.3 * len(item_list))
+            
+            random.shuffle(item_list)
+            _query = item_list[ : query_size]
+            _test = item_list[query_size : ]
+
+            assert len(list(set(_query) & set(_test))) == 0
+
+            val_query_dict[val_ep] = copy.deepcopy(_query)
+            val_test_dict[val_ep] = copy.deepcopy(_test)
+        
+            for q_item in _query:
+                val_query_data.append({
+                    'user_id' : val_ep,
+                    'item_id' : q_item,
+                    'ratings' : 1,
+                    'timestamp' : 1000
+                })
+
+            for t_item in _test:
+                val_test_data.append({
+                    'user_id' : val_ep,
+                    'item_id' : t_item,
+                    'ratings' : 1,
+                    'timestamp' : 1000
+                })
+
+        val_query_df = pd.DataFrame(val_query_data)
+        val_test_df = pd.DataFrame(val_test_data)
+
+    ## Interaction-based splits
+    else:
+        val_dict = {}
+        val_data = []
+        train_data = []
+        for user in train_episodes:
+            items = copy.deepcopy(train_dict[user])
+            random.shuffle(items)
+
+            val_size = max(1, int(len(items) * 0.3))
+            _val = items[ : val_size]
+            _train = items[val_size : ]
+
+            for v_item in _val:
+                val_data.append({
+                    'user_id' : user,
+                    'item_id' : v_item,
+                    'rating' : 1,
+                    'timestamp' : 1000
+                })
+
+            for t_item in _train:
+                train_data.append({
+                    'user_id' : user,
+                    'item_id' : t_item,
+                    'rating' : 1,
+                    'timestamp' : 1000
+                })
+
+            train_dict[user] = copy.deepcopy(_train)
+            val_dict[user] = copy.deepcopy(_val)
+
+        train_df = pd.DataFrame(train_data)
+        val_df = pd.DataFrame(val_data)
+
     episode_id = 0 # Each episode corresponds to 1 user interactive session
 
     # Generating initial memory
@@ -464,23 +562,26 @@ def train_dqn(train_df, test_df, query_df, item_pop_dict,
             agent.net_hard_update()
         for ep_user in tqdm(train_episodes, desc= f'Epoch {t}'):
             episode_id += 1
-            # print(f'Episode {episode_id}: User : {ep_user}')
-            # future = executor.submit(recommender,
-            #                         agent, ep_user, train_df, test_df, train_dict,
-            #                         item_sim_dict, item_quality_dict, item_pop_dict,
-            #                         max_item_id, mask_list, repr_user, item_emb, args, min_freq, max_freq)
             _prec, _recall, _ndcg, _epc, _coverage = recommender(agent, train_episodes, ep_user, train_df, test_df, 
                                                 train_dict, item_pop_dict,
                                                 max_item_id, mask_list, repr_user, item_emb, episode_id, args,
                                                 min_freq, max_freq, freq, wild_items)
 
         if args.eval_query:
-            _prec, _recall, _ndcg, _epc, _coverage = evaluate(agent, query_episodes, query_df, test_df, query_dict, item_pop_dict,
+            # _prec, _recall, _ndcg, _epc, _coverage = evaluate(agent, query_episodes, query_df, test_df, query_dict, item_pop_dict,
+            #             max_item_id, mask_list, repr_user, item_emb, args, ckpt= True,
+            #             min_freq= min_freq, max_freq= max_freq, freq= freq, wild_items= wild_items)
+
+            _prec, _recall, _ndcg, _epc, _coverage = evaluate(agent, val_episodes, val_query_df, val_test_df, val_query_dict, item_pop_dict,
                         max_item_id, mask_list, repr_user, item_emb, args, ckpt= True,
                         min_freq= min_freq, max_freq= max_freq, freq= freq, wild_items= wild_items)
             
         else:
-            _prec, _recall, _ndcg, _epc, _coverage = evaluate(agent, train_episodes, train_df, test_df, train_dict, item_pop_dict,
+            # _prec, _recall, _ndcg, _epc, _coverage = evaluate(agent, train_episodes, train_df, test_df, train_dict, item_pop_dict,
+            #             max_item_id, mask_list, repr_user, item_emb, args, ckpt= True,
+            #             min_freq= min_freq, max_freq= max_freq, freq= freq, wild_items= wild_items)
+            
+            _prec, _recall, _ndcg, _epc, _coverage = evaluate(agent, train_episodes, train_df, val_df, train_dict, item_pop_dict,
                         max_item_id, mask_list, repr_user, item_emb, args, ckpt= True,
                         min_freq= min_freq, max_freq= max_freq, freq= freq, wild_items= wild_items)
         
@@ -510,7 +611,7 @@ def train_dqn(train_df, test_df, query_df, item_pop_dict,
                     min_freq= min_freq, max_freq= max_freq, freq= freq, wild_items= wild_items, export_list= True)
         
     else:
-        _, _, _, epc, coverage, reclist, testlist, testers = evaluate(best_agent, train_episodes, train_df, test_df, train_dict, item_pop_dict,
+        _, _, _, epc, coverage, reclist, testlist, testers = evaluate(best_agent, train_episodes, full_train_df, test_df, full_train_dict, item_pop_dict,
                     max_item_id, mask_list, repr_user, item_emb, args, ckpt= True,
                     min_freq= min_freq, max_freq= max_freq, freq= freq, wild_items= wild_items, export_list= True)
 
@@ -556,12 +657,12 @@ def train_dqn(train_df, test_df, query_df, item_pop_dict,
         print('####################')
         print('Running evaluations on trained encoder ...')
         if args.eval_query:
-            _, _, _, epc, coverage, reclist, testlist, testers = evaluate(agent, query_episodes, query_df, test_df, query_dict, item_pop_dict,
+            _, _, _, epc, coverage, reclist, testlist, testers = evaluate(best_agent, query_episodes, query_df, test_df, query_dict, item_pop_dict,
                                             max_item_id, mask_list, repr_user, item_emb, args, encoder= True,
                                             min_freq= min_freq, max_freq= max_freq, freq= freq, 
                                             user_emb= user_emb, wild_items= wild_items, ckpt= True, export_list= True)
         else:
-            _, _, _, epc, coverage, reclist, testlist, testers = evaluate(agent, train_episodes, train_df, test_df, train_dict, item_pop_dict,
+            _, _, _, epc, coverage, reclist, testlist, testers = evaluate(best_agent, train_episodes, full_train_df, test_df, full_train_dict, item_pop_dict,
                                             max_item_id, mask_list, repr_user, item_emb, args, encoder= True,
                                             min_freq= min_freq, max_freq= max_freq, freq= freq, 
                                             user_emb= user_emb, wild_items= wild_items, ckpt= True, export_list= True)
@@ -591,7 +692,7 @@ def train_dqn(train_df, test_df, query_df, item_pop_dict,
             file.write(f"Coverage@{args.topk}: {np.round(coverage, 4)}\n")
             file.close()
 
-    return agent
+    return best_agent
 
 if __name__ == "__main__":
     pass

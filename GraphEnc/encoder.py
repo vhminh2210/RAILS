@@ -529,29 +529,17 @@ def getEncoder(args, data_only= False):
     pop_mask=[item[0] for item in sort_pop[:10]]
     print(pop_mask)
 
-    if not args.eval_query:
-        if not args.pop_test:
-            # Default. Set only for SAM-REG (?). num_thread might need adjustments for Kaggle experiments
-            # eval_test_ood = ProxyEvaluator(data,data.train_user_list,data.test_ood_user_list,top_k=[20],dump_dict=merge_user_list([data.train_user_list,data.valid_user_list,data.test_id_user_list]))
-            eval_test_id = ProxyEvaluator(data,data.train_user_list,data.test_id_user_list,top_k=[10],dump_dict=merge_user_list([data.train_user_list,data.valid_user_list,data.test_ood_user_list]))
-            eval_valid = ProxyEvaluator(data,data.train_user_list,data.valid_user_list,top_k=[10])
-        else:
-            # eval_test_ood = ProxyEvaluator(data,data.train_user_list,data.test_ood_user_list,top_k=[20],dump_dict=merge_user_list([data.train_user_list,data.valid_user_list,data.test_id_user_list]),pop_mask=pop_mask)
-            eval_test_id = ProxyEvaluator(data,data.train_user_list,data.test_id_user_list,top_k=[10],dump_dict=merge_user_list([data.train_user_list,data.valid_user_list,data.test_ood_user_list]),pop_mask=pop_mask)
-            eval_valid = ProxyEvaluator(data,data.train_user_list,data.valid_user_list,top_k=[10],pop_mask=pop_mask)
-    
+    # Using trainset for pretrain evaluation
+    if not args.pop_test:
+        # Default. Set only for SAM-REG (?). num_thread might need adjustments for Kaggle experiments
+        # eval_test_ood = ProxyEvaluator(data,data.train_user_list,data.test_ood_user_list,top_k=[20],dump_dict=merge_user_list([data.train_user_list,data.valid_user_list,data.test_id_user_list]))
+        eval_test_id = ProxyEvaluator(data,data.train_user_list,data.train_user_list,top_k=[10])
+        eval_valid = ProxyEvaluator(data,data.train_user_list,data.train_user_list,top_k=[10])
     else:
-        # Using trainset for pretrain evaluation in query mode
-        if not args.pop_test:
-            # Default. Set only for SAM-REG (?). num_thread might need adjustments for Kaggle experiments
-            # eval_test_ood = ProxyEvaluator(data,data.train_user_list,data.test_ood_user_list,top_k=[20],dump_dict=merge_user_list([data.train_user_list,data.valid_user_list,data.test_id_user_list]))
-            eval_test_id = ProxyEvaluator(data,data.train_user_list,data.train_user_list,top_k=[20],dump_dict=merge_user_list([data.train_user_list,data.valid_user_list,data.test_ood_user_list]))
-            eval_valid = ProxyEvaluator(data,data.train_user_list,data.train_user_list,top_k=[20])
-        else:
-            # eval_test_ood = ProxyEvaluator(data,data.train_user_list,data.test_ood_user_list,top_k=[20],dump_dict=merge_user_list([data.train_user_list,data.valid_user_list,data.test_id_user_list]),pop_mask=pop_mask)
-            eval_test_id = ProxyEvaluator(data,data.train_user_list,data.train_user_list,top_k=[20],dump_dict=merge_user_list([data.train_user_list,data.valid_user_list,data.test_ood_user_list]),pop_mask=pop_mask)
-            eval_valid = ProxyEvaluator(data,data.train_user_list,data.train_user_list,top_k=[20],pop_mask=pop_mask)
-
+        # eval_test_ood = ProxyEvaluator(data,data.train_user_list,data.test_ood_user_list,top_k=[20],dump_dict=merge_user_list([data.train_user_list,data.valid_user_list,data.test_id_user_list]),pop_mask=pop_mask)
+        eval_test_id = ProxyEvaluator(data,data.train_user_list,data.train_user_list,top_k=[10])
+        eval_valid = ProxyEvaluator(data,data.train_user_list,data.train_user_list,top_k=[10],pop_mask=pop_mask)
+    
     # evaluators=[eval_valid,eval_test_id, eval_test_ood]
     evaluators = [eval_valid, eval_test_id]
     # eval_names=["valid","test_id", "test_ood" ]
