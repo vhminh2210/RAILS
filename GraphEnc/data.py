@@ -108,6 +108,7 @@ class Data:
 
         # Used to track early stopping point
         self.best_valid_recall = -np.inf
+        self.best_valid_precision = -np.inf
         self.best_valid_epoch, self.patience = 0, 0
 
         self.train_item_list = collections.defaultdict(list)

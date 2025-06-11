@@ -171,6 +171,11 @@ def evaluation(args, data, model, epoch, base_path, evaluator, name="valid"):
             data.best_valid_recall = ret[1]
             data.patience = 0
             is_best=True
+        elif np.isnan(ret[1]) and ret[0] > data.best_valid_precision:
+            data.best_valid_epoch = epoch
+            data.best_valid_precision = ret[0]
+            data.patience = 0
+            is_best=True
         else:
             data.patience += 1
             if data.patience >= args.patience:
@@ -537,7 +542,7 @@ def getEncoder(args, data_only= False):
         eval_valid = ProxyEvaluator(data,data.train_user_list,data.train_user_list,top_k=[10])
     else:
         # eval_test_ood = ProxyEvaluator(data,data.train_user_list,data.test_ood_user_list,top_k=[20],dump_dict=merge_user_list([data.train_user_list,data.valid_user_list,data.test_id_user_list]),pop_mask=pop_mask)
-        eval_test_id = ProxyEvaluator(data,data.train_user_list,data.train_user_list,top_k=[10])
+        eval_test_id = ProxyEvaluator(data,data.train_user_list,data.train_user_list,top_k=[10],pop_mask=pop_mask)
         eval_valid = ProxyEvaluator(data,data.train_user_list,data.train_user_list,top_k=[10],pop_mask=pop_mask)
     
     # evaluators=[eval_valid,eval_test_id, eval_test_ood]
