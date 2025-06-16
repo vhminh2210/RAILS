@@ -10,6 +10,7 @@
 # *.tar
 # *.png
 exps
+exps-backup
 old_exps
 old_weights
 enc_weights
@@ -20,3 +21,4 @@ msr_cold_2
 figs
 TODO.txt
 test_metric.py
+eval_crawl.py
