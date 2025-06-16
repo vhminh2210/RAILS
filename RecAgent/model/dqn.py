@@ -10,6 +10,8 @@ import json
 import random
 import math
 import copy
+import yaml
+import pickle
 random.seed(101)
 # import seaborn as sns
 
@@ -361,6 +363,7 @@ class DQN(object):
         self.item_pop_dict = item_pop_dict
 
         self.num_hidden = self.args.num_hidden
+        self.embd = embd
 
         if embd is None:
             self.eval_net = Net(self.n_states, self.n_actions, self.num_hidden, 
@@ -864,3 +867,91 @@ class DQN(object):
             plt.clf()   
 
         return root
+
+    def save_config(self, path):
+        """
+        Extracts the relevant initialization parameters from a DQN instance
+        and saves them to a YAML file.
+        """
+        config = {
+            'n_states': self.n_states,
+            'n_actions': self.n_actions,
+            'memory_capacity': self.memory_capacity,
+            'lr': self.lr,
+            'epsilon': self.epsilon,
+            'target_network_replace_freq': self.replace_freq,
+            'batch_size': self.batch_size,
+            'gamma': self.gamma,
+            'tau': self.tau,
+            'K': self.K,
+            'mode': self.mode,
+        }
+
+        if self.embd is not None:
+            torch.save(self.embd, f= os.path.join(path, 'embd.pt'))
+            config['embd_path'] = os.path.join(path, 'embd.pt')
+
+        if self.args is not None:
+            try:
+                config['args'] = vars(self.args)
+            except TypeError:
+                config['args'] = str(self.args)
+
+        if self.item_pop_dict is not None:
+            with open(os.path.join(path, 'item_pop_dict.pkl'), 'wb') as file:
+                pickle.dump(self.item_pop_dict, file)
+                file.close()
+
+            config['item_pop_dict_path'] = os.path.join(path, 'item_pop_dict.pkl')
+
+        # Save to YAML
+        with open(os.path.join(path, 'config.yaml'), 'w') as f:
+            yaml.dump(config, f, sort_keys=False)
+            f.close()
+
+    @staticmethod
+    def save_ckpt(dqn, path):
+        if not os.path.exists(path):
+            os.makedirs(path)
+
+        print('Saving RL Agent at', path)
+
+        # Save weights
+        with open(os.path.join(path, 'dqn.pkl'), 'wb') as file:
+            pickle.dump(dqn, file)
+            file.close()
+
+        # Save config
+        dqn.save_config(path)
+
+        print('Saving success! ...')
+
+    @staticmethod
+    def load_ckpt(path):
+        
+        # # Load configs
+        # with open(os.path.join(path, 'config.yaml'), 'r') as f:
+        #     config = yaml.safe_load(f)
+        #     f.close()
+
+        # # Load item_pop_dict
+        # if 'item_pop_dict_path' in config.keys():
+        #     with open(config['item_pop_dict_path'], 'rb') as f:
+        #         config['item_pop_dict'] = pickle.load(f)
+        #         f.close()
+
+        # # Load pretrained CF-based embeddings
+        # if 'embd_path' in config.keys():
+        #     with open(config['embd_path'], 'rb') as f:
+        #         config['embd'] = pickle.load(f)
+        #         f.close()
+
+        # # Initialize DQN
+        # dqn = DQN(**config)
+
+        # Load weights
+        with open(os.path.join(path, 'dqn.pkl'), 'rb') as file:
+            dqn = pickle.load(file)
+            file.close()
+
+        return dqn

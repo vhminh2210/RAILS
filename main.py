@@ -13,6 +13,7 @@ import os
 
 from GraphEnc.encoder import getEncoder
 from RecAgent.agent import getAgent
+from RecAgent.model.dqn import DQN
 from utils import split_data, get_minmax_freq, crossrec_prep
 
 if __name__ == "__main__":
@@ -32,6 +33,8 @@ if __name__ == "__main__":
                         help= 'Checkpoint directory')
     parser.add_argument('--ckpt', type=str, default='',
                         help= 'Checkpoint name')
+    parser.add_argument('--ckpt_agent', type=str, default='ckpt/agent',
+                        help= 'Saving checkpoint for RL agent')
     parser.add_argument('--val_ratio', type=float, default=0.2,
                         help= 'Custom proportion of training users used for RL agent validation.')
     
@@ -329,5 +332,13 @@ if __name__ == "__main__":
 
     # Interactive RL Agent
     agent = getAgent(repr_user, user_emb, item_emb, args.wild_items, min_freq, max_freq, freq, args)
+    DQN.save_ckpt(agent, args.ckpt_agent)
     print('####################')
     print('Runtime:', time.time() - start_time, 'seconds')
+
+    print('####################')
+    print('Load test ...')
+    load_agent = DQN.load_ckpt(args.ckpt_agent)
+    print('Agent type:', type(load_agent))
+    print('Pretrained embd shape:', load_agent.embd.weight.shape)
+    print('Load test success!')
