@@ -15,6 +15,8 @@ import pickle
 random.seed(101)
 # import seaborn as sns
 
+from .environment import Env
+
 def soft_update(target, source, tau):
     for target_param, param in zip(target.parameters(), source.parameters()):
         target_param.data.copy_(target_param.data * (1.0 - tau) + param.data * tau)
@@ -426,7 +428,7 @@ class DQN(object):
         if embd is not None:
             self.proposal_net = self.proposal_net.to(self.device)
 
-    def choose_action(self, obs, env, mode= 'training'):
+    def choose_action(self, obs, env, topK= None, mode= 'training'):
         self.setEval()
         if env.args.sim_mode == 'stats':
             obs = torch.unsqueeze(torch.tensor(obs, dtype=torch.float32), 0)
@@ -452,13 +454,16 @@ class DQN(object):
         rec_list = []
         cnt = 0
 
+        if topK is None:
+            topK = self.args.topk
+
         for i in range(actions_Q.size):
             candidate = sorted_ids[i]
             if candidate in env.mask_list:
                 continue
             rec_list.append(candidate)
             cnt += 1
-            if cnt == self.args.topk:
+            if cnt == topK:
                 break
 
         return rec_list
@@ -954,4 +959,16 @@ class DQN(object):
             dqn = pickle.load(file)
             file.close()
 
+        print(f'\n🚀 Loading RL Agent from {path}')
+        print(f"🎯 Action space size:   {dqn.n_actions:<22}")
+        print(f"📦 Default topK:        {dqn.args.topk:<22}")
+        print(f'✅ Successfully load ckpt from {path}!\n')
+
         return dqn
+
+    @staticmethod
+    def set_env(dqn, interaction_history):
+        user_id = 101 # Deprecated feature
+        env = Env(user_id, interaction_history, list(range(dqn.n_actions + 1)),
+                    dqn.item_pop_dict, interaction_history, dqn.args.sim_mode, dqn.embd, dqn.embd, wild_items= None, args= dqn.args)
+        return env
