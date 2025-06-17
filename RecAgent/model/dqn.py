@@ -416,7 +416,7 @@ class DQN(object):
         self.mode = mode
 
         # Proposal net
-        if embd is not None:
+        if self.embd is not None:
             self.proposal_net = AQLProposalNet(embd, self.args)
 
         # Load components to device
@@ -425,7 +425,18 @@ class DQN(object):
         self.target_net = self.target_net.to(self.device)
         self.loss_func = self.loss_func.to(self.device)
 
-        if embd is not None:
+        if self.embd is not None:
+            self.proposal_net = self.proposal_net.to(self.device)
+
+    def to_device(self, device):
+        self.device = device
+
+        self.eval_net = self.eval_net.to(self.device)
+        self.buffered_net = self.buffered_net.to(self.device)
+        self.target_net = self.target_net.to(self.device)
+        self.loss_func = self.loss_func.to(self.device)
+
+        if self.embd is not None:
             self.proposal_net = self.proposal_net.to(self.device)
 
     def choose_action(self, obs, env, topK= None, mode= 'training'):
@@ -921,6 +932,9 @@ class DQN(object):
 
         print('Saving RL Agent at', path)
 
+        # Export to cpu
+        dqn.to_device('cpu')
+
         # Save weights
         with open(os.path.join(path, 'dqn.pkl'), 'wb') as file:
             pickle.dump(dqn, file)
@@ -934,10 +948,10 @@ class DQN(object):
     @staticmethod
     def load_ckpt(path):
         
-        # # Load configs
-        # with open(os.path.join(path, 'config.yaml'), 'r') as f:
-        #     config = yaml.safe_load(f)
-        #     f.close()
+        # Load configs
+        with open(os.path.join(path, 'config.yaml'), 'r') as f:
+            config = yaml.safe_load(f)
+            f.close()
 
         # # Load item_pop_dict
         # if 'item_pop_dict_path' in config.keys():
@@ -964,11 +978,27 @@ class DQN(object):
         print(f"📦 Default topK:        {dqn.args.topk:<22}")
         print(f'✅ Successfully load ckpt from {path}!\n')
 
-        return dqn
+        return dqn, config
 
     @staticmethod
-    def set_env(dqn, interaction_history):
+    def set_env(dqn, interaction_history, wild_items= None):
+        '''
+        Preparing environment for chossing action.
+
+        Input:
+        -----
+        dqn (DQN): RL agent \n
+        interaction_history (List[int]): List of known historical interaction \n
+        wild_items (List[int]): List of wild (unseen) items. Default: None \n
+        '''
         user_id = 101 # Deprecated feature
         env = Env(user_id, interaction_history, list(range(dqn.n_actions + 1)),
-                    dqn.item_pop_dict, interaction_history, dqn.args.sim_mode, dqn.embd, dqn.embd, wild_items= None, args= dqn.args)
+                    dqn.item_pop_dict, interaction_history, dqn.args.sim_mode, dqn.embd, dqn.embd, wild_items= wild_items, args= dqn.args)
         return env
+    
+    @staticmethod
+    def recommend_offpolicy(env, agent, last_obs):
+        state = np.array(last_obs)
+        so = env.reset(state)
+
+        return agent.choose_action(so, env, mode= 'infer')
