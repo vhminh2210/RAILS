@@ -114,3 +114,28 @@ python main.py --modeltype BC_LOSS \
                 --sim_mode user_embedding \  # Start of RL parameters
                 ...  # Add similar hyperparameters
 ```
+### 3. Loading a Pretrained RL Agent
+
+If a recommendation agent has already been trained, it can be loaded and infered as follows:
+
+```python
+from RecAgent.model.dqn import DQN
+
+### Load RL agent
+rails, config = DQN.load_ckpt('ckpt/d1-r1')
+rails.to_device('cpu') # Or cuda:0
+
+### Cold-start historical interaction
+interaction_history = [1, 3, 5, 7, 9]
+
+### Setup environment
+env = DQN.set_env(rails, interaction_history, wild_items= None)
+
+### Predict top-K action
+rec_list = rails.choose_action(obs= interaction_history,
+                               env= env,
+                               topK= 10)
+
+print('Recommendation list:', rec_list)
+```
+A more detailed example can be found at `infer.py`
