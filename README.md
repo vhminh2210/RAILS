@@ -71,6 +71,7 @@ python main.py --modeltype BC_LOSS \
                 --neg_sample 128 \
                 --freeze_epoch 5 \  # End of encoder parameters
                 --sim_mode user_embedding \  # Start of RL parameters
+                --ckpt_agent ckpt/d1 # Saving the final agent
                 --epoch_max 1 \
                 --step_max 4 \
                 --memory 16384 \
@@ -108,6 +109,7 @@ python main.py --modeltype BC_LOSS \
                 --pretrained_graph \
                 --ckpt_dir weights/d2-fold/Round3/BC_LOSS-LGN \
                 --ckpt n_layers=2tau1=0.07tau2=0.1w=0.5 \  # Specify checkpoint
+                --ckpt_agent ckpt/d1 # Saving the final agent
                 --cuda -1 \
                 --root datasets \
                 --dataset d1 \  # End of encoder parameters
