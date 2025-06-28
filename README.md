@@ -28,7 +28,7 @@ The GraphICS framework consists of two main stages:
 The dataset directory must include the following files:
 
 - `train.txt`
-- `val.txt` *(Required only as a placeholder for encoder training and loading)* 
+- `val.txt` *(Required only as a placeholder, not containing any important data)* 
 - `test.txt`
 - `query.txt` *(Optional)* contains known cold-start interaction history for cold-start setting
 
@@ -52,6 +52,12 @@ The script allows different evaluation modes via command-line flags:
 ---
 
 ## Usage Examples
+
+The environment can be setup using `pip` with the packages listed in `requirements.txt`
+```bash
+cd RAILS
+pip install -r requirements.txt
+```
 
 ### 1. End-to-End Training
 
