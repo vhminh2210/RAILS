@@ -28,7 +28,7 @@ The GraphICS framework consists of two main stages:
 The dataset directory must include the following files:
 
 - `train.txt`
-- `val.txt` *(Required for encoder training and loading)* 
+- `val.txt` *(Required only as a placeholder for encoder training and loading)* 
 - `test.txt`
 - `query.txt` *(Optional)* contains known cold-start interaction history for cold-start setting
 
