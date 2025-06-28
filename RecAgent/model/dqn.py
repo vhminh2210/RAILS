@@ -790,7 +790,7 @@ class DQN(object):
         if not os.path.exists('exps'):
             os.mkdir('exps')
         now = datetime.now()
-        dt_string = now.strftime("%d-%m-%Y_%H:%M:%S")
+        dt_string = now.strftime("%d-%m-%Y_%H-%M-%S")
         root = os.path.join('exps', dt_string)
         os.makedirs(root)
 

@@ -338,7 +338,7 @@ if __name__ == "__main__":
 
     print('####################')
     print('Load test ...')
-    load_agent = DQN.load_ckpt(args.ckpt_agent)
+    load_agent, config = DQN.load_ckpt(args.ckpt_agent)
     print('Agent type:', type(load_agent))
     print('Pretrained embd shape:', load_agent.embd.weight.shape)
     print('Load test success!')
